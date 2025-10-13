@@ -1,0 +1,22 @@
+#map {
+    position: fixed;
+    inset: 0;
+    z-index: 1;
+}
+
+/* Topbar centrale sopra la mappa */
+.topbar {
+    position: fixed;
+    left: 50%;
+    top: 16px;
+    transform: translateX(-50%);
+    background: rgba(18, 18, 20, 0.85);
+    backdrop-filter: blur(8px);
+    border-radius: 50px;
+    z-index: 5;
+    box-shadow: 0 8px 25px rgba(0, 0, 0, 0.3);
+}
+
+.topbar select {
+    min-width: 180px;
+}

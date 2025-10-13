@@ -1,0 +1,44 @@
+html,
+body {
+    height: 100%;
+    margin: 0;
+    font-family: system-ui, Segoe UI, Roboto, Inter, Arial;
+    background-color: #0f1115;
+    color: #e8eaed;
+}
+
+.form-control,
+.form-select {
+    background-color: #0c0f14;
+    color: #eee;
+    border: none;
+}
+
+.card {
+    background: rgba(255, 255, 255, 0.05);
+    border: none;
+}
+
+.bg-dark {
+    background-color: #0f1115 !important;
+}
+
+.text-light {
+    color: #e8eaed !important;
+}
+
+/* Utility minima per effetto vetro */
+.glass {
+    backdrop-filter: blur(8px);
+    background: rgba(18, 18, 20, 0.9);
+}
+
+/* Scrollbar leggera e discreta */
+::-webkit-scrollbar {
+    width: 6px;
+}
+
+::-webkit-scrollbar-thumb {
+    background-color: rgba(255, 255, 255, 0.15);
+    border-radius: 3px;
+}

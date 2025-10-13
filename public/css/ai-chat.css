@@ -1,0 +1,124 @@
+.chatbox {
+    position: fixed;
+    right: 16px;
+    bottom: 16px;
+    width: 420px;
+    max-width: 95vw;
+    background: rgba(18, 18, 20, 0.92);
+    backdrop-filter: blur(8px);
+    border-radius: 1rem;
+    z-index: 6;
+    box-shadow: 0 12px 40px rgba(0, 0, 0, 0.35);
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    border: 1px solid rgba(255, 255, 255, 0.06);
+}
+
+.chatbox.min {
+    height: 56px;
+}
+
+/* Header */
+.chat-header {
+    padding: 0.6rem 0.9rem;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    background: linear-gradient(180deg, rgba(255, 255, 255, .06), rgba(255, 255, 255, .02));
+}
+
+.chat-title {
+    font-weight: 600;
+}
+
+/* Corpo messaggi */
+.chat-body {
+    padding: 0.75rem;
+    height: 40vh;
+    overflow: auto;
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+}
+
+.bubble {
+    padding: 0.55rem 0.7rem;
+    border-radius: 0.8rem;
+    max-width: 85%;
+    font-size: 0.92rem;
+    border: 1px solid rgba(255, 255, 255, 0.06);
+}
+
+.bubble.user {
+    align-self: flex-end;
+    background: rgba(110, 231, 183, 0.12);
+}
+
+.bubble.ai {
+    align-self: flex-start;
+    background: rgba(255, 255, 255, 0.05);
+}
+
+.bubble.ai h1,
+.bubble.ai h2,
+.bubble.ai h3 {
+    font-weight: 600;
+    margin-top: .4em;
+}
+
+.bubble.ai p {
+    margin-bottom: .4em;
+}
+
+.bubble.ai code {
+    background: rgba(255, 255, 255, 0.1);
+    padding: 2px 4px;
+    border-radius: 4px;
+    font-family: monospace;
+}
+
+.bubble.ai pre {
+    background: rgba(255, 255, 255, 0.07);
+    padding: 6px 8px;
+    border-radius: 8px;
+    overflow: auto;
+}
+
+.bubble.ai ul {
+    padding-left: 1.2em;
+    margin: 0.2em 0;
+}
+
+.bubble.ai a {
+    color: #6ee7b7;
+    text-decoration: none;
+}
+
+.bubble.ai a:hover {
+    text-decoration: underline;
+}
+
+.bubble.typing {
+    align-self: flex-start;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    background: rgba(255, 255, 255, 0.04);
+}
+
+/* Input box */
+.chat-input {
+    padding: 0.6rem;
+    background: rgba(255, 255, 255, 0.03);
+    display: flex;
+    gap: 0.4rem;
+    align-items: center;
+    border-top: 1px solid rgba(255, 255, 255, 0.06);
+}
+
+@media (max-width: 480px) {
+    .chat-body {
+        height: 220px;
+    }
+}

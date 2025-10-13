@@ -1,0 +1,376 @@
+<!DOCTYPE html>
+<html lang="it">
+
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <title>MapLibre • Viewer + Chat AI (typing)</title>
+
+    <!-- Bootstrap -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+
+    <!-- MapLibre -->
+    <link href="https://unpkg.com/maplibre-gl@4.6.0/dist/maplibre-gl.css" rel="stylesheet" />
+    <script src="https://unpkg.com/maplibre-gl@4.6.0/dist/maplibre-gl.js"></script>
+
+    <!-- Shapefile reader -->
+    <script src="https://unpkg.com/shpjs@latest/dist/shp.min.js"></script>
+
+    <style>
+        html,
+        body {
+            height: 100%;
+            margin: 0;
+            font-family: system-ui, Segoe UI, Roboto, Inter, Arial;
+        }
+
+        #map {
+            position: fixed;
+            inset: 0;
+        }
+
+        /* Topbar centrata */
+        .topbar {
+            position: fixed;
+            left: 50%;
+            top: 16px;
+            transform: translateX(-50%);
+            background: rgba(18, 18, 20, 0.85);
+            backdrop-filter: blur(8px);
+            border-radius: 50px;
+            z-index: 5;
+        }
+
+        /* Sidebar SINISTRA */
+        .sidebar {
+            position: fixed;
+            left: 16px;
+            top: 16px;
+            bottom: 16px;
+            width: 360px;
+            max-width: 90vw;
+            background: rgba(18, 18, 20, 0.9);
+            backdrop-filter: blur(8px);
+            border-radius: 1rem;
+            padding: 1rem;
+            z-index: 6;
+            transition: transform .3s ease;
+        }
+
+        .sidebar.closed {
+            transform: translateX(calc(-100% - 20px));
+        }
+
+        .toggle-btn {
+            position: fixed;
+            left: 16px;
+            top: 16px;
+            z-index: 7;
+        }
+
+        /* Chat box DESTRO IN BASSO */
+        .chatbox {
+            position: fixed;
+            right: 16px;
+            bottom: 16px;
+            width: 360px;
+            max-width: 95vw;
+            background: rgba(18, 18, 20, 0.92);
+            backdrop-filter: blur(8px);
+            border-radius: 1rem;
+            z-index: 6;
+            box-shadow: 0 12px 40px rgba(0, 0, 0, .35);
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+            border: 1px solid rgba(255, 255, 255, .06);
+        }
+
+        .chatbox.min {
+            height: 56px;
+        }
+
+        .chat-header {
+            padding: .6rem .9rem;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            background: linear-gradient(180deg, rgba(255, 255, 255, .06), rgba(255, 255, 255, .02));
+        }
+
+        .chat-title {
+            font-weight: 600
+        }
+
+        .chat-body {
+            padding: .75rem;
+            height: 280px;
+            overflow: auto;
+            display: flex;
+            flex-direction: column;
+            gap: .5rem;
+        }
+
+        .bubble {
+            padding: .55rem .7rem;
+            border-radius: .8rem;
+            max-width: 85%;
+            font-size: .92rem;
+            border: 1px solid rgba(255, 255, 255, .06);
+        }
+
+        .bubble.user {
+            align-self: flex-end;
+            background: rgba(110, 231, 183, .12)
+        }
+
+        .bubble.ai {
+            align-self: flex-start;
+            background: rgba(255, 255, 255, .05)
+        }
+
+        .bubble.typing {
+            align-self: flex-start;
+            display: flex;
+            align-items: center;
+            gap: .5rem;
+            background: rgba(255, 255, 255, .04)
+        }
+
+        .chat-input {
+            padding: .6rem;
+            background: rgba(255, 255, 255, .03);
+            display: flex;
+            gap: .4rem;
+            align-items: center;
+            border-top: 1px solid rgba(255, 255, 255, .06);
+        }
+
+        .form-control,
+        .form-select {
+            background-color: #0c0f14;
+            color: #eee;
+            border: none;
+        }
+
+        .card {
+            background: rgba(255, 255, 255, 0.05);
+            border: none;
+        }
+
+        @media (max-width:480px) {
+            .chat-body {
+                height: 220px
+            }
+        }
+    </style>
+</head>
+
+<body class="bg-dark text-light">
+    <div id="map"></div>
+
+    <!-- Top bar -->
+    <div class="topbar px-3 py-2 d-flex gap-2 align-items-center shadow">
+        <span class="small text-secondary">Stile mappa</span>
+        <select id="styleSelect" class="form-select form-select-sm bg-dark text-light border-secondary">
+            <option value="https://demotiles.maplibre.org/style.json">MapLibre Basic</option>
+            <option value="https://basemaps.cartocdn.com/gl/positron-gl-style/style.json">Carto Positron</option>
+            <option value="https://basemaps.cartocdn.com/gl/dark-matter-gl-style/style.json">Carto Dark Matter</option>
+        </select>
+        <button id="resetView" class="btn btn-success btn-sm fw-semibold">Reset view</button>
+    </div>
+
+    <!-- Sidebar SINISTRA -->
+    <button class="btn btn-secondary btn-sm toggle-btn" id="toggleBtn">☰</button>
+    <aside class="sidebar closed shadow-lg" id="sidebar">
+        <div class="d-flex justify-content-between align-items-center mb-2">
+            <strong>Layers</strong>
+            <span class="badge bg-success" id="layerCount">0</span>
+        </div>
+
+        <div class="card mb-3 p-3">
+            <label class="form-label small">Aggiungi GeoJSON (URL)</label>
+            <div class="input-group input-group-sm">
+                <input id="geojsonUrl" class="form-control" placeholder="https://…/dati.geojson">
+                <button class="btn btn-outline-light" id="btnGeojson">Aggiungi</button>
+            </div>
+        </div>
+
+        <div class="card mb-3 p-3">
+            <label class="form-label small">Aggiungi Shapefile .zip (URL)</label>
+            <div class="input-group input-group-sm">
+                <input id="shpUrl" class="form-control" placeholder="https://…/dati.zip">
+                <button class="btn btn-outline-light" id="btnShp">Aggiungi</button>
+            </div>
+            <div class="small text-secondary mt-1">Zip con .shp/.dbf/.prj/.shx</div>
+        </div>
+
+        <div class="card p-3">
+            <label class="form-label small">Aggiungi COG (single band) (URL)</label>
+            <div class="input-group input-group-sm mb-2">
+                <input id="cogUrl" class="form-control" placeholder="https://…/raster.tif">
+                <select id="cmap" class="form-select bg-dark text-light">
+                    <option>viridis</option>
+                    <option>inferno</option>
+                    <option>magma</option>
+                    <option>plasma</option>
+                    <option>gray</option>
+                    <option>terrain</option>
+                </select>
+                <button class="btn btn-outline-light" id="btnCog">Aggiungi</button>
+            </div>
+            <label class="form-label small">Opacità raster</label>
+            <input type="range" id="rasterOpacity" min="0" max="1" step="0.05" value="0.85" class="form-range">
+        </div>
+    </aside>
+
+    <!-- Chat AI (DESTRO BASSO) -->
+    <section class="chatbox" id="chatBox" aria-label="Chat con assistente AI">
+        <div class="chat-header">
+            <div class="d-flex align-items-center gap-2">
+                <span class="badge bg-success">AI</span>
+                <span class="chat-title">Assistente geospaziale</span>
+            </div>
+            <div class="d-flex align-items-center gap-2">
+                <button id="clearChat" class="btn btn-outline-light btn-sm">Pulisci</button>
+                <button id="minChat" class="btn btn-secondary btn-sm" title="Riduci/espandi">–</button>
+            </div>
+        </div>
+        <div class="chat-body" id="chatBody">
+            <div class="bubble ai">Ciao! Posso aiutarti a caricare dati (GeoJSON, Shapefile, COG) o a cambiare lo stile della mappa.</div>
+        </div>
+        <div class="chat-input">
+            <input id="chatInput" class="form-control form-control-sm" placeholder="Scrivi un messaggio… (Invio per inviare)">
+            <button id="sendMsg" class="btn btn-success btn-sm fw-semibold">Invia</button>
+        </div>
+    </section>
+
+    <script>
+        // --- MAP ---
+        const map = new maplibregl.Map({
+            container: 'map',
+            style: 'https://demotiles.maplibre.org/style.json',
+            center: [12.4964, 41.9028], zoom: 5
+        });
+        map.addControl(new maplibregl.NavigationControl());
+        map.addControl(new maplibregl.ScaleControl({ unit: 'metric' }));
+
+        // --- UI base ---
+        const sidebar = document.getElementById('sidebar');
+        document.getElementById('toggleBtn').onclick = () => sidebar.classList.toggle('closed');
+        document.getElementById('styleSelect').onchange = e => map.setStyle(e.target.value);
+        document.getElementById('resetView').onclick = () => map.easeTo({ center: [12.4964, 41.9028], zoom: 5 });
+
+        const customLayerIds = new Set(); const badge = document.getElementById('layerCount');
+        const refresh = () => badge.textContent = customLayerIds.size;
+        const reg = {};
+        const uid = p => 'lyr-' + Math.random().toString(36).slice(2, 8);
+
+        // --- Layer helpers ---
+        async function addGeoJSON(url) {
+            const id = uid(); const r = await fetch(url); const data = await r.json();
+            reg[id] = { type: 'geojson', data }; map.addSource(id, { type: 'geojson', data });
+            map.addLayer({ id: id + 'fill', type: 'fill', source: id, filter: ['==', ['geometry-type'], 'Polygon'], paint: { 'fill-color': '#6ee7b7', 'fill-opacity': 0.25 } });
+            map.addLayer({ id: id + 'line', type: 'line', source: id, filter: ['==', ['geometry-type'], 'LineString'], paint: { 'line-color': '#6ee7b7', 'line-width': 2 } });
+            map.addLayer({ id: id + 'pt', type: 'circle', source: id, filter: ['==', ['geometry-type'], 'Point'], paint: { 'circle-color': '#6ee7b7', 'circle-radius': 4 } });
+            customLayerIds.add(id); refresh();
+        }
+        async function addShapefile(url) {
+            const id = uid(); const geojson = await shp(url);
+            reg[id] = { type: 'geojson', data: geojson }; map.addSource(id, { type: 'geojson', data: geojson });
+            map.addLayer({ id, type: 'line', source: id, paint: { 'line-color': '#00aaff', 'line-width': 2 } });
+            customLayerIds.add(id); refresh();
+        }
+        function addCOG(url, cmap = 'viridis', opacity = 0.85) {
+            const id = uid();
+            const template = `https://titiler.xyz/cog/tiles/{z}/{x}/{y}.png?url=${encodeURIComponent(url)}&colormap_name=${cmap}`;
+            map.addSource(id, { type: 'raster', tiles: [template], tileSize: 256 });
+            map.addLayer({ id, type: 'raster', source: id, paint: { 'raster-opacity': opacity } });
+            reg[id] = { type: 'raster', template, opacity }; customLayerIds.add(id); refresh();
+        }
+        document.getElementById('rasterOpacity').oninput = e => {
+            const v = +e.target.value;
+            for (const id of customLayerIds) {
+                if (reg[id]?.type === 'raster' && map.getLayer(id)) map.setPaintProperty(id, 'raster-opacity', v);
+            }
+        };
+        btnGeojson.onclick = () => geojsonUrl.value.trim() && addGeoJSON(geojsonUrl.value.trim());
+        btnShp.onclick = () => shpUrl.value.trim() && addShapefile(shpUrl.value.trim());
+        btnCog.onclick = () => cogUrl.value.trim() && addCOG(cogUrl.value.trim(), cmap.value, rasterOpacity.value);
+
+        // --- Chat box ---
+        const chatBox = document.getElementById('chatBox');
+        const chatBody = document.getElementById('chatBody');
+        const chatInput = document.getElementById('chatInput');
+        const sendMsg = document.getElementById('sendMsg');
+        const minChat = document.getElementById('minChat');
+        const clearChat = document.getElementById('clearChat');
+
+        minChat.onclick = () => {
+            chatBox.classList.toggle('min');
+            if (!chatBox.classList.contains('min')) setTimeout(() => chatInput.focus(), 150);
+        };
+        clearChat.onclick = () => { chatBody.innerHTML = ''; };
+
+        function appendBubble(text, who = 'user') {
+            const div = document.createElement('div');
+            div.className = 'bubble ' + (who === 'user' ? 'user' : 'ai');
+            div.textContent = text;
+            chatBody.appendChild(div);
+            chatBody.scrollTop = chatBody.scrollHeight;
+            return div;
+        }
+
+        // --- TIPING INDICATOR (spinner) ---
+        function showTyping(label = "in calcolo…") {
+            const wrap = document.createElement('div');
+            wrap.className = 'bubble typing';
+            wrap.innerHTML = `
+        <div class="spinner-border spinner-border-sm text-light" role="status" aria-hidden="true"></div>
+        <span class="small text-secondary">${label}</span>
+      `;
+            chatBody.appendChild(wrap);
+            chatBody.scrollTop = chatBody.scrollHeight;
+            return wrap; // ritorna il nodo per poterlo rimuovere
+        }
+        function hideTyping(node) {
+            if (node && node.parentNode) { node.parentNode.removeChild(node); }
+        }
+
+        // Simulazione risposta AI con latenza e spinner
+        function fakeAIResponse(q) {
+            let reply = "Ho ricevuto: “" + q + "”. Come posso aiutarti con dati o mappa?";
+            // micro-comandi demo
+            if (q.match(/stile.*dark|dark matter/i)) { document.getElementById('styleSelect').value = 'https://basemaps.cartocdn.com/gl/dark-matter-gl-style/style.json'; document.getElementById('styleSelect').dispatchEvent(new Event('change')); reply = "Ok, imposto lo stile Dark Matter."; }
+            if (q.match(/stile.*positron|chiaro|light/i)) { document.getElementById('styleSelect').value = 'https://basemaps.cartocdn.com/gl/positron-gl-style/style.json'; document.getElementById('styleSelect').dispatchEvent(new Event('change')); reply = "Stile chiaro (Positron) attivato."; }
+            if (q.match(/reset|roma/i)) { document.getElementById('resetView').click(); reply = "Vista resettata sull’Italia/Centro (Roma)."; }
+
+            const indicator = showTyping();                                  // mostra spinner
+            const delay = 600 + Math.random() * 800;                           // 0.6–1.4s
+            setTimeout(() => {
+                hideTyping(indicator);                                         // nasconde spinner
+                appendBubble(reply, 'ai');                                      // mostra risposta
+            }, delay);
+        }
+
+        function send() {
+            const t = chatInput.value.trim(); if (!t) return;
+            appendBubble(t, 'user'); chatInput.value = '';
+            fakeAIResponse(t);
+        }
+        sendMsg.onclick = send;
+        chatInput.addEventListener('keydown', e => {
+            if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); send(); }
+        });
+
+        // API minima per backend reale
+        window.ChatAI = {
+            addMessage: (text, who = 'ai') => appendBubble(text, who),
+            setMinimized: (b = true) => chatBox.classList.toggle('min', b),
+            showTyping, hideTyping
+        };
+    </script>
+</body>
+
+</html>

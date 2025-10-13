@@ -1,0 +1,58 @@
+<!-- Bottone pannello utente (sopra all'hamburger) -->
+<button class="btn btn-primary btn-sm toggle-user-btn" id="toggleUserBtn">👤</button>
+
+<!-- Pannello UTENTE (sinistra, esclusivo col pannello layer) -->
+<aside class="user-sidebar closed" id="userSidebar">
+    <div class="d-flex justify-content-between align-items-center mb-2">
+        <strong>Utente</strong>
+        <button id="logoutBtn" class="btn btn-outline-danger btn-sm">Esci</button>
+    </div>
+
+    <div class="card p-3 mb-3">
+        <div class="small text-secondary">user_id</div>
+        <div id="infoUserId" class="fw-semibold">—</div>
+        <div class="small text-secondary mt-2">project_id</div>
+        <div id="infoProjectId" class="fw-semibold">—</div>
+        <div class="small text-secondary mt-2">thread_id</div>
+        <div id="infoThreadId" class="fw-semibold">—</div>
+    </div>
+
+    <div class="d-flex align-items-center justify-content-between mb-2">
+        <strong>Progetti</strong>
+        <span class="small text-secondary">altri del tuo account</span>
+    </div>
+
+    <!-- Mini sezione: Nuovo progetto -->
+    <div class="card p-3 mb-2">
+        <div class="d-flex align-items-center justify-content-between">
+            <strong class="me-2">Nuovo progetto</strong>
+            <button id="newProjBtn" class="btn btn-outline-light btn-sm">+ Crea</button>
+        </div>
+
+        <!-- form inline nascosto -->
+        <div id="newProjForm" class="mt-2 d-none">
+            <div class="input-group input-group-sm mb-2">
+                <input id="newProjName" class="form-control" placeholder="es. dev-023">
+                <button id="newProjCreateBtn" class="btn btn-success">Crea</button>
+            </div>
+            <div id="newProjError" class="small text-danger d-none">Creazione non riuscita.</div>
+        </div>
+    </div>
+
+
+    <div id="userProjects" class="mb-2">
+        <!-- popolati via JS, escluso il corrente -->
+        <!-- esempio struttura:
+    <div class="project-item">
+      <span class="project-name">dev-021</span>
+      <div class="dropdown">
+        <button class="btn btn-sm btn-outline-light" data-bs-toggle="dropdown">⋯</button>
+        <ul class="dropdown-menu dropdown-menu-dark">
+          <li><a class="dropdown-item" href="#" data-action="open" data-project="dev-021">Apri</a></li>
+          <li><a class="dropdown-item" href="#" data-action="export" data-project="dev-021">Esporta</a></li>
+        </ul>
+      </div>
+    </div>
+    -->
+    </div>
+</aside>

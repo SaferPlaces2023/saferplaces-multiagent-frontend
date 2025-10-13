@@ -1,0 +1,48 @@
+<!-- Contenitore mappa + topbar -->
+<div id="map" aria-label="MapLibre map"></div>
+
+<div class="topbar px-3 py-2 d-flex gap-2 align-items-center shadow">
+    <span class="small text-secondary">Stile mappa</span>
+    <select id="styleSelect" class="form-select form-select-sm bg-dark text-light border-secondary">
+        <!-- 🌍 Stili MapLibre compatibili -->
+        <option value="https://demotiles.maplibre.org/style.json">MapLibre Basic</option>
+
+        <!-- 🟢 CARTO -->
+        <option value="https://basemaps.cartocdn.com/gl/positron-gl-style/style.json">Carto Positron (chiaro)</option>
+        <option value="https://basemaps.cartocdn.com/gl/dark-matter-gl-style/style.json">Carto Dark Matter (scuro)</option>
+        <option value="https://basemaps.cartocdn.com/gl/voyager-gl-style/style.json" selected>Carto Voyager</option>
+
+        <!-- 🗺️ MAPTILER --> <!-- DOC: Need Api-Key -->
+        <!-- <option value="https://api.maptiler.com/maps/basic-v2/style.json?key=get_your_own_OpIi9ZULNHzrESv6T2vL">MapTiler Basic</option>
+        <option value="https://api.maptiler.com/maps/bright-v2/style.json?key=get_your_own_OpIi9ZULNHzrESv6T2vL">MapTiler Bright</option>
+        <option value="https://api.maptiler.com/maps/darkmatter/style.json?key=get_your_own_OpIi9ZULNHzrESv6T2vL">MapTiler Dark Matter</option>
+        <option value="https://api.maptiler.com/maps/streets-v2/style.json?key=get_your_own_OpIi9ZULNHzrESv6T2vL">MapTiler Streets</option>
+        <option value="https://api.maptiler.com/maps/terrain/style.json?key=get_your_own_OpIi9ZULNHzrESv6T2vL">MapTiler Terrain</option>
+        <option value="https://api.maptiler.com/maps/satellite/style.json?key=get_your_own_OpIi9ZULNHzrESv6T2vL">MapTiler Satellite</option>
+        <option value="https://api.maptiler.com/maps/hybrid/style.json?key=get_your_own_OpIi9ZULNHzrESv6T2vL">MapTiler Hybrid</option> -->
+
+        <!-- 🟣 STADIA MAPS -->
+        <option value="https://tiles.stadiamaps.com/styles/alidade_smooth/style.json">Stadia Alidade Smooth</option>
+        <option value="https://tiles.stadiamaps.com/styles/alidade_smooth_dark/style.json">Stadia Alidade Smooth Dark</option>
+        <option value="https://tiles.stadiamaps.com/styles/outdoors/style.json">Stadia Outdoors</option>
+        <option value="https://tiles.stadiamaps.com/styles/osm_bright/style.json">Stadia OSM Bright</option>
+        <option value="https://tiles.stadiamaps.com/styles/stamen_toner/style.json">Stadia Toner</option>
+
+        <!-- 🟠 OPENMAPTILES --> <!-- DOC: Need Api-Key -->
+        <!-- <option value="https://api.maptiler.com/maps/topo/style.json?key=get_your_own_OpIi9ZULNHzrESv6T2vL">OpenMapTiles Topo</option>
+        <option value="https://api.maptiler.com/maps/dataviz/style.json?key=get_your_own_OpIi9ZULNHzrESv6T2vL">OpenMapTiles Dataviz</option>
+        <option value="https://api.maptiler.com/maps/toner/style.json?key=get_your_own_OpIi9ZULNHzrESv6T2vL">OpenMapTiles Toner</option> -->
+
+        <!-- 🔵 MAPLIBRE EXAMPLES -->
+        <option value="https://demotiles.maplibre.org/style.json">MapLibre Demo Basic</option>
+        <option value="https://raw.githubusercontent.com/maplibre/demotiles/main/style.json">MapLibre Demo (raw GitHub)</option>
+
+        <!-- 🧊 OSM & NATURAL EARTH -->
+        <option value="https://osm2vectortiles.github.io/mapbox-gl-styles/styles/osm-bright/style.json">OSM Bright (legacy)</option>
+        <option value="https://osm2vectortiles.github.io/mapbox-gl-styles/styles/fiord-color/style.json">OSM Fiord Color</option>
+        <option value="https://osm2vectortiles.github.io/mapbox-gl-styles/styles/toner/style.json">OSM Toner</option>
+        <option value="https://osm2vectortiles.github.io/mapbox-gl-styles/styles/klokantech-basic/style.json">Klokantech Basic</option>
+
+    </select>
+    <button id="resetView" class="btn btn-success btn-sm fw-semibold">Reset view</button>
+</div>

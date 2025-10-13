@@ -1,0 +1,20 @@
+<!-- Chat AI (DESTRO BASSO) -->
+<section class="chatbox" id="chatBox" aria-label="Chat con assistente AI">
+    <div class="chat-header">
+        <div class="d-flex align-items-center gap-2">
+            <span class="badge bg-success">AI</span>
+            <span class="chat-title">Assistente geospaziale</span>
+        </div>
+        <div class="d-flex align-items-center gap-2">
+            <button id="clearChat" class="btn btn-outline-light btn-sm">Pulisci</button>
+            <button id="minChat" class="btn btn-secondary btn-sm" title="Riduci/espandi">–</button>
+        </div>
+    </div>
+    <div class="chat-body" id="chatBody">
+        <div class="bubble ai">Ciao! Posso aiutarti a caricare dati (GeoJSON, Shapefile, COG) o a cambiare lo stile della mappa.</div>
+    </div>
+    <div class="chat-input">
+        <input id="chatInput" class="form-control form-control-sm" placeholder="Scrivi un messaggio… (Invio per inviare)">
+        <button id="sendMsg" class="btn btn-success btn-sm fw-semibold">Invia</button>
+    </div>
+</section>
