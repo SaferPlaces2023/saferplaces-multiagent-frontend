@@ -18,9 +18,9 @@
     AIChat.init();          // wiring chat (spinner incluso)
 
     // 4) wiring tra componenti tramite CustomEvent
-    document.addEventListener('layer:add-geojson', e => GeoMap.addVectorLayer(e.detail.url));
+    document.addEventListener('layer:add-geojson', e => GeoMap.addVectorLayer(e.detail));
     document.addEventListener('layer:add-shp', e => GeoMap.addShapefile(e.detail.url));
-    document.addEventListener('layer:add-cog', e => GeoMap.addCOG(e.detail.url, e.detail.colormap, e.detail.opacity));
+    document.addEventListener('layer:add-cog', e => GeoMap.addCOG(e.detail));
     document.addEventListener('layer:toggle-remote', e => {
         const layer = e.detail.layer;
         GeoMap.toggleRemoteLayer(layer); // ved. delta in GeoMap

@@ -10,9 +10,11 @@ const GeoMap = (() => {
     function init() {
         map = new maplibregl.Map({
             container: 'map',
-            style: document.getElementById('styleSelect').value || 'https://basemaps.cartocdn.com/gl/voyager-gl-style/style.json',
+            style: document.getElementById('styleSelect').value || 'https://tiles.stadiamaps.com/styles/alidade_smooth.json?api_key=961bdf77-3689-48c2-b079-80c0d4169115', //"https://tiles.openfreemap.org/styles/bright"
             center: [12.4964, 41.9028], zoom: 3
         });
+        maplibregl.addProtocol('cog', MaplibreCOGProtocol.cogProtocol);
+
         map.addControl(new maplibregl.NavigationControl());
         map.addControl(new maplibregl.ScaleControl({ unit: 'metric' }));
         map.addControl(new maplibregl.GlobeControl(), 'top-right');
@@ -39,6 +41,57 @@ const GeoMap = (() => {
         // UI: select stile + reset
         document.getElementById('styleSelect').onchange = e => setStyle(e.target.value);
         document.getElementById('resetView').onclick = () => resetView();
+
+        map.on('load', () => {
+            // Aggiungi edifici 3D
+            add_3d_buildings();
+        });
+    }
+
+    function add_3d_buildings() {
+        const layers = map.getStyle().layers;
+        let labelLayerId;
+        for (let i = 0; i < layers.length; i++) {
+            if (layers[i].type === 'symbol' && layers[i].layout['text-field']) {
+                labelLayerId = layers[i].id;
+                break;
+            }
+        }
+        map.addSource('openfreemap', {
+            url: `https://tiles.openfreemap.org/planet`,
+            type: 'vector',
+        });
+        map.addLayer(
+            {
+                'id': '3d-buildings',
+                'source': 'openfreemap',
+                'source-layer': 'building',
+                'type': 'fill-extrusion',
+                'minzoom': 15,
+                'filter': ['!=', ['get', 'hide_3d'], true],
+                'paint': {
+                    'fill-extrusion-color': [
+                        'interpolate',
+                        ['linear'],
+                        ['get', 'render_height'], 0, 'lightgray', 200, 'royalblue', 400, 'lightblue'
+                    ],
+                    'fill-extrusion-height': [
+                        'interpolate',
+                        ['linear'],
+                        ['zoom'],
+                        15,
+                        0,
+                        16,
+                        ['get', 'render_height']
+                    ],
+                    'fill-extrusion-base': ['case',
+                        ['>=', ['get', 'zoom'], 16],
+                        ['get', 'render_min_height'], 0
+                    ]
+                }
+            },
+            labelLayerId
+        );
     }
 
     // async function addGeoJSON(url) {
@@ -53,17 +106,18 @@ const GeoMap = (() => {
     //     customLayerIds.add(id);
     //     dispatch('layer:added', { id, type: 'geojson' });
     // }
-    async function addVectorLayer(srcUrl, opts = {}) {
-        console.log('addVectorLayer', srcUrl, opts);
+    async function addVectorLayer(layer_data) {
+        console.log('addVectorLayer', layer_data);
+
         const id = uid('vec');
         // 1) chiedi al backend l'URL “render-ready”
 
-        // let thread_id = localStorage.getItem('thread_id');
-        // TODO: Bisogna anche registrarlo !!!!! vedi route e chiama add layer (bisognerebbe anche chiedere titolo e descrizioni.. forse con box centrale com auth-gate) ! comunque rederizza yea
-        const res = await fetch("http://localhost:5000/render", {
+        let thread_id = localStorage.getItem('thread_id');
+        // "http://localhost:5000/render", {
+        const res = await fetch(`http://localhost:5000/t/${thread_id}/render`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ src: srcUrl, type: 'vector' })
+            body: JSON.stringify(layer_data)
         });
         if (!res.ok) throw new Error('render-layer HTTP ' + res.status);
 
@@ -116,14 +170,105 @@ const GeoMap = (() => {
         dispatch('layer:added', { id, type: 'shp' });
     }
 
-    function addCOG(url, colormap = 'viridis', opacity = 0.85) {
-        const id = uid('cog');
-        const template = `https://titiler.xyz/cog/tiles/{z}/{x}/{y}.png?url=${encodeURIComponent(url)}&colormap_name=${colormap}`;
-        map.addSource(id, { type: 'raster', tiles: [template], tileSize: 256 });
-        map.addLayer({ id, type: 'raster', source: id, paint: { 'raster-opacity': +opacity } });
-        reg[id] = { type: 'raster', template, opacity: +opacity };
-        customLayerIds.add(id);
-        dispatch('layer:added', { id, type: 'cog' });
+    async function addCOG(layer_data) {
+
+        console.log('addCogLayer', layer_data);
+
+        const id = uid('tif');
+
+        let thread_id = localStorage.getItem('thread_id');
+        const res = await fetch(`http://localhost:5000/t/${thread_id}/render`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(layer_data)
+        });
+        if (!res.ok) throw new Error('render-layer HTTP ' + res.status);
+
+        const info = await res.json();
+        const renderUrl = info.src;
+        if (!renderUrl) throw new Error('render-layer: render_url mancante');
+
+        let cog_source = {
+            type: 'raster',
+            url: `cog://${renderUrl}#color:BrewerBrBG10,0,10,c-`,
+            tileSize: 256
+        }
+        let cog_layer = {
+            id: id,
+            type: 'raster',
+            source: id,
+        }
+        map.addSource(id, cog_source);
+        map.addLayer(cog_layer);
+
+
+
+        // layer_data = layer_data.layer_data
+
+        // debugger
+        // const url = layer_data.src;
+        // const colormap = layer_data.metadata?.colormap || 'viridis';
+        // const opacity = layer_data.metadata?.opacity || 1.0;
+
+
+
+
+
+        // // DOC: YEEEEEEEEEES
+        // // map.addSource('imageSource', {
+        // //     type: 'raster',
+        // //     url: 'cog://https://s3.us-east-1.amazonaws.com/saferplaces.co/SaferPlaces-Agent/GECOSISTEMA_ITALY_132250.tif#color:BrewerSpectral7,0,30,c',
+        // //     tileSize: 256
+        // // });
+        // // map.addLayer({
+        // //     source: 'imageSource',
+        // //     id: 'imageLayer',
+        // //     type: 'raster'
+        // // });
+
+
+
+
+        // const sources = {
+        //     'hipsoSource': {
+        //         type: 'raster',
+        //         url: 'cog://https://s3.us-east-1.amazonaws.com/saferplaces.co/SaferPlaces-Agent/GECOSISTEMA_ITALY_165506.tif' +
+        //             '#color:BrewerBrBG10,0,70,c-',
+        //         tileSize: 256
+        //     },
+        //     'hillshadeSource': {
+        //         type: 'raster-dem',
+        //         url: 'cog://https://s3.us-east-1.amazonaws.com/saferplaces.co/SaferPlaces-Agent/GECOSISTEMA_ITALY_165506.tif#dem',
+        //         tileSize: 256
+        //     },
+        //     'terrainSource': {
+        //         type: 'raster-dem',
+        //         url: 'cog://https://s3.us-east-1.amazonaws.com/saferplaces.co/SaferPlaces-Agent/GECOSISTEMA_ITALY_165506.tif#dem',
+        //         tileSize: 256
+        //     },
+        // };
+
+        // const layers = [{
+        //     source: 'hipsoSource',
+        //     id: 'imageLayer',
+        //     type: 'raster'
+        // }, {
+        //     source: 'hillshadeSource',
+        //     id: 'hillshadingLayer',
+        //     type: 'hillshade'
+        // }];
+
+        // const terrain = {
+        //     source: 'terrainSource'
+        // };
+
+        // map.addSource('hipsoSource', sources.hipsoSource);
+        // map.addSource('hillshadeSource', sources.hillshadeSource);
+        // map.addSource('terrainSource', sources.terrainSource);
+
+        // map.addLayer(layers[0]);
+        // map.addLayer(layers[1]);
+        // map.setTerrain(terrain);
     }
 
     function setStyle(styleUrl) { map.setStyle(styleUrl); }

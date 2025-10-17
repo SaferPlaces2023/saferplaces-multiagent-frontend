@@ -13,10 +13,6 @@ const AuthGate = (() => {
     let sectionCreate, inputProjectName, errorProj;
     let btnProceed;
 
-    // endpoints (sostituisci con i tuoi)
-    const ENDPOINT_CREATE = 'https://example.com/api/projects';       // POST {user_id, name} -> {ok, project_id}
-    const ENDPOINT_SELECT = 'https://example.com/api/select-project'; // opzionale
-
     // stato
     let currentUser = null;
     let mode = 'select'; // 'select' | 'create'
@@ -47,9 +43,29 @@ const AuthGate = (() => {
         const u = localStorage.getItem(LS_USER);
         const p = localStorage.getItem(LS_PROJ);
         if (u && p) {
-            const t = localStorage.getItem(LS_THREAD);  // !!!: t need to be checked if exists also in GRAPH registry, otherwise POST '/t' with only user and project and retrieve a new thred id
-            hideGate();
-            dispatchReady(t, u, p);
+            const t = localStorage.getItem(LS_THREAD);  
+            
+            fetch("http://localhost:5000/t", {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ thread_id: t, user_id: u, project_id: p })
+            })
+            .then(r => {
+                if (!r.ok) throw new Error('HTTP ' + r.status);
+                return r.json();
+            })
+            .then(data => {
+                localStorage.setItem(LS_THREAD, data.thread_id);
+                localStorage.setItem(LS_USER, data.user_id);
+                localStorage.setItem(LS_PROJ, data.project_id);
+
+                hideGate();
+                dispatchReady(t, u, p);
+            })
+            .catch(err => {
+                console.error(err);
+                flash(errorProj, 'Impossibile caricare il progetto. Riprova.');
+            });
             return;
         }
 

@@ -10,6 +10,7 @@ const LayerPanel = (() => {
     let lrSrc;
     let lrTitle;
     let lrDesc;
+    let lrType;
     let lrCancel;
     let lrConfirm;
     let lrError;
@@ -37,8 +38,9 @@ const LayerPanel = (() => {
             const url = document.getElementById('geojsonUrl').value.trim();
             if (!url) return;
             const wantRegister = document.getElementById('regSwitchVector')?.checked;
-            if (wantRegister) openRegModal({ src: url, kind: 'vector' });
-            else dispatch('layer:add-geojson', { url });
+            let base_layer_data = { src: url, type: 'vector' };
+            if (wantRegister) openRegModal(base_layer_data);
+            else dispatch('layer:add-geojson', { layer_data: { ...base_layer_data, register: false } });
         };
 
         // TODO: Shapefiles will be handled like geojson (vector)
@@ -59,16 +61,12 @@ const LayerPanel = (() => {
             const url = document.getElementById('cogUrl').value.trim();
             if (!url) return;
             const colormap = document.getElementById('cmap').value;
-            const opacity = document.getElementById('rasterOpacity').value;
             const wantRegister = document.getElementById('regSwitchRaster')?.checked;
-            if (wantRegister) openRegModal({ src: url, kind: 'raster', colormap, opacity });
-            else dispatch('layer:add-cog', { url, colormap, opacity });
+            let base_layer_data = { src: url, type: 'raster', metadata: { colormap: colormap } };
+            debugger
+            if (wantRegister) openRegModal(base_layer_data);
+            else dispatch('layer:add-cog', { layer_data: { ...base_layer_data, register: false } });
         };
-
-        // Opacità live per tutti i raster aggiunti manualmente (lasciamo al modulo mappa la gestione concreta)
-        document.getElementById('rasterOpacity').addEventListener('input', e => {
-            document.dispatchEvent(new CustomEvent('layer:raster-opacity-global', { detail: { opacity: +e.target.value } }));
-        });
 
         // Carica/ricarica layers progetto
         reloadBtn.onclick = reloadProjectLayers;
@@ -94,15 +92,27 @@ const LayerPanel = (() => {
 
             // emetti evento “registrazione + add”
             // puoi usare due step backend: 1) registra metadati 2) render-layer -> qui emettiamo un unico evento “intent”
-            const detail = {
-                url: pendingReg.src,
-                title,
+            const layer_data = {
+                src: pendingReg.src,
+                title: title,
                 description: lrDesc.value.trim(),
-                kind: pendingReg.kind,
-                colormap: pendingReg.colormap,
-                opacity: pendingReg.opacity
+                type: pendingReg.type,
+                register: true
+                // kind: pendingReg.kind,
+                // colormap: pendingReg.colormap,
+                // opacity: pendingReg.opacity
             };
-            document.dispatchEvent('layer:add-geojson', { detail });
+            debugger
+            if (pendingReg.type=='vector') {
+                dispatch('layer:add-geojson', { layer_data: layer_data });
+            } else if (pendingReg.type=='raster') {
+                dispatch('layer:add-cog', { layer_data: layer_data });
+            } else {
+                console.error('Tipo layer non supportato:', pendingReg.type);
+                lrError.textContent = 'Tipo layer non supportato.';
+                lrError.classList.remove('d-none');
+                return;
+            }
 
             closeRegModal();
         };
@@ -115,6 +125,7 @@ const LayerPanel = (() => {
         lrSrc.value = payload.src || '';
         lrTitle.value = '';
         lrDesc.value = '';
+        lrType = payload.type || '';
         lrError.classList.add('d-none');
         regModal.classList.remove('hidden');
         setTimeout(() => lrTitle.focus(), 30);
