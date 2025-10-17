@@ -46,7 +46,7 @@
     display: flex;
     flex-direction: column;
     gap: 0.5rem;
-    transition: height 0.3s ease, width 0.3s ease;
+    transition: height 0.3s ease, width 0.s ease;
 }
 /* .chat-body.full-height {
     height: calc(100vh - 160px);
