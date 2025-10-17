@@ -2,7 +2,7 @@
     position: fixed;
     right: 16px;
     bottom: 16px;
-    width: 420px;
+    width: 15vw;
     max-width: 95vw;
     background: rgba(18, 18, 20, 0.92);
     backdrop-filter: blur(8px);
@@ -13,8 +13,14 @@
     flex-direction: column;
     overflow: hidden;
     border: 1px solid rgba(255, 255, 255, 0.06);
+    transition: height 0.3s ease, width 0.3s ease;
 }
-
+.chatbox.full-height .chat-body {
+    height: calc(100vh - 160px);
+}
+.chatbox.full-height {
+    width: min(35vw, 600px);
+}
 .chatbox.min {
     height: 56px;
 }
@@ -40,7 +46,11 @@
     display: flex;
     flex-direction: column;
     gap: 0.5rem;
+    transition: height 0.3s ease, width 0.3s ease;
 }
+/* .chat-body.full-height {
+    height: calc(100vh - 160px);
+} */
 
 .bubble {
     padding: 0.55rem 0.7rem;

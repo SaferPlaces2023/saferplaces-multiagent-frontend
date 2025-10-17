@@ -1,6 +1,6 @@
 // Chat: invio messaggi, spinner "in calcolo", demo comandi
 const AIChat = (() => {
-    let chatBox, chatBody, chatInput, sendBtn, minBtn, clearBtn;
+    let chatBox, chatBody, chatInput, sendBtn, minBtn, expandBtn, clearBtn;
 
     function init() {
         chatBox = document.getElementById('chatBox');
@@ -8,6 +8,7 @@ const AIChat = (() => {
         chatInput = document.getElementById('chatInput');
         sendBtn = document.getElementById('sendMsg');
         minBtn = document.getElementById('minChat');
+        expandBtn = document.getElementById('chatExpandBtn');
         clearBtn = document.getElementById('clearChat');
 
         marked.setOptions({ breaks: true, mangle: false, headerIds: false });
@@ -16,6 +17,12 @@ const AIChat = (() => {
             chatBox.classList.toggle('min');
             if (!chatBox.classList.contains('min')) setTimeout(() => chatInput.focus(), 150);
         };
+        expandBtn.addEventListener('click', () => {
+            chatBox.classList.toggle('full-height');
+            const expanded = chatBox.classList.contains('full-height');
+            expandBtn.textContent = expanded ? '⬏' : '⬍'; // cambia icona
+            expandBtn.title = expanded ? 'Riduci altezza' : 'Espandi a tutta altezza';
+        });
         clearBtn.onclick = () => { chatBody.innerHTML = ''; };
 
         sendBtn.onclick = send;
