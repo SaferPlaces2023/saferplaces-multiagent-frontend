@@ -122,3 +122,69 @@
         height: 220px;
     }
 }
+
+
+
+
+/* struttura base già definita per .tool-item ... aggiungiamo il layout titolo+id */
+.tool-item > summary {
+  position: relative;
+  list-style: none;
+  cursor: pointer;
+  padding: .55rem .9rem .55rem .65rem;
+  display: flex;
+  flex-direction: column;      /* titolo sopra, id sotto */
+  gap: .25rem;
+  user-select: none;
+}
+
+.tool-item > summary::-webkit-details-marker { display: none; }
+
+/* chevron a destra */
+.tool-item > summary::after {
+  content: '▸';
+  opacity: .8;
+  transition: transform .15s ease;
+  position: absolute;
+  left: -0.3rem;
+  top: .65rem;
+  font-size: .9rem;
+}
+.tool-item[open] > summary::after { transform: rotate(90deg); }
+
+/* titolo: "tool call: <code>name</code>" */
+.tool-head {
+  display: inline-flex;
+  align-items: center;
+  gap: .4rem;
+  font-weight: 600;
+  color: #e8eaed;
+}
+.tool-head code {
+  background: rgba(255,255,255,.10);
+  border: 1px solid rgba(255,255,255,.08);
+  padding: 0 .35rem;
+  border-radius: .35rem;
+  font-size: .9em;
+}
+
+/* id piccolo sotto */
+.tool-id {
+  color: #9aa0a6;
+  font-size: .8rem;
+}
+
+/* args */
+.tool-args {
+  margin: 0;
+  padding: .55rem .65rem .7rem;
+  background: rgba(255,255,255,.03);
+  border-top: 1px dashed rgba(255,255,255,.08);
+  border-radius: 0 0 .6rem .6rem;
+  overflow: auto;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", monospace;
+  font-size: .85rem;
+  line-height: 1.25;
+  color: #d7dadf;
+  white-space: pre;
+}
