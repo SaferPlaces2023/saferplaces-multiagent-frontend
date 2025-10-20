@@ -19,7 +19,6 @@
 
     // 4) wiring tra componenti tramite CustomEvent
     document.addEventListener('layer:add-geojson', e => GeoMap.addVectorLayer(e.detail));
-    document.addEventListener('layer:add-shp', e => GeoMap.addShapefile(e.detail.url));
     document.addEventListener('layer:add-cog', e => GeoMap.addCOG(e.detail));
     document.addEventListener('layer:toggle-remote', e => {
         const layer = e.detail.layer;
@@ -32,6 +31,7 @@
         if (layer?.src) window.open(layer.src, '_blank');
     });
 
+    document.addEventListener('map:toggle-layer-visibility', e => GeoMap.toggleLayerMapVisibility(e.detail));
     document.addEventListener('map:set-style', e => GeoMap.setStyle(e.detail.styleUrl));
     document.addEventListener('map:reset', () => GeoMap.resetView());
 

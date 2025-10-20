@@ -96,11 +96,11 @@ const AIChat = (() => {
                     .flat()
                     .filter(d => d.role != 'user')
                     .forEach(element => {
-                        debugger
                         if (element.tool_calls && element.tool_calls.length > 0) {
                             element.tool_calls.forEach(call => appendToolCall(call));
                         } else if (element.role === 'tool') {
                             appendToolResponse(element);
+                            dispatch('layer:reload-project-layers', {});
                         } else {
                             appendBubble(element.content || '(nessuna risposta)', element.role || 'ai');
                         }

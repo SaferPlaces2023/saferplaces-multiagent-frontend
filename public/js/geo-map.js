@@ -109,7 +109,7 @@ const GeoMap = (() => {
     async function addVectorLayer(layer_data) {
         console.log('addVectorLayer', layer_data);
 
-        const id = uid('vec');
+        const id = btoa(layer_data.layer_data.src) //uid('vec');
         // 1) chiedi al backend l'URL “render-ready”
 
         let thread_id = localStorage.getItem('thread_id');
@@ -160,21 +160,11 @@ const GeoMap = (() => {
         return id;
     }
 
-    async function addShapefile(url) {
-        const id = uid('shp');
-        const geojson = await shp(url);           // shpjs -> GeoJSON
-        reg[id] = { type: 'geojson', data: geojson };
-        map.addSource(id, { type: 'geojson', data: geojson });
-        map.addLayer({ id, type: 'line', source: id, paint: { 'line-color': '#00aaff', 'line-width': 2 } });
-        customLayerIds.add(id);
-        dispatch('layer:added', { id, type: 'shp' });
-    }
-
-    async function addCOG(layer_data) {
+    async function addCOG(layer_data, view_params={}) {
 
         console.log('addCogLayer', layer_data);
 
-        const id = uid('tif');
+        const id = btoa(layer_data.layer_data.src)
 
         let thread_id = localStorage.getItem('thread_id');
         const res = await fetch(`http://localhost:5000/t/${thread_id}/render`, {
@@ -188,9 +178,16 @@ const GeoMap = (() => {
         const renderUrl = info.src;
         if (!renderUrl) throw new Error('render-layer: render_url mancante');
 
+        function getColorMap(render_info) {
+            const colormap = 'BrewerBrBG10';
+            const min = render_info.metadata?.min || 0;
+            const max = render_info.metadata?.max || 1000;
+            return `#color:${colormap},${min},${max},c-`;
+        }
+
         let cog_source = {
             type: 'raster',
-            url: `cog://${renderUrl}#color:BrewerBrBG10,0,10,c-`,
+            url: `cog://${renderUrl}${getColorMap(info)}`,
             tileSize: 256
         }
         let cog_layer = {
@@ -198,9 +195,14 @@ const GeoMap = (() => {
             type: 'raster',
             source: id,
         }
+        let view = {
+            layout: {
+                visibility: 'none',
+            }
+        }
         map.addSource(id, cog_source);
-        map.addLayer(cog_layer);
-
+        map.addLayer({...cog_layer, ...view});
+        debugger
 
 
         // layer_data = layer_data.layer_data
@@ -271,10 +273,17 @@ const GeoMap = (() => {
         // map.setTerrain(terrain);
     }
 
+    function toggleLayerMapVisibility(layer_data) {
+        if (map.getStyle().layers.some(l => l.id === layer_data.id)) {
+            const visibility = map.getLayoutProperty(layer_data.id, 'visibility');
+            map.setLayoutProperty(layer_data.id, 'visibility', visibility === 'visible' ? 'none' : 'visible');
+        }
+    }
+
     function setStyle(styleUrl) { map.setStyle(styleUrl); }
     function resetView() { map.easeTo({ center: [12.4964, 41.9028], zoom: 5, bearing: 0, pitch: 0 }); }
 
     function dispatch(name, detail) { document.dispatchEvent(new CustomEvent(name, { detail })); }
 
-    return { init, addVectorLayer, addShapefile, addCOG, setStyle, resetView };
+    return { init, addVectorLayer, addCOG, setStyle, resetView, toggleLayerMapVisibility };
 })();

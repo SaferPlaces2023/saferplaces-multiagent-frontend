@@ -73,6 +73,7 @@ const LayerPanel = (() => {
 
         // Ricarica al login e quando cambia progetto
         document.addEventListener('auth:ready', reloadProjectLayers);
+        document.addEventListener('layer:reload-project-layers', reloadProjectLayers);
 
         // Modal registrazione layer
         regModal = document.getElementById('layerRegModal');
@@ -103,9 +104,9 @@ const LayerPanel = (() => {
                 // opacity: pendingReg.opacity
             };
             debugger
-            if (pendingReg.type=='vector') {
+            if (pendingReg.type == 'vector') {
                 dispatch('layer:add-geojson', { layer_data: layer_data });
-            } else if (pendingReg.type=='raster') {
+            } else if (pendingReg.type == 'raster') {
                 dispatch('layer:add-cog', { layer_data: layer_data });
             } else {
                 console.error('Tipo layer non supportato:', pendingReg.type);
@@ -170,28 +171,51 @@ const LayerPanel = (() => {
         for (const layer of layers) {
             const item = document.createElement('div');
             item.className = 'layer-item';
-
+            item.setAttribute('draggable', 'true');
+            item.dataset.layerKey = btoa(layer.src)
+            item.dataset.layerData = JSON.stringify({...layer, ...{id: item.dataset.layerKey}}); // per passare dati al backend se serve
+            
             // header riga
             const row = document.createElement('div');
             row.className = 'layer-row';
 
+            const dragHandle = document.createElement('div');
+            dragHandle.className = 'layer-drag-handle';
+            dragHandle.innerHTML = '<span class="material-symbols-outlined">drag_indicator</span>';
+
             const left = document.createElement('div');
-            left.innerHTML = `<div class="layer-title">${escapeHtml(layer.title || 'Untitled')}</div>
-                        <div class="small"><span class="layer-toggle">visualizza dettagli</span></div>`;
+            left.innerHTML = `
+            <div class="layer-title">${escapeHtml(layer.title || 'Untitled')}</div>
+            <div class="small">
+                <span class="layer-toggle">visualizza dettagli</span>
+            </div>`;
 
             const right = document.createElement('div');
-            right.className = 'layer-actions';
+            right.className = 'layer-actions d-flex align-items-center gap-1';
             right.innerHTML = `
-        <div class="dropdown">
-          <button class="btn btn-sm btn-outline-light" data-bs-toggle="dropdown" aria-expanded="false">⋯</button>
-          <ul class="dropdown-menu dropdown-menu-dark">
-            <li><a class="dropdown-item" href="#" data-action="toggle"  data-title="${escapeAttr(layer.title)}">Mostra/Nascondi</a></li>
-            <li><a class="dropdown-item" href="#" data-action="download" data-title="${escapeAttr(layer.title)}">Download</a></li>
-          </ul>
-        </div>
-      `;
+            <button class="btn btn-sm btn-outline-light layer-eye" title="Mostra/Nascondi">
+                <span class="material-symbols-outlined">visibility_off</span>
+            </button>
+            <div class="dropdown">
+                <button class="btn btn-sm btn-outline-light" data-bs-toggle="dropdown" aria-expanded="false">⋯</button>
+                <ul class="dropdown-menu dropdown-menu-dark">
+                    <li><a class="dropdown-item" href="#" data-action="toggle"  data-title="${escapeAttr(layer.title)}">Mostra/Nascondi</a></li>
+                    <li><a class="dropdown-item" href="#" data-action="download" data-title="${escapeAttr(layer.title)}">Download</a></li>
+                </ul>
+            </div>
+            `;
 
-            row.appendChild(left); row.appendChild(right);
+            right.querySelector('.layer-eye').addEventListener('click', () => {
+                // toggle visibilità layer nella mappa
+                dispatch('map:toggle-layer-visibility', JSON.parse(item.dataset.layerData) )
+
+                right.querySelector('.layer-eye span').textContent = right.querySelector('.layer-eye span').textContent === 'visibility' ? 'visibility_off' : 'visibility';                
+            });
+
+
+            row.appendChild(dragHandle);
+            row.appendChild(left);
+            row.appendChild(right);
             item.appendChild(row);
 
             // dettaglio collassabile
@@ -228,7 +252,69 @@ const LayerPanel = (() => {
             });
 
             listWrap.appendChild(item);
+
+            if (layer.type === 'vector') {
+                dispatch('layer:add-geojson', { layer_data: layer })
+            } else if (layer.type === 'raster') {
+                dispatch('layer:add-cog', { layer_data: layer });
+            }
         }
+
+        enableLayerDragSort();
+    }
+
+    function enableLayerDragSort() {
+        const container = document.getElementById('projectLayersList');
+        if (!container) return;
+
+        let draggingEl = null;
+
+        container.querySelectorAll('.layer-item[draggable="true"]').forEach(item => {
+            item.addEventListener('dragstart', (e) => {
+                
+                draggingEl = item;
+                item.classList.add('dragging');
+                e.dataTransfer.effectAllowed = 'move';
+                e.dataTransfer.setData('text/plain', item.dataset.layerKey || '');
+            });
+
+            item.addEventListener('dragend', () => {
+                if (!draggingEl) return;
+                draggingEl.classList.remove('dragging');
+                container.querySelectorAll('.drop-above,.drop-below').forEach(el => el.classList.remove('drop-above', 'drop-below'));
+                draggingEl = null;
+                dispatchNewOrder(container);
+            });
+
+            item.addEventListener('dragover', (e) => {
+                if (!draggingEl || draggingEl === item) return;
+                e.preventDefault();
+                const rect = item.getBoundingClientRect();
+                const isAbove = (e.clientY - rect.top) < rect.height / 2;
+                item.classList.toggle('drop-above', isAbove);
+                item.classList.toggle('drop-below', !isAbove);
+                e.dataTransfer.dropEffect = 'move';
+            });
+
+            item.addEventListener('dragleave', () => {
+                item.classList.remove('drop-above', 'drop-below');
+            });
+
+            item.addEventListener('drop', (e) => {
+                e.preventDefault();
+                if (!draggingEl || draggingEl === item) return;
+                const isAbove = item.classList.contains('drop-above');
+                item.classList.remove('drop-above', 'drop-below');
+                if (isAbove) container.insertBefore(draggingEl, item);
+                else container.insertBefore(draggingEl, item.nextSibling);
+            });
+        });
+    }
+
+    function dispatchNewOrder(container) {
+        const order = [...container.querySelectorAll('.layer-item')]
+            .map(el => el.dataset.layerKey);
+        document.dispatchEvent(new CustomEvent('layers:reordered', { detail: { order } }));
     }
 
     function incrementCount() { count++; badge.textContent = String(count); }
@@ -238,5 +324,5 @@ const LayerPanel = (() => {
     function escapeHtml(s) { return String(s).replace(/[&<>"']/g, m => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[m])); }
     function escapeAttr(s) { return escapeHtml(s).replace(/"/g, '&quot;'); }
 
-    return { init, incrementCount, reloadProjectLayers };
+    return { init, incrementCount, reloadProjectLayers, listWrap };
 })();
