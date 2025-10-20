@@ -1,6 +1,6 @@
 .sidebar {
   position: fixed;
-  left: 16px;
+  left: 64px;
   top: 16px;
   bottom: 16px;
   width: 360px;
@@ -16,7 +16,7 @@
 }
 
 .sidebar.closed {
-  transform: translateX(calc(-100% - 20px));
+  transform: translateX(calc(-100% - 64px));
 }
 
 .toggle-btn {
@@ -29,6 +29,8 @@
 .sidebar .card {
   background: rgba(255, 255, 255, 0.05);
   border: none;
+  max-height: 60vh;
+  overflow-y: scroll;
 }
 
 .sidebar .form-control,
@@ -41,7 +43,7 @@
 
 
 .layer-list .layer-item {
-  padding: .55rem .5rem;
+  padding: .55rem 0rem;
   border-bottom: 1px dashed rgba(255, 255, 255, .08);
 }
 

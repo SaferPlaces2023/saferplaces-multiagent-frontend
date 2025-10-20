@@ -9,7 +9,9 @@
 /* pannello utente: stessa pelle della sidebar layer */
 .user-sidebar {
   position: fixed;
-  left: 16px; top: 16px; bottom: 16px;
+  left: 64px;
+  top: 16px;
+  bottom: 16px;
   width: 360px; max-width: 90vw;
   background: rgba(18,18,20,0.9);
   backdrop-filter: blur(8px);
@@ -20,7 +22,7 @@
   box-shadow: 0 12px 40px rgba(0,0,0,.35);
   overflow-y: scroll !important;
 }
-.user-sidebar.closed { transform: translateX(calc(-100% - 20px)); }
+.user-sidebar.closed { transform: translateX(calc(-100% - 64px)); }
 
 .project-item { display:flex; align-items:center; justify-content:space-between; gap:.5rem; padding:.35rem .2rem; border-bottom:1px dashed rgba(255,255,255,.06); }
 .project-item:last-child { border-bottom:none; }
