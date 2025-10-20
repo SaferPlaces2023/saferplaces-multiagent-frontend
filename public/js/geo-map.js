@@ -109,6 +109,11 @@ const GeoMap = (() => {
     async function addVectorLayer(layer_data) {
         console.log('addVectorLayer', layer_data);
 
+        if (map.getStyle().layers.some(l => l.id === layer_data.id)) {
+            console.warn('Layer already exists:', layer_data.id);
+            return
+        }
+
         const id = btoa(layer_data.layer_data.src) //uid('vec');
         // 1) chiedi al backend l'URL “render-ready”
 
@@ -155,14 +160,16 @@ const GeoMap = (() => {
         reg[id] = { type: 'geojson', url: renderUrl, data };
 
         customLayerIds.add(id);
-        dispatch('layer:added', { id, type: 'vector', format: format || 'geojson' });
 
         return id;
     }
 
     async function addCOG(layer_data, view_params={}) {
 
-        console.log('addCogLayer', layer_data);
+        if (map.getStyle().layers.some(l => l.id === layer_data.id)) {
+            console.warn('Layer already exists:', layer_data.id);
+            return
+        }
 
         const id = btoa(layer_data.layer_data.src)
 

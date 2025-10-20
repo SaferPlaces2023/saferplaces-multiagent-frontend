@@ -103,7 +103,6 @@ const LayerPanel = (() => {
                 // colormap: pendingReg.colormap,
                 // opacity: pendingReg.opacity
             };
-            debugger
             if (pendingReg.type == 'vector') {
                 dispatch('layer:add-geojson', { layer_data: layer_data });
             } else if (pendingReg.type == 'raster') {
@@ -152,6 +151,7 @@ const LayerPanel = (() => {
             .then(r => r.ok ? r.json() : Promise.reject('HTTP ' + r.status))
             .then(data => {
                 const layers = Array.isArray(data) ? data : (Array.isArray(data?.layers) ? data.layers : []);
+                debugger
                 badge.textContent = String(layers.length);
                 renderLayerList(layers);
             })
@@ -183,12 +183,17 @@ const LayerPanel = (() => {
             dragHandle.className = 'layer-drag-handle';
             dragHandle.innerHTML = '<span class="material-symbols-outlined">drag_indicator</span>';
 
-            const left = document.createElement('div');
-            left.innerHTML = `
+            const layerInfo = document.createElement('div');
+            layerInfo.innerHTML = `
             <div class="layer-title">${escapeHtml(layer.title || 'Untitled')}</div>
             <div class="small">
                 <span class="layer-toggle">visualizza dettagli</span>
             </div>`;
+
+            const left = document.createElement('div');
+            left.className = 'd-flex flex-row gap-1';
+            left.appendChild(dragHandle);
+            left.appendChild(layerInfo);
 
             const right = document.createElement('div');
             right.className = 'layer-actions d-flex align-items-center gap-1';
@@ -213,7 +218,7 @@ const LayerPanel = (() => {
             });
 
 
-            row.appendChild(dragHandle);
+            // row.appendChild(dragHandle);
             row.appendChild(left);
             row.appendChild(right);
             item.appendChild(row);
@@ -244,7 +249,6 @@ const LayerPanel = (() => {
                 const title = a.dataset.title;
 
                 if (action === 'toggle') {
-                    // demandiamo a GeoMap la logica di show/hide per titolo
                     document.dispatchEvent(new CustomEvent('layer:toggle-remote', { detail: { layer } }));
                 } else if (action === 'download') {
                     document.dispatchEvent(new CustomEvent('layer:download', { detail: { layer } }));
@@ -317,12 +321,11 @@ const LayerPanel = (() => {
         document.dispatchEvent(new CustomEvent('layers:reordered', { detail: { order } }));
     }
 
-    function incrementCount() { count++; badge.textContent = String(count); }
     function dispatch(name, detail) { document.dispatchEvent(new CustomEvent(name, { detail })); }
 
     // helpers XSS-safe
     function escapeHtml(s) { return String(s).replace(/[&<>"']/g, m => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[m])); }
     function escapeAttr(s) { return escapeHtml(s).replace(/"/g, '&quot;'); }
 
-    return { init, incrementCount, reloadProjectLayers, listWrap };
+    return { init, reloadProjectLayers, listWrap };
 })();

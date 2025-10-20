@@ -35,9 +35,6 @@
     document.addEventListener('map:set-style', e => GeoMap.setStyle(e.detail.styleUrl));
     document.addEventListener('map:reset', () => GeoMap.resetView());
 
-    // Aggiorna badge quando la mappa conferma un layer aggiunto
-    document.addEventListener('layer:added', e => LayerPanel.incrementCount());
-
     // Esempio: la chat può inviare comandi (demo)
     document.addEventListener('chat:command', e => {
         const { cmd } = e.detail;
