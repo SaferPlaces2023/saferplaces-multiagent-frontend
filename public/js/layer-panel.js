@@ -3,6 +3,8 @@ const LayerPanel = (() => {
     let sidebar, badge;
     let count = 0;
 
+    let dragging_from_handle = false;
+
     // UI sezioni nuove
     let listWrap, reloadBtn;
 
@@ -63,7 +65,6 @@ const LayerPanel = (() => {
             const colormap = document.getElementById('cmap').value;
             const wantRegister = document.getElementById('regSwitchRaster')?.checked;
             let base_layer_data = { src: url, type: 'raster', metadata: { colormap: colormap } };
-            debugger
             if (wantRegister) openRegModal(base_layer_data);
             else dispatch('layer:add-cog', { layer_data: { ...base_layer_data, register: false } });
         };
@@ -151,7 +152,6 @@ const LayerPanel = (() => {
             .then(r => r.ok ? r.json() : Promise.reject('HTTP ' + r.status))
             .then(data => {
                 const layers = Array.isArray(data) ? data : (Array.isArray(data?.layers) ? data.layers : []);
-                debugger
                 badge.textContent = String(layers.length);
                 renderLayerList(layers);
             })
@@ -181,7 +181,7 @@ const LayerPanel = (() => {
 
             const dragHandle = document.createElement('div');
             dragHandle.className = 'layer-drag-handle';
-            dragHandle.innerHTML = '<span class="material-symbols-outlined">drag_indicator</span>';
+            dragHandle.innerHTML = '<span class="drag-handle-symbol material-symbols-outlined">drag_indicator</span>';
 
             const layerInfo = document.createElement('div');
             layerInfo.innerHTML = `
@@ -255,6 +255,10 @@ const LayerPanel = (() => {
                 }
             });
 
+            item.addEventListener('mousedown', (e) => {
+                dragging_from_handle = e.target.classList.contains('drag-handle-symbol');
+            });
+
             listWrap.appendChild(item);
 
             if (layer.type === 'vector') {
@@ -273,9 +277,14 @@ const LayerPanel = (() => {
 
         let draggingEl = null;
 
-        container.querySelectorAll('.layer-item[draggable="true"]').forEach(item => {
+        container.querySelectorAll('.layer-item[draggable="true"] .layer-drag-handle').forEach(item_drag_handle => {
+            let item = item_drag_handle.closest('.layer-item');
+
             item.addEventListener('dragstart', (e) => {
-                
+                if (!dragging_from_handle) {
+                    e.preventDefault(); // non iniziare il drag se non dal handle
+                    return;
+                }
                 draggingEl = item;
                 item.classList.add('dragging');
                 e.dataTransfer.effectAllowed = 'move';

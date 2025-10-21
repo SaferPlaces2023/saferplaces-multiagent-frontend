@@ -67,7 +67,7 @@ const GeoMap = (() => {
                 'source': 'openfreemap',
                 'source-layer': 'building',
                 'type': 'fill-extrusion',
-                'minzoom': 15,
+                'minzoom': 13,
                 'filter': ['!=', ['get', 'hide_3d'], true],
                 'paint': {
                     'fill-extrusion-color': [
@@ -165,6 +165,7 @@ const GeoMap = (() => {
     }
 
     async function addCOG(layer_data, view_params={}) {
+        console.log('addCOG', layer_data);
 
         if (map.getStyle().layers.some(l => l.id === layer_data.id)) {
             console.warn('Layer already exists:', layer_data.id);
@@ -192,29 +193,74 @@ const GeoMap = (() => {
             return `#color:${colormap},${min},${max},c-`;
         }
 
-        let cog_source = {
-            type: 'raster',
-            url: `cog://${renderUrl}${getColorMap(info)}`,
-            tileSize: 256
-        }
-        let cog_layer = {
-            id: id,
-            type: 'raster',
-            source: id,
-        }
-        let view = {
-            layout: {
-                visibility: 'none',
+        let surface_type = layer_data.layer_data.metadata?.surface_type || 'raster';
+
+        if (surface_type === 'dem' || surface_type === 'dem-building') {
+            let dem_sources = {
+                ['hipso_' + id]: {
+                    type: 'raster',
+                    url: `cog://${renderUrl}${getColorMap(info)}`,
+                    tileSize: 256
+                },
+                ['hillshade_' + id]: {
+                    type: 'raster-dem',
+                    url: `cog://${renderUrl}#dem`,
+                    tileSize: 256
+                },
+                ['terrain_' + id]: {
+                    type: 'raster-dem',
+                    url: `cog://${renderUrl}#dem`,
+                    tileSize: 256
+                },
+            };
+            let dem_layers = [{
+                source: `hipso_${id}`,
+                id: `image_${id}`,
+                type: 'raster'
+            }, {
+                source: `hillshade_${id}`,
+                id: `hillshade_${id}`,
+                type: 'hillshade'
+            }];
+            let dem_terrain = {
+                source: `terrain_${id}`
+            };
+            let view = {
+                layout: {
+                    visibility: 'none',
+                }
             }
+            // map.addSource('hipsoSource', sources.hipsoSource);
+            map.addSource(`hipso_${id}`, dem_sources[`hipso_${id}`]);
+            map.addSource(`hillshade_${id}`, dem_sources[`hillshade_${id}`]);
+            map.addSource(`terrain_${id}`, dem_sources[`terrain_${id}`]);
+            map.addLayer({...dem_layers[0], ...view});
+            map.addLayer({...dem_layers[1], ...view});
+            map.setTerrain(dem_terrain);
+        } else {
+            let cog_source = {
+                type: 'raster',
+                url: `cog://${renderUrl}${getColorMap(info)}`,
+                tileSize: 256
+            }
+            let cog_layer = {
+                id: id,
+                type: 'raster',
+                source: id,
+            }
+            let view = {
+                layout: {
+                    visibility: 'none',
+                }
+            }
+            map.addSource(id, cog_source);
+            map.addLayer({...cog_layer, ...view});
         }
-        map.addSource(id, cog_source);
-        map.addLayer({...cog_layer, ...view});
-        debugger
+
 
 
         // layer_data = layer_data.layer_data
 
-        // debugger
         // const url = layer_data.src;
         // const colormap = layer_data.metadata?.colormap || 'viridis';
         // const opacity = layer_data.metadata?.opacity || 1.0;
@@ -281,10 +327,14 @@ const GeoMap = (() => {
     }
 
     function toggleLayerMapVisibility(layer_data) {
-        if (map.getStyle().layers.some(l => l.id === layer_data.id)) {
-            const visibility = map.getLayoutProperty(layer_data.id, 'visibility');
-            map.setLayoutProperty(layer_data.id, 'visibility', visibility === 'visible' ? 'none' : 'visible');
-        }
+        map.getStyle().layers.filter(l => l.id.includes(layer_data.id)).forEach(l => {
+            const visibility = map.getLayoutProperty(l.id, 'visibility');
+            map.setLayoutProperty(l.id, 'visibility', visibility === 'visible' ? 'none' : 'visible');
+        });
+        // if (map.getStyle().layers.some(l => l.id === layer_data.id)) {
+        //     const visibility = map.getLayoutProperty(layer_data.id, 'visibility');
+        //     map.setLayoutProperty(layer_data.id, 'visibility', visibility === 'visible' ? 'none' : 'visible');
+        // }
     }
 
     function setStyle(styleUrl) { map.setStyle(styleUrl); }

@@ -47,6 +47,11 @@
   border-bottom: 1px dashed rgba(255, 255, 255, .08);
 }
 
+.layer-list .layer-item,
+.layer-list .layer-item * {
+  user-select: text;
+}
+
 .layer-list .layer-item:last-child {
   border-bottom: none;
 }
