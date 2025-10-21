@@ -27,3 +27,8 @@
     background-color: rgba(255, 255, 255, .04);
     color: #e8eaed;
 }
+
+#lrDesc {
+    resize: none; 
+    max-height: 200px;
+}

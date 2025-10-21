@@ -130,6 +130,11 @@ const LayerPanel = (() => {
         lrError.classList.add('d-none');
         regModal.classList.remove('hidden');
         setTimeout(() => lrTitle.focus(), 30);
+
+        document.getElementById("lrDesc").addEventListener("input", function() {
+            this.style.height = "auto";
+            this.style.height = this.scrollHeight + "px";
+        });
     }
 
     function closeRegModal() {
