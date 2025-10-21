@@ -228,9 +228,9 @@ const LayerPanel = (() => {
             details.className = 'layer-details d-none';
             details.innerHTML = `
         <div class="small text-secondary mb-1">${escapeHtml(layer.type || '')}</div>
-        <div class="mb-1">${escapeHtml(layer.description || '—')}</div>
-        <div class="mb-1"><strong>src:</strong> <code>${escapeHtml(layer.src || '')}</code></div>
-        <div><strong>metadata:</strong> <code>${escapeHtml(JSON.stringify(layer.metadata || {}))}</code></div>
+        <div class="mb-1 layer-detail detail-description">${escapeHtml(layer.description || '—')}</div>
+        <div class="mb-1 text-secondary"><strong>src:</strong> <code>${escapeHtml(layer.src || '')}</code></div>
+        <div class="text-secondary"><strong>metadata:</strong> <code>${escapeHtml(JSON.stringify(layer.metadata || {}))}</code></div>
       `;
             item.appendChild(details);
 

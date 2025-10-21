@@ -87,6 +87,10 @@
   border-radius: .6rem;
 }
 
+.layer-detail.detail-description {
+  color: #e8eaed
+}
+
 .layer-details code {
   background: rgba(255, 255, 255, .08);
   padding: 0 .25rem;
@@ -136,6 +140,7 @@
   margin-top: 6px;
 }
 
-#addVectorWrap, #addRasterWrap {
+#addVectorWrap,
+#addRasterWrap {
   color: #e8eaed;
 }

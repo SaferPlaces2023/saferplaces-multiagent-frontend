@@ -21,3 +21,9 @@
     padding: 16px;
     box-shadow: 0 18px 48px rgba(0, 0, 0, .35);
 }
+
+#lrSrc, #lrTitle, #lrDesc,
+#lrSrc:focus, #lrTitle:focus, #lrDesc:focus {
+    background-color: rgba(255, 255, 255, .04);
+    color: #e8eaed;
+}
