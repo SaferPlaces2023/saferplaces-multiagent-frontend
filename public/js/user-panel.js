@@ -112,7 +112,7 @@ const UserPanel = (() => {
     function fillInfo() {
         infoUserId.textContent = localStorage.getItem(LS_USER) || '—';
         infoProjectId.textContent = localStorage.getItem(LS_PROJ) || '—';
-        infoThreadId.textContent = localStorage.getItem(LS_THREAD) || '—';
+        infoThreadId.innerHTML = `<code>${localStorage.getItem(LS_THREAD) || '—'}</code>`;
     }
 
     function loadProjects() {

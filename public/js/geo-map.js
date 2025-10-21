@@ -256,74 +256,6 @@ const GeoMap = (() => {
             map.addSource(id, cog_source);
             map.addLayer({...cog_layer, ...view});
         }
-
-
-
-        // layer_data = layer_data.layer_data
-
-        // const url = layer_data.src;
-        // const colormap = layer_data.metadata?.colormap || 'viridis';
-        // const opacity = layer_data.metadata?.opacity || 1.0;
-
-
-
-
-
-        // // DOC: YEEEEEEEEEES
-        // // map.addSource('imageSource', {
-        // //     type: 'raster',
-        // //     url: 'cog://https://s3.us-east-1.amazonaws.com/saferplaces.co/SaferPlaces-Agent/GECOSISTEMA_ITALY_132250.tif#color:BrewerSpectral7,0,30,c',
-        // //     tileSize: 256
-        // // });
-        // // map.addLayer({
-        // //     source: 'imageSource',
-        // //     id: 'imageLayer',
-        // //     type: 'raster'
-        // // });
-
-
-
-
-        // const sources = {
-        //     'hipsoSource': {
-        //         type: 'raster',
-        //         url: 'cog://https://s3.us-east-1.amazonaws.com/saferplaces.co/SaferPlaces-Agent/GECOSISTEMA_ITALY_165506.tif' +
-        //             '#color:BrewerBrBG10,0,70,c-',
-        //         tileSize: 256
-        //     },
-        //     'hillshadeSource': {
-        //         type: 'raster-dem',
-        //         url: 'cog://https://s3.us-east-1.amazonaws.com/saferplaces.co/SaferPlaces-Agent/GECOSISTEMA_ITALY_165506.tif#dem',
-        //         tileSize: 256
-        //     },
-        //     'terrainSource': {
-        //         type: 'raster-dem',
-        //         url: 'cog://https://s3.us-east-1.amazonaws.com/saferplaces.co/SaferPlaces-Agent/GECOSISTEMA_ITALY_165506.tif#dem',
-        //         tileSize: 256
-        //     },
-        // };
-
-        // const layers = [{
-        //     source: 'hipsoSource',
-        //     id: 'imageLayer',
-        //     type: 'raster'
-        // }, {
-        //     source: 'hillshadeSource',
-        //     id: 'hillshadingLayer',
-        //     type: 'hillshade'
-        // }];
-
-        // const terrain = {
-        //     source: 'terrainSource'
-        // };
-
-        // map.addSource('hipsoSource', sources.hipsoSource);
-        // map.addSource('hillshadeSource', sources.hillshadeSource);
-        // map.addSource('terrainSource', sources.terrainSource);
-
-        // map.addLayer(layers[0]);
-        // map.addLayer(layers[1]);
-        // map.setTerrain(terrain);
     }
 
     function toggleLayerMapVisibility(layer_data) {
@@ -331,10 +263,6 @@ const GeoMap = (() => {
             const visibility = map.getLayoutProperty(l.id, 'visibility');
             map.setLayoutProperty(l.id, 'visibility', visibility === 'visible' ? 'none' : 'visible');
         });
-        // if (map.getStyle().layers.some(l => l.id === layer_data.id)) {
-        //     const visibility = map.getLayoutProperty(layer_data.id, 'visibility');
-        //     map.setLayoutProperty(layer_data.id, 'visibility', visibility === 'visible' ? 'none' : 'visible');
-        // }
     }
 
     function setStyle(styleUrl) { map.setStyle(styleUrl); }

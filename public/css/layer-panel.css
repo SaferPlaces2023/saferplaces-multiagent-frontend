@@ -135,3 +135,7 @@
 .layer-item.drop-below::after {
   margin-top: 6px;
 }
+
+#addVectorWrap, #addRasterWrap {
+  color: #e8eaed;
+}
