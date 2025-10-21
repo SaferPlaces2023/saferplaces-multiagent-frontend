@@ -1,0 +1,76 @@
+/* Toast stack: bottom-center, elementi che “scalano” verso l’alto */
+#toastStack {
+    position: fixed;
+    left: 50%;
+    bottom: 24px;
+    transform: translateX(-50%);
+    display: flex;
+    flex-direction: column;
+    justify-content: flex-end;
+    gap: 8px;
+    z-index: 9999;
+    pointer-events: none;
+}
+
+/* Toast card */
+.toast-item {
+    pointer-events: auto;
+    min-width: 20vw;
+    max-width: 30vw;
+    background: rgba(18, 18, 20, .95);
+    border: 1px solid rgba(255, 255, 255, .08);
+    border-radius: 12px;
+    padding: 10px 12px;
+    color: #e8eaed;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    box-shadow: 0 12px 30px rgba(0, 0, 0, .35);
+    opacity: 0;
+    transform: translateY(6px) scale(.98);
+    transition: opacity .25s ease, transform .25s ease;
+}
+
+.toast-item.show {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+}
+
+/* Contenuti */
+.toast-icon {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 18px;
+}
+
+.toast-msg {
+    font-size: .92rem;
+}
+
+/* Stati icona */
+.toast-icon .spinner-border {
+    width: 16px;
+    height: 16px;
+}
+
+.toast-icon .ok {
+    font-size: 18px;
+    color: #4ade80;
+    display: none;
+}
+
+.toast-item.ok .spinner-border {
+    display: none;
+}
+
+.toast-item.ok .ok {
+    display: inline-block;
+}
+
+/* Dissolvenza uscita */
+.toast-item.hide {
+    opacity: 0;
+    transform: translateY(-6px) scale(.98);
+    transition: opacity .5s ease, transform .5s ease;
+}

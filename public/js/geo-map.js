@@ -109,8 +109,14 @@ const GeoMap = (() => {
     async function addVectorLayer(layer_data) {
         console.log('addVectorLayer', layer_data);
 
+        // !!!: Handle error otherwise will spin forever
+        const t = Toasts.show(`Adding layer <i>"${layer_data.layer_data.title + '"</i>'} ...`); // spinner + messaggio
+
         if (map.getStyle().layers.some(l => l.id === layer_data.id)) {
+            // !!!: use contains id not strict equality
+            // !!!: move this into if case add as id can be inside multiple layers with prefixes (see below)
             console.warn('Layer already exists:', layer_data.id);
+            Toasts.ok(t, `Layer <i>"${layer_data.layer_data.title}"</i> added`);
             return
         }
 
@@ -161,14 +167,22 @@ const GeoMap = (() => {
 
         customLayerIds.add(id);
 
+        Toasts.ok(t, `Layer <i>"${layer_data.layer_data.title}"</i> added`);
+
         return id;
     }
 
     async function addCOG(layer_data, view_params={}) {
         console.log('addCOG', layer_data);
 
-        if (map.getStyle().layers.some(l => l.id === layer_data.id)) {
-            console.warn('Layer already exists:', layer_data.id);
+        // !!!: Handle error otherwise will spin forever
+        const t = Toasts.show(`Adding layer <i>"${layer_data.layer_data.title + '"</i>'} ...`); // spinner + messaggio
+
+        if (map.getStyle().layers.some(l => l.id === layer_data.layer_data.id)) {
+            // !!!: use contains id not strict equality
+            // !!!: move this into if case add as id can be inside multiple layers with prefixes (see below)
+            console.warn('Layer already exists:', layer_data.layer_data.id);
+            Toasts.ok(t, `Layer <i>"${layer_data.layer_data.title}"</i> added`);
             return
         }
 
@@ -256,6 +270,8 @@ const GeoMap = (() => {
             map.addSource(id, cog_source);
             map.addLayer({...cog_layer, ...view});
         }
+
+        Toasts.ok(t, `Layer <i>"${layer_data.layer_data.title}"</i> added`);
     }
 
     function toggleLayerMapVisibility(layer_data) {
