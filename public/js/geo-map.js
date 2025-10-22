@@ -172,7 +172,7 @@ const GeoMap = (() => {
         return id;
     }
 
-    async function addCOG(layer_data, view_params={}) {
+    async function addCOG(layer_data, view_params = {}) {
         console.log('addCOG', layer_data);
 
         // !!!: Handle error otherwise will spin forever
@@ -244,13 +244,71 @@ const GeoMap = (() => {
                     visibility: 'none',
                 }
             }
-            // map.addSource('hipsoSource', sources.hipsoSource);
             map.addSource(`hipso_${id}`, dem_sources[`hipso_${id}`]);
             map.addSource(`hillshade_${id}`, dem_sources[`hillshade_${id}`]);
             map.addSource(`terrain_${id}`, dem_sources[`terrain_${id}`]);
-            map.addLayer({...dem_layers[0], ...view});
-            map.addLayer({...dem_layers[1], ...view});
+            map.addLayer({ ...dem_layers[0], ...view });
+            map.addLayer({ ...dem_layers[1], ...view });
             map.setTerrain(dem_terrain);
+        } else if (surface_type === 'rain-timeseries') {
+
+            // Multiband timeserie "animation"
+            let cog_source = {
+                type: 'raster',
+                url: `cog://${renderUrl}`, //${getColorMap(info)}`,
+                tileSize: 256
+            }
+            let cog_layer = {
+                id: id,
+                type: 'raster',
+                source: id,
+            }
+            let view = {
+                layout: {
+                    visibility: 'none',
+                }
+            }
+            map.addSource(id, cog_source);
+            map.addLayer({ ...cog_layer, ...view });
+
+            let b = 0;
+            let n_bands = layer_data.layer_data.metadata.n_bands
+
+            const colorScale = MaplibreCOGProtocol.colorScale({
+                colorScheme: 'BrewerRdYlBu10', 
+                min: 0, // layer_data.layer_data.metadata.min, 
+                max: 50, //layer_data.layer_data.metadata.max, 
+                isContinuous: true, 
+                isReverse: true 
+            });
+
+            function showBand(band) {
+                console.log(band)
+                
+                MaplibreCOGProtocol.setColorFunction(renderUrl, (pixel, color, metadata) => {
+                    const value = pixel[band];
+                    if (value === metadata.noData || value===0) {
+                        color[3] = 0;
+                    } else {
+                        const [r, g, b] = colorScale(value * metadata.scale + metadata.offset);
+                        color[0] = r;
+                        color[1] = g;
+                        color[2] = b;
+                        color[3] = 224;
+                    }
+                });
+            }
+            setInterval(() => {
+                if (isLayerVisible(id)) {
+                    b = (b + 1) % n_bands;
+                    showBand(b);
+                    if (map.getLayer(id)) {
+                        map.removeLayer(id);
+                        map.addLayer({...cog_layer, ...{ layout: { visibility: 'visible' } }});
+                    }
+                }
+            }, 100);
+
         } else {
             let cog_source = {
                 type: 'raster',
@@ -268,10 +326,14 @@ const GeoMap = (() => {
                 }
             }
             map.addSource(id, cog_source);
-            map.addLayer({...cog_layer, ...view});
+            map.addLayer({ ...cog_layer, ...view });
         }
 
         Toasts.ok(t, `Layer <i>"${layer_data.layer_data.title}"</i> added`);
+    }
+
+    function isLayerVisible(layer_id) {
+        return map.getStyle().layers.some(l => l.id.includes(layer_id) && map.getLayoutProperty(l.id, 'visibility') === 'visible');
     }
 
     function toggleLayerMapVisibility(layer_data) {
