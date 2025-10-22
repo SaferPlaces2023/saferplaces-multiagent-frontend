@@ -23,7 +23,35 @@ const AIChat = (() => {
             expandBtn.textContent = expanded ? '⬏' : '⬍'; // cambia icona
             expandBtn.title = expanded ? 'Riduci altezza' : 'Espandi a tutta altezza';
         });
-        clearBtn.onclick = () => { chatBody.innerHTML = ''; };
+        clearBtn.onclick = () => { 
+            chatBody.innerHTML = '';
+            const LS_USER = 'user_id';
+            const LS_PROJ = 'project_id';
+            const LS_THREAD = 'thread_id';
+            const t = Toasts.show(`Creating a new chat ...`);
+            fetch("http://localhost:5000/t", {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ user_id: localStorage.getItem(LS_USER), project_id: localStorage.getItem(LS_PROJ) })
+            })
+            .then(r => {
+                if (!r.ok) throw new Error('HTTP ' + r.status);
+                return r.json();
+            })
+            .then(data => {
+                localStorage.setItem(LS_THREAD, data.thread_id);
+                localStorage.setItem(LS_USER, data.user_id);
+                localStorage.setItem(LS_PROJ, data.project_id);
+
+                Toasts.ok(t, `New chat created [<code>${data.thread_id}</code>]`);
+
+                UserPanel.fillInfo();
+            })
+            .catch(err => {
+                console.error(err);
+                Toasts.error(t, 'Errore durante la creazione della chat.');
+            })
+        };
 
         sendBtn.onclick = send;
         chatInput.addEventListener('keydown', e => {

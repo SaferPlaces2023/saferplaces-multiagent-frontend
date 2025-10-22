@@ -233,5 +233,5 @@ const UserPanel = (() => {
     }
 
 
-    return { init, openProject };
+    return { init, openProject, fillInfo };
 })();
