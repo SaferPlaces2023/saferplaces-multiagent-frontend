@@ -1,0 +1,42 @@
+<!-- Time Slider (bottom floating) -->
+<button class="btn btn-secondary btn-sm toggle-btn" id="tsToggleBtn"><span class="material-symbols-outlined">timer</span></button>
+<section id="timeSlider" class="ts-container hidden" aria-label="Time slider">
+    <div class="ts-card">
+        <div class="ts-header">
+            <div class="ts-controls">
+                <button id="tsPlay" class="btn btn-outline-light btn-sm" title="Play/Pausa">
+                    <span class="material-symbols-outlined">play_arrow</span>
+                </button>
+                <select id="tsSpeed" class="form-select form-select-sm ts-speed">
+                    <option value="800">0.5×</option>
+                    <option value="500" selected>1×</option>
+                    <option value="250">2×</option>
+                    <option value="100">5×</option>
+                </select>
+                <div id="tsNow" class="ts-now">—</div>
+            </div>
+            
+        </div>
+
+        <div class="ts-track-wrap" id="tsTrackWrap">
+            <!-- aree evidenziate -->
+            <div class="ts-highlights" id="tsHighlights"></div>
+
+            <!-- track + ticks + maniglia -->
+            <div class="ts-track" id="tsTrack">
+                <div class="ts-ticks" id="tsTicks"></div>
+                <div class="ts-handle" id="tsHandle" title="Trascina per cambiare ora">
+                    <div class="ts-handle-dot"></div>
+                </div>
+            </div>
+
+            <!-- tooltip intervalli -->
+            <div class="ts-tooltip hidden" id="tsTooltip"></div>
+        </div>
+
+        <div class="ts-range justify-content-between mt-1 px-1">
+            <span id="tsStartLabel">—</span>
+            <span id="tsEndLabel">—</span>
+        </div>
+    </div>
+</section>

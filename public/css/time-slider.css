@@ -1,0 +1,189 @@
+/* Container flottante */
+#tsToggleBtn {
+  position: fixed;
+  left: 16px;
+  top: 96px;
+  z-index: 7;
+  padding: 4px 4px 0 4px;
+}
+
+.ts-container {
+    position: fixed;
+    left: 50%;
+    bottom: 20px;
+    transform: translateX(-50%);
+    z-index: 8;
+    transition: bottom 0.3s ease;
+}
+.ts-container.closed {
+    bottom: -20vh;
+}
+
+.ts-container.hidden {
+    display: none;
+}
+
+/* Card */
+.ts-card {
+    min-width: min(50vw, 1200px);
+    background: rgba(18, 18, 20, 0.9);
+    backdrop-filter: blur(8px);
+    border: 1px solid rgba(255, 255, 255, .08);
+    border-radius: 14px;
+    box-shadow: 0 18px 48px rgba(0, 0, 0, .35);
+    padding: 10px 12px;
+    color: #e8eaed;
+}
+
+/* Header (controlli + range) */
+.ts-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    margin-bottom: 8px;
+}
+
+.ts-controls {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.ts-speed {
+    width: 88px;
+    background: #0c0f14;
+    color: #e8eaed;
+    border: none;
+}
+
+#tsPlay .material-symbols-outlined {
+    font-size: 18px;
+    line-height: 1;
+    vertical-align: -2px;
+}
+
+.ts-now {
+    font-weight: 600;
+    font-size: .95rem;
+    color: #cfd3d7;
+    padding-left: 6px;
+}
+
+.ts-range {
+    display: flex;
+    gap: 10px;
+    color: #9aa0a6;
+    font-size: .85rem;
+}
+
+/* Track */
+.ts-track-wrap {
+    position: relative;
+}
+
+.ts-track {
+    position: relative;
+    height: 36px;
+    border-radius: 8px;
+    background: linear-gradient(180deg, rgba(255, 255, 255, .06), rgba(255, 255, 255, .03));
+    border: 1px solid rgba(255, 255, 255, .07);
+    overflow: hidden;
+}
+
+.ts-ticks {
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+    background-image:
+        repeating-linear-gradient(to right, rgba(255, 255, 255, .12) 0 1px, transparent 1px 60px);
+    /* grid oraria: 60px ~ 1h, verrà riscalato via transform */
+    transform-origin: left center;
+}
+
+.ts-handle {
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    width: 0;
+    transform: translateX(-50%);
+    cursor: grab;
+}
+
+.ts-handle:active {
+    cursor: grabbing;
+}
+
+.ts-handle-dot {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    width: 14px;
+    height: 14px;
+    border-radius: 50%;
+    background: #6ee7b7;
+    box-shadow: 0 0 0 4px rgba(110, 231, 183, .18);
+    border: 1px solid rgba(110, 231, 183, .8);
+}
+
+/* Highlights (intervalli colorati) */
+.ts-highlights {
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+}
+
+.ts-highlight {
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    background: linear-gradient(180deg, rgba(110, 231, 183, .2), rgba(110, 231, 183, .08));
+    border-left: 1px solid rgba(110, 231, 183, .35);
+    border-right: 1px solid rgba(110, 231, 183, .35);
+    pointer-events: auto;
+    /* servono per hover tooltip */
+    z-index: 1;
+}
+
+/* Tooltip */
+.ts-tooltip {
+    position: absolute;
+    left: 0;
+    top: -34px;
+    transform: translateX(-50%);
+    background: rgba(18, 18, 20, .95);
+    padding: 4px 8px;
+    border-radius: 8px;
+    border: 1px solid rgba(255, 255, 255, .12);
+    color: #e8eaed;
+    font-size: .85rem;
+    white-space: nowrap;
+    pointer-events: none;
+    box-shadow: 0 8px 24px rgba(0, 0, 0, .25);
+}
+
+.ts-tooltip::after {
+    content: "";
+    position: absolute;
+    left: 50%;
+    bottom: -6px;
+    transform: translateX(-50%);
+    border: 6px solid transparent;
+    border-top-color: rgba(18, 18, 20, .95);
+}
+
+.hidden {
+    display: none !important;
+}
+
+/* Piccole rifiniture responsive */
+@media (max-width: 640px) {
+    .ts-card {
+        min-width: min(96vw, 560px);
+    }
+
+    .ts-now {
+        display: none;
+    }
+}

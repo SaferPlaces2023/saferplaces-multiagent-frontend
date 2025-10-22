@@ -17,6 +17,16 @@
     AuthGate.init();
     AIChat.init();          // wiring chat (spinner incluso)
 
+    TimeSlider.init({
+        startISO: '2025-10-20T00:00:00Z',
+        endISO: '2025-10-22T12:00:00Z',
+        stepMinutes: 5, // 1 ora
+        intervals: [
+            { start: '2025-10-20T06:00:00Z', end: '2025-10-20T10:00:00Z', label: 'Evento A', color: '#6ee7b7' },
+            { start: '2025-10-21T00:00:00Z', end: '2025-10-21T03:00:00Z', label: 'Maintenance', color: '#60a5fa' }
+        ]
+    });
+
     // 4) wiring tra componenti tramite CustomEvent
     document.addEventListener('layer:add-geojson', e => GeoMap.addVectorLayer(e.detail));
     document.addEventListener('layer:add-cog', e => GeoMap.addCOG(e.detail));
@@ -43,6 +53,5 @@
             document.querySelector('#styleSelect').dispatchEvent(new Event('change'));
         }
     });
-
 
 })();
