@@ -43,7 +43,7 @@ const AIChat = (() => {
                 localStorage.setItem(LS_USER, data.user_id);
                 localStorage.setItem(LS_PROJ, data.project_id);
 
-                Toasts.ok(t, `New chat created [<code>${data.thread_id}</code>]`);
+                Toasts.ok(t, `New chat created [ <code>${data.thread_id}</code> ]`);
 
                 UserPanel.fillInfo();
             })

@@ -283,22 +283,21 @@ const GeoMap = (() => {
             });
 
             function showBand(band) {
-                console.log(band)
-                
                 MaplibreCOGProtocol.setColorFunction(renderUrl, (pixel, color, metadata) => {
                     const value = pixel[band];
-                    if (value === metadata.noData || value===0) {
+                    if (value === metadata.noData) {
                         color[3] = 0;
                     } else {
                         const [r, g, b] = colorScale(value * metadata.scale + metadata.offset);
                         color[0] = r;
                         color[1] = g;
                         color[2] = b;
-                        color[3] = 224;
+                        color[3] = value > 0 ? 224 : 50
                     }
                 });
             }
             setInterval(() => {
+                // !!!: check every 0.1s it's quite unefficient (bisogna trovare il modo di abilitare o non abilitare) ... however, it works fast
                 if (isLayerVisible(id)) {
                     b = (b + 1) % n_bands;
                     showBand(b);
@@ -307,7 +306,7 @@ const GeoMap = (() => {
                         map.addLayer({...cog_layer, ...{ layout: { visibility: 'visible' } }});
                     }
                 }
-            }, 100);
+            }, 300);
 
         } else {
             let cog_source = {
@@ -343,7 +342,7 @@ const GeoMap = (() => {
         });
     }
 
-    function setStyle(styleUrl) { map.setStyle(styleUrl); }
+    function setStyle(styleUrl) { map.setStyle(styleUrl); LayerPanel.reloadProjectLayers() }
     function resetView() { map.easeTo({ center: [12.4964, 41.9028], zoom: 5, bearing: 0, pitch: 0 }); }
 
     function dispatch(name, detail) { document.dispatchEvent(new CustomEvent(name, { detail })); }
