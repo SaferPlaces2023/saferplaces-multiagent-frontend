@@ -22,8 +22,8 @@
         endISO: '2025-10-22T12:00:00Z',
         stepMinutes: 5, // 1 ora
         intervals: [
-            { start: '2025-10-20T06:00:00Z', end: '2025-10-20T10:00:00Z', label: 'Evento A', color: '#6ee7b7' },
-            { start: '2025-10-21T00:00:00Z', end: '2025-10-21T03:00:00Z', label: 'Maintenance', color: '#60a5fa' }
+            // { start: '2025-10-20T06:00:00Z', end: '2025-10-20T10:00:00Z', label: 'Evento A', color: '#6ee7b7' },
+            // { start: '2025-10-21T00:00:00Z', end: '2025-10-21T03:00:00Z', label: 'Maintenance', color: '#60a5fa' }
         ]
     });
 
@@ -44,6 +44,12 @@
     document.addEventListener('map:toggle-layer-visibility', e => GeoMap.toggleLayerMapVisibility(e.detail));
     document.addEventListener('map:set-style', e => GeoMap.setStyle(e.detail.styleUrl));
     document.addEventListener('map:reset', () => GeoMap.resetView());
+
+    document.addEventListener('timeslider:change', e => {
+        // DOC: all we need to call whenever the time slider changes
+        const { iso, date } = e.detail;
+        GeoMap.renderTimestampRasters(iso);
+    });
 
     // Esempio: la chat può inviare comandi (demo)
     document.addEventListener('chat:command', e => {

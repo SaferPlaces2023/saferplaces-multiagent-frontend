@@ -109,6 +109,7 @@
     width: 0;
     transform: translateX(-50%);
     cursor: grab;
+    z-index: 9;
 }
 
 .ts-handle:active {
@@ -145,6 +146,7 @@
     pointer-events: auto;
     /* servono per hover tooltip */
     z-index: 1;
+    border-radius: 6px;
 }
 
 /* Tooltip */

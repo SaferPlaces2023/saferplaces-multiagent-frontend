@@ -5,6 +5,16 @@ const GeoMap = (() => {
     const customLayerIds = new Set();
     const uid = p => (p || 'lyr') + '-' + Math.random().toString(36).slice(2, 8);
 
+    const surfaceColorscalesMap = {
+        'rain-timeseries': MaplibreCOGProtocol.colorScale({
+            colorScheme: 'BrewerRdYlBu10', 
+            min: 0, // layer_data.layer_data.metadata.min, 
+            max: 50, //layer_data.layer_data.metadata.max, 
+            isContinuous: true, 
+            isReverse: true 
+        })
+    }
+
     let map;
 
     function init() {
@@ -271,42 +281,74 @@ const GeoMap = (() => {
             map.addSource(id, cog_source);
             map.addLayer({ ...cog_layer, ...view });
 
-            let b = 0;
-            let n_bands = layer_data.layer_data.metadata.n_bands
-
-            const colorScale = MaplibreCOGProtocol.colorScale({
-                colorScheme: 'BrewerRdYlBu10', 
-                min: 0, // layer_data.layer_data.metadata.min, 
-                max: 50, //layer_data.layer_data.metadata.max, 
-                isContinuous: true, 
-                isReverse: true 
-            });
-
-            function showBand(band) {
-                MaplibreCOGProtocol.setColorFunction(renderUrl, (pixel, color, metadata) => {
-                    const value = pixel[band];
-                    if (value === metadata.noData) {
-                        color[3] = 0;
-                    } else {
-                        const [r, g, b] = colorScale(value * metadata.scale + metadata.offset);
-                        color[0] = r;
-                        color[1] = g;
-                        color[2] = b;
-                        color[3] = value > 0 ? 224 : 50
-                    }
-                });
-            }
-            setInterval(() => {
-                // !!!: check every 0.1s it's quite unefficient (bisogna trovare il modo di abilitare o non abilitare) ... however, it works fast
-                if (isLayerVisible(id)) {
-                    b = (b + 1) % n_bands;
-                    showBand(b);
-                    if (map.getLayer(id)) {
-                        map.removeLayer(id);
-                        map.addLayer({...cog_layer, ...{ layout: { visibility: 'visible' } }});
-                    }
+            try {
+                let tStart = `${layer_data.layer_data.metadata.time_start}${layer_data.layer_data.metadata.time_start.endsWith('Z') ? '' : 'Z'}`
+                let dStart = new Date(tStart);
+                let tEnd = `${layer_data.layer_data.metadata.time_end}${layer_data.layer_data.metadata.time_end.endsWith('Z') ? '' : 'Z'}`;
+                let dEnd = new Date(tEnd);
+                let timestamps = TimeSlider.dateRange(dStart, dEnd, layer_data.layer_data.metadata.n_bands).map(d => d.toISOString())
+                timestamps.forEach((ts, ts_idx) => TimeSlider.registerTimestampItem(ts, {
+                    type: 'raster-band',
+                    layer_id: id,
+                    render_url: renderUrl,
+                    band: ts_idx + 1,
+                    surface_type: surface_type,
+                    cog_layer
+                }));
+                TimeSlider.setRange(
+                    new Date(dStart.setUTCHours(0,0,0,0)).toISOString(),
+                    new Date(new Date(dEnd.setDate(dEnd.getUTCDate()+1)).setUTCHours(0,0,0,0)).toISOString()
+                )
+                let interval = { 
+                    start: tStart,
+                    end: tEnd,
+                    label: layer_data.layer_data.title, 
+                    // color: '#6ee7b7' 
                 }
-            }, 300);
+                TimeSlider.setIntervals([interval]);
+            } catch (e) {
+                console.error('Error setting time slider intervals:', e);
+                Toasts.error(t, `Error setting time slider intervals: ${e.message}`);
+            }
+
+
+
+            // let b = 0;
+            // let n_bands = layer_data.layer_data.metadata.n_bands
+
+            // const colorScale = MaplibreCOGProtocol.colorScale({
+            //     colorScheme: 'BrewerRdYlBu10', 
+            //     min: 0, // layer_data.layer_data.metadata.min, 
+            //     max: 50, //layer_data.layer_data.metadata.max, 
+            //     isContinuous: true, 
+            //     isReverse: true 
+            // });
+
+            // function showBand(band) {
+            //     MaplibreCOGProtocol.setColorFunction(renderUrl, (pixel, color, metadata) => {
+            //         const value = pixel[band];
+            //         if (value === metadata.noData) {
+            //             color[3] = 0;
+            //         } else {
+            //             const [r, g, b] = colorScale(value * metadata.scale + metadata.offset);
+            //             color[0] = r;
+            //             color[1] = g;
+            //             color[2] = b;
+            //             color[3] = value > 0 ? 224 : 50
+            //         }
+            //     });
+            // }
+            // setInterval(() => {
+            //     // !!!: check every 0.1s it's quite unefficient (bisogna trovare il modo di abilitare o non abilitare) ... however, it works fast
+            //     if (isLayerVisible(id)) {
+            //         b = (b + 1) % n_bands;
+            //         showBand(b);
+            //         if (map.getLayer(id)) {
+            //             map.removeLayer(id);
+            //             map.addLayer({...cog_layer, ...{ layout: { visibility: 'visible' } }});
+            //         }
+            //     }
+            // }, 300);
 
         } else {
             let cog_source = {
@@ -325,11 +367,40 @@ const GeoMap = (() => {
                 }
             }
             map.addSource(id, cog_source);
-            map.addLayer({ ...cog_layer, ...view });
+            map.addLayer({ ...cog_layer, ...view, ...layer_data });
         }
 
         Toasts.ok(t, `Layer <i>"${layer_data.layer_data.title}"</i> added`);
     }
+
+    
+    function renderTimestampRasters(timestamp) {
+        TimeSlider.getTimestampItems(timestamp, 'raster-band').forEach(item => {
+            let layer_id = item.layer_id;
+            let render_url = item.render_url;
+            let band = item.band;
+            let surface_type = item.surface_type;
+            let cog_layer = item.cog_layer;
+
+            if (map.getLayer(layer_id) && isLayerVisible(layer_id)) {
+                MaplibreCOGProtocol.setColorFunction(render_url, (pixel, color, metadata) => {
+                    const value = pixel[band]; // band is 1-based
+                    if (value === metadata.noData) {
+                        color[3] = 0;
+                    } else {
+                        const [r, g, b] = surfaceColorscalesMap[surface_type](value * metadata.scale + metadata.offset);
+                        color[0] = r;
+                        color[1] = g;
+                        color[2] = b;
+                        color[3] = value > 0 ? 224 : 50; // alpha
+                    }
+                });
+                map.removeLayer(layer_id);
+                map.addLayer({...cog_layer, ...{ layout: { visibility: 'visible' } }});
+            }
+        })
+    }
+
 
     function isLayerVisible(layer_id) {
         return map.getStyle().layers.some(l => l.id.includes(layer_id) && map.getLayoutProperty(l.id, 'visibility') === 'visible');
@@ -342,10 +413,10 @@ const GeoMap = (() => {
         });
     }
 
-    function setStyle(styleUrl) { map.setStyle(styleUrl); LayerPanel.reloadProjectLayers() }
+    function setStyle(styleUrl) { map.setStyle(styleUrl); TimeSlider.clearIntervals(); LayerPanel.reloadProjectLayers() }
     function resetView() { map.easeTo({ center: [12.4964, 41.9028], zoom: 5, bearing: 0, pitch: 0 }); }
 
     function dispatch(name, detail) { document.dispatchEvent(new CustomEvent(name, { detail })); }
 
-    return { init, addVectorLayer, addCOG, setStyle, resetView, toggleLayerMapVisibility };
+    return { init, addVectorLayer, addCOG, setStyle, resetView, toggleLayerMapVisibility, renderTimestampRasters };
 })();

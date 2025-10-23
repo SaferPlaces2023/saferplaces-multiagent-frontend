@@ -12,6 +12,21 @@ const TimeSlider = (() => {
     let stepMinutes = 5;
     let timer = null;
 
+    let intervalColors = [
+        '#6ee7b7',
+        '#60a5fa',
+        '#f472b6',
+        '#facc15',
+        '#fb923c',
+        '#f87171',
+        '#a78bfa',
+        '#34d399',
+        '#38bdf8',
+        '#c084fc',
+    ]
+
+    let timestampRegister = new Map();
+
     function init({ startISO, endISO, valueISO, stepMinutes: step = 60, intervals = [] }) {
         el = document.getElementById('timeSlider');
         track = document.getElementById('tsTrack');
@@ -64,8 +79,14 @@ const TimeSlider = (() => {
         dispatchChange();
     }
 
-    function setIntervals(list) {
+    function clearIntervals() {
         highlights.innerHTML = '';
+        // ???: timestampRegister.clear();
+    }
+
+    function setIntervals(list) {
+        // highlights.innerHTML = '';
+        let n_intervals = highlights.children.length;
         if (!Array.isArray(list)) return;
         for (const it of list) {
             const s = new Date(it.start), e = new Date(it.end);
@@ -77,6 +98,7 @@ const TimeSlider = (() => {
             div.className = 'ts-highlight';
             div.style.left = left + '%';
             div.style.width = w + '%';
+            it.color = it.color || intervalColors[n_intervals++ % intervalColors.length];
             if (it.color) {
                 div.style.background = `linear-gradient(180deg, ${hexOr(it.color, .20)}, ${hexOr(it.color, .08)})`;
                 div.style.borderLeftColor = hexOr(it.color, .35);
@@ -122,17 +144,21 @@ const TimeSlider = (() => {
 
     function layoutTicks() {
         // base: ripetizione ogni 60px = 1h; ridimensioniamo in base alla durata
+
         const hours = (end - start) / (1000 * 60 * 60);
         const desiredPxPerHour = 60; // target
         const width = track.clientWidth || 600;
         const scale = Math.max(0.4, Math.min(3, width / (hours * desiredPxPerHour)));
         ticks.style.transform = `scaleX(${scale})`;
+
+        // ticks.style.display = 'none'    // !!!: viene brutto a video, disabilito per ora
+
         // etichette ogni ora + data alle 00
         const labels = track.querySelectorAll('.ts-tick-label');
         labels.forEach(l => l.remove());
         const startH = new Date(start);
         startH.setMinutes(0, 0, 0);
-        for (let t = +startH; t <= +end; t += 3600*3e3) {
+        for (let t = +startH; t <= +end; t += 3600 * 2e3) {
             const dt = new Date(t);
             const p = pctBetween(dt);
             if (p < 0 || p > 100) continue;
@@ -178,7 +204,6 @@ const TimeSlider = (() => {
 
     // tooltip
     function showTooltip(ev, text) {
-        console.log('showTooltip', text);
         tooltip.textContent = text;
         tooltip.classList.remove('hidden');
         moveTooltip(ev);
@@ -209,6 +234,28 @@ const TimeSlider = (() => {
         return color; // fallback
     }
 
+    // funzione per creare array di date
+    function dateRange(start, end, n) {
+        const dates = [];
+        const step = (end - start) / (n - 1);
+        for (let i = 0; i < n; i++) {
+            dates.push(new Date(start.getTime() + step * i));
+        }
+        return dates;
+    }
+
+    function registerTimestampItem(isoDate, item) {
+        timestampRegister.set(
+            isoDate, 
+            timestampRegister.has(isoDate) ? [...timestampRegister.get(isoDate), item] : [item]
+        );
+    }
+
+    function getTimestampItems(isoDate, itemType = null) {
+        const items = timestampRegister.get(isoDate) || [];
+        return itemType ? items.filter(it => it.type === itemType) : items;
+    }
+
     // public
-    return { init, setRange, setValue, setIntervals, play, pause, isPlaying };
+    return { init, setRange, setValue, setIntervals, clearIntervals, play, pause, isPlaying, dateRange, timestampRegister, registerTimestampItem, getTimestampItems };
 })();
