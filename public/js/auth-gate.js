@@ -19,6 +19,7 @@ const AuthGate = (() => {
 
     function init() {
         gate = document.getElementById('authGate');
+        gateLogo = document.getElementById('authGateLogo');
         appRoot = document.getElementById('appRoot');
 
         // user
@@ -79,8 +80,8 @@ const AuthGate = (() => {
     }
 
     // UI helpers
-    function showGate() { appRoot.classList.add('blurred'); gate.classList.remove('hidden'); setTimeout(() => inputUser?.focus(), 50); }
-    function hideGate() { appRoot.classList.remove('blurred'); gate.classList.add('hidden'); }
+    function showGate() { appRoot.classList.add('blurred'); gate.classList.remove('hidden'); gateLogo.classList.remove('hidden'); setTimeout(() => inputUser?.focus(), 50); }
+    function hideGate() { appRoot.classList.remove('blurred'); gate.classList.add('hidden'); gateLogo.classList.add('hidden')}
     function show(el) { el.classList.remove('d-none'); }
     function hide(el) { el.classList.add('d-none'); }
     function flash(el, msg) { el.textContent = msg; el.classList.remove('d-none'); setTimeout(() => el.classList.add('d-none'), 2500); }
@@ -94,11 +95,14 @@ const AuthGate = (() => {
         const prev = btnUser.textContent; btnUser.disabled = true; btnUser.textContent = 'Verifico…'; hide(errorUser);
 
         try {
+            let cardTopBefore = document.querySelector('.auth-card').getBoundingClientRect().top;
+
             const res = await fetch("http://localhost:5000/user", {
                 method: 'POST', headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ user_id: userId })
             });
             if (!res.ok) throw new Error('HTTP ' + res.status);
+            
             const data = await res.json(); // { user_id, projects: [] }
 
             currentUser = data.user_id || userId;
@@ -107,6 +111,10 @@ const AuthGate = (() => {
             // prepara area progetto
             userBadge.textContent = `utente: ${currentUser}`;
             buildProjectsUI(Array.isArray(data.projects) ? data.projects : []);
+
+            let cardTopAfter = document.querySelector('.auth-card').getBoundingClientRect().top;
+            gateLogo.style.top = `${gateLogo.getBoundingClientRect().top - (cardTopBefore - cardTopAfter)}px`;
+
         } catch (e) {
             console.error(e);
             flash(errorUser, 'Verifica non riuscita. Controlla lo user_id.');
