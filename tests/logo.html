@@ -1,0 +1,62 @@
+<!doctype html>
+<html lang="it">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Logo morph centrato 300px</title>
+  <style>
+    html, body {
+      margin: 0;
+      height: 100%;
+    }
+
+    body {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background-color: #0A0B0E;
+    }
+
+    .morph-pro {
+      position: relative;
+      width: 400px; /* stessa misura del logo */
+      /* height: 400px; */
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      overflow: hidden; /* impedisce allo sfondo di uscire */
+      border-radius: 0; /* puoi regolare se il logo è tondo */
+    }
+
+    .morph-pro::after {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background: linear-gradient(90deg, #0fffc1, #7e0fff);
+      background-size: 200% 200%;
+      animation: animateGlow 10s ease infinite;
+      filter: blur(20px);
+      z-index: 0; /* resta dietro */
+    }
+
+    @keyframes animateGlow {
+      0% { background-position: 0% 50%; }
+      50% { background-position: 100% 50%; }
+      100% { background-position: 0% 50%; }
+    }
+
+    .logo {
+      width: 400px;
+      height: auto;
+      position: relative;
+      z-index: 1; /* sopra lo sfondo */
+      display: block;
+    }
+  </style>
+</head>
+<body>
+  <div class="morph-pro">
+    <img class="logo" src="logo.png" alt="Logo" />
+  </div>
+</body>
+</html>
