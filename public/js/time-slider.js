@@ -58,6 +58,11 @@ const TimeSlider = (() => {
         speedSel.addEventListener('change', () => { if (isPlaying()) { pause(); play(); } });
         // click su track
         track.addEventListener('pointerdown', onTrackPointer);
+
+        if (intervals.length > 0) {
+            el.classList.remove('closed');
+            el.classList.remove('disabled');
+        }
     }
 
     function setRange(aISO, bISO) {
@@ -249,6 +254,10 @@ const TimeSlider = (() => {
             isoDate, 
             timestampRegister.has(isoDate) ? [...timestampRegister.get(isoDate), item] : [item]
         );
+
+        if (el && el.classList.contains('disabled')) {
+            el.classList.remove('disabled');
+        }
     }
 
     function getTimestampItems(isoDate, itemType = null) {

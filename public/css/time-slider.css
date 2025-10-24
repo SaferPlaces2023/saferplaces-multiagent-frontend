@@ -24,6 +24,25 @@
     display: none;
 }
 
+.ts-container .disabled-text {
+    display: none;
+}
+.ts-container.disabled .disabled-text {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    min-width: min(50vw, 1200px);
+    height: 100%;
+    transform: translateX(-50%) translateY(-50%);
+    background-color: #0c0f14AA;
+    padding: 8px 12px;
+    border-radius: 14px;
+    align-items: center;
+    display: flex;
+    justify-content: center;
+    z-index: 9999;
+}
+
 /* Card */
 .ts-card {
     min-width: min(50vw, 1200px);
@@ -34,6 +53,12 @@
     box-shadow: 0 18px 48px rgba(0, 0, 0, .35);
     padding: 10px 12px;
     color: #e8eaed;
+}
+.ts-container.disabled .ts-card {
+    opacity: 1;
+    filter: blur(6px);
+    background-color: #0c0f14;
+    pointer-events: none;
 }
 
 /* Header (controlli + range) */
@@ -100,6 +125,8 @@
         repeating-linear-gradient(to right, rgba(255, 255, 255, .12) 0 1px, transparent 1px 60px);
     /* grid oraria: 60px ~ 1h, verrà riscalato via transform */
     transform-origin: left center;
+
+    display: none;  /* !!!: da correggere la visualizzazione, non è easy */
 }
 
 .ts-handle {

@@ -18,13 +18,10 @@
     AIChat.init();          // wiring chat (spinner incluso)
 
     TimeSlider.init({
-        startISO: '2025-10-20T00:00:00Z',
-        endISO: '2025-10-22T12:00:00Z',
+        startISO: new Date(new Date().setUTCHours(0, 0, 0, 0)).toISOString(),
+        endISO: new Date(new Date().setUTCHours(24, 0, 0, 0)).toISOString(),
         stepMinutes: 5, // 1 ora
-        intervals: [
-            // { start: '2025-10-20T06:00:00Z', end: '2025-10-20T10:00:00Z', label: 'Evento A', color: '#6ee7b7' },
-            // { start: '2025-10-21T00:00:00Z', end: '2025-10-21T03:00:00Z', label: 'Maintenance', color: '#60a5fa' }
-        ]
+        intervals: []
     });
 
     // 4) wiring tra componenti tramite CustomEvent

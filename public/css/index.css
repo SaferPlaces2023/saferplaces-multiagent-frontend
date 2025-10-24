@@ -1,0 +1,44 @@
+#authGateLogo2 {
+    position: absolute;
+    z-index: 20;
+    bottom: 40px;
+    left: 32px;
+    transform: top 0.3s ease;
+    width: 200px;
+}
+
+.logo-container2 {
+    /* margin-bottom: 10px; */
+}
+
+.logo-container2 p {
+    font-size: 21px;
+    letter-spacing: 0.0rem;
+    margin: 0;
+    font-weight: 500;
+    color: #e8ecf0;
+    margin-top: 8px;
+    padding-right: 0 !important;
+    padding-left: 0 !important;
+}
+
+.morph-pro2 {
+    position: relative;
+    width: 100%;
+    display: flex;
+    align-items: center;
+    overflow: hidden;
+    border-radius: 0;
+    /* margin-right: 12px; */
+    padding-left: 0 !important;
+    padding-right: 0 !important;
+    /* left: 16px; */
+}
+
+.logo2 {
+    width: 200px;
+    height: auto;
+    position: relative;
+    z-index: 1;
+    display: block;
+}
