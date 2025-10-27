@@ -17,6 +17,14 @@
     box-shadow: 0 8px 25px rgba(0, 0, 0, 0.3);
 }
 
+.topbar span {
+    width: 150px;
+}
+
 .topbar select {
     min-width: 180px;
+}
+
+.topbar button {
+    width: 150px;
 }
