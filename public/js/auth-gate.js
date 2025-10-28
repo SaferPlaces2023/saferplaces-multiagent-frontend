@@ -46,7 +46,7 @@ const AuthGate = (() => {
         if (u && p) {
             const t = localStorage.getItem(LS_THREAD);  
             
-            fetch("http://localhost:5000/t", {
+            fetch(Routes.Agent.NEWTHREAD, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ thread_id: t, user_id: u, project_id: p })
@@ -97,7 +97,8 @@ const AuthGate = (() => {
         try {
             let cardTopBefore = document.querySelector('.auth-card').getBoundingClientRect().top;
 
-            const res = await fetch("http://localhost:5000/user", {
+            // const res = await fetch("http://localhost:5000/user", {
+            const res = await fetch(Routes.Agent.USER, {
                 method: 'POST', headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ user_id: userId })
             });
@@ -161,7 +162,7 @@ const AuthGate = (() => {
         else setTimeout(() => selProject?.focus(), 50);
     }
     async function load_user_project(currentUser, project) {
-        fetch("http://localhost:5000/t", {
+        fetch(Routes.Agent.NEWTHREAD, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ user_id: currentUser, project_id: project })

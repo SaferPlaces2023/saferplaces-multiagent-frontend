@@ -135,7 +135,8 @@ const GeoMap = (() => {
 
         let thread_id = localStorage.getItem('thread_id');
         // "http://localhost:5000/render", {
-        const res = await fetch(`http://localhost:5000/t/${thread_id}/render`, {
+        // const res = await fetch(`http://localhost:5000/t/${thread_id}/render`, {
+        const res = await fetch(Routes.Agent.RENDER(thread_id), {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify(layer_data)
@@ -199,7 +200,8 @@ const GeoMap = (() => {
         const id = btoa(layer_data.layer_data.src)
 
         let thread_id = localStorage.getItem('thread_id');
-        const res = await fetch(`http://localhost:5000/t/${thread_id}/render`, {
+        // const res = await fetch(`http://localhost:5000/t/${thread_id}/render`, {
+        const res = await fetch(Routes.Agent.RENDER(thread_id), {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify(layer_data)

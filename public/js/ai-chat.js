@@ -29,7 +29,7 @@ const AIChat = (() => {
             const LS_PROJ = 'project_id';
             const LS_THREAD = 'thread_id';
             const t = Toasts.show(`Creating a new chat ...`);
-            fetch("http://localhost:5000/t", {
+            fetch(Routes.Agent.NEWTHREAD, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ user_id: localStorage.getItem(LS_USER), project_id: localStorage.getItem(LS_PROJ) })
@@ -112,7 +112,7 @@ const AIChat = (() => {
         // 2️⃣ altrimenti: chiama l'agente remoto
         const LS_THREAD = 'thread_id';
         let thread_id = localStorage.getItem(LS_THREAD);
-        fetch(`http://localhost:5000/t/${thread_id}`, {
+        fetch(Routes.Agent.THREAD(thread_id), {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ prompt: t })

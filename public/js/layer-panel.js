@@ -150,7 +150,7 @@ const LayerPanel = (() => {
         listWrap.innerHTML = '<span class="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span><span style="color: whitesmoke;">Caricamento layers ...</span>';
         let thread_id = localStorage.getItem('thread_id');
         // POST
-        fetch(`http://localhost:5000/t/${thread_id}/layers`, {
+        fetch(Routes.Agent.LAYERS(thread_id), {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
         })

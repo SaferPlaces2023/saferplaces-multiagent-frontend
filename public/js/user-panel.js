@@ -85,7 +85,7 @@ const UserPanel = (() => {
                     AuthGate.loadUserProject(currentUser, project);
                 } else {
                     // fallback: semplice POST come nel gate
-                    fetch("http://localhost:5000/t", {
+                    fetch(Routes.Agent.NEWTHREAD, {
                         method: 'POST', headers: { 'Content-Type': 'application/json' },
                         body: JSON.stringify({ user_id: currentUser, project_id: project })
                     })
@@ -194,7 +194,7 @@ const UserPanel = (() => {
         }
 
         // Usa lo stesso flusso del gate: POST /t crea/attiva il progetto e ritorna thread/user/project
-        fetch("http://localhost:5000/t", {
+        fetch(Routes.Agent.NEWTHREAD, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ user_id: currentUser, project_id: name })
