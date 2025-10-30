@@ -2,7 +2,7 @@ const Routes = (() => {
 
     const Agent = (() => {
 
-        let localhost_base = 'http://localhost:5000';
+        let localhost_base = 'agent'//'http://localhost:5000';
         let ngrock_base = ' https://bdc1201eff1b.ngrok-free.app';
 
         const BASE = localhost_base
