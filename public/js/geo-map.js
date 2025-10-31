@@ -214,14 +214,14 @@ const GeoMap = (() => {
 
         function getColorMap(render_info) {
             const colormap = 'BrewerBrBG10';
-            const min = render_info.metadata?.min || 0;
+            const min = 0//render_info.metadata?.min || 0;
             const max = render_info.metadata?.max || 1000;
             return `#color:${colormap},${min},${max},c-`;
         }
 
         let surface_type = layer_data.layer_data.metadata?.surface_type || 'raster';
 
-        if (surface_type === 'dem' || surface_type === 'dem-building') {
+        if (surface_type === 'dem' || surface_type === 'dem-building---') {
             let dem_sources = {
                 ['hipso_' + id]: {
                     type: 'raster',

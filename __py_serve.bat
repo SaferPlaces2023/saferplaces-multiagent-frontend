@@ -1,1 +1,1 @@
-py -m http.server 8000 --directory public
+py -m http.server 8001 --directory public

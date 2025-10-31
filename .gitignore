@@ -12,3 +12,7 @@ modern.jsonp
 resources/sass/.sass-cache/
 resources/.arch-internal-preview.css
 .arch-internal-preview.css
+__run_ngrock-host.bat
+nginx.local.conf
+docker-compose.local.yml
+Dockerfile.local
