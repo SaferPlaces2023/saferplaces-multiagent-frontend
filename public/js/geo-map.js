@@ -46,6 +46,7 @@ const GeoMap = (() => {
                     0, 1, 10, 1, 12, 0
                 ]
             });
+            add_3d_buildings();
         });
 
         // UI: select stile + reset
@@ -54,7 +55,7 @@ const GeoMap = (() => {
 
         map.on('load', () => {
             // Aggiungi edifici 3D
-            add_3d_buildings();
+            // add_3d_buildings();
         });
     }
 
@@ -151,27 +152,36 @@ const GeoMap = (() => {
         // GeoJSON (in EPSG:4326)
         const data = await fetch(renderUrl).then(r => r.json());
         map.addSource(id, { type: 'geojson', data });
-
+        
+        let view = {
+            layout: {
+                visibility: 'none',
+            }
+        }
+            
         map.addLayer({
             id: id + '-fill',
             type: 'fill',
             source: id,
             filter: ['==', ['geometry-type'], 'Polygon'],
-            paint: { 'fill-color': '#6ee7b7', 'fill-opacity': 0.25 }
+            paint: { 'fill-color': '#6ee7b7', 'fill-opacity': 0.25 },
+            ...view
         });
         map.addLayer({
             id: id + '-line',
             type: 'line',
             source: id,
             filter: ['==', ['geometry-type'], 'LineString'],
-            paint: { 'line-color': '#6ee7b7', 'line-width': 2 }
+            paint: { 'line-color': '#6ee7b7', 'line-width': 2 },
+            ...view
         });
         map.addLayer({
             id: id + '-pt',
             type: 'circle',
             source: id,
             filter: ['==', ['geometry-type'], 'Point'],
-            paint: { 'circle-color': '#6ee7b7', 'circle-radius': 4 }
+            paint: { 'circle-color': '#6ee7b7', 'circle-radius': 4 },
+            ...view
         });
 
         reg[id] = { type: 'geojson', url: renderUrl, data };
@@ -213,7 +223,14 @@ const GeoMap = (() => {
         if (!renderUrl) throw new Error('render-layer: render_url mancante');
 
         function getColorMap(render_info) {
-            const colormap = 'BrewerBrBG10';
+            let colormap = 'BrewerBrBG10';
+            if (layer_data.layer_data?.metadata?.surface_type === 'water-depth') {
+                console.log('aaaa')
+                colormap = 'CartoTealGrn';
+                const min = 0//render_info.metadata?.min || 0;
+                const max = 2;
+                return `#color:${colormap},${min},${max},c-`;
+            }
             const min = 0//render_info.metadata?.min || 0;
             const max = render_info.metadata?.max || 1000;
             return `#color:${colormap},${min},${max},c-`;
