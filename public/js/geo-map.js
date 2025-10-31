@@ -256,11 +256,16 @@ const GeoMap = (() => {
                     visibility: 'none',
                 }
             }
+            let paint = {
+                paint: {
+                    'raster-opacity': 0.6,
+                }
+            }
             map.addSource(`hipso_${id}`, dem_sources[`hipso_${id}`]);
             map.addSource(`hillshade_${id}`, dem_sources[`hillshade_${id}`]);
             map.addSource(`terrain_${id}`, dem_sources[`terrain_${id}`]);
-            map.addLayer({ ...dem_layers[0], ...view });
-            map.addLayer({ ...dem_layers[1], ...view });
+            map.addLayer({ ...dem_layers[0], ...view, ...paint });
+            map.addLayer({ ...dem_layers[1], ...view, ...paint });
             map.setTerrain(dem_terrain);
         } else if (surface_type === 'rain-timeseries') {
 
@@ -368,8 +373,13 @@ const GeoMap = (() => {
                     visibility: 'none',
                 }
             }
+            let paint = {
+                paint: {
+                    'raster-opacity': 0.6,
+                }
+            }
             map.addSource(id, cog_source);
-            map.addLayer({ ...cog_layer, ...view, ...layer_data });
+            map.addLayer({ ...cog_layer, ...view, ...paint, ...layer_data });
         }
 
         Toasts.ok(t, `Layer <i>"${layer_data.layer_data.title}"</i> added`);
