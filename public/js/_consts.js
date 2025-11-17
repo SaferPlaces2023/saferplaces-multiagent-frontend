@@ -6,7 +6,7 @@ const Routes = (() => {
         let agent_base = 'agent';
         let ngrock_base = ' https://bdc1201eff1b.ngrok-free.app';
 
-        const BASE = localhost_base
+        const BASE = agent_base
         const NEWTHREAD = `${BASE}/t`;
         const THREAD = (threadId) => `${BASE}/t/${threadId}`;
         const USER = `${BASE}/user`;
