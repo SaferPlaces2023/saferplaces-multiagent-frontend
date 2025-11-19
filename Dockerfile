@@ -8,7 +8,7 @@ COPY public/ /usr/share/nginx/html
 COPY nginx.conf /etc/nginx/conf.d/default.conf
 
 # Nginx ascolta su 80 dentro il container
-EXPOSE 8000
+EXPOSE 80
 
 # L'immagine nginx:alpine usa già un utente non-root ("nginx") a runtime
 # Entrypoint/CMD default sono già corretti
