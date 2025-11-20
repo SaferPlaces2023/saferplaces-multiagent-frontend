@@ -89,7 +89,7 @@ const LayerPanel = (() => {
         lrCancel.onclick = closeRegModal;
         lrConfirm.onclick = () => {
             const title = lrTitle.value.trim();
-            if (!title) { lrError.textContent = 'Compila almeno il titolo.'; lrError.classList.remove('d-none'); return; }
+            if (!title) { lrError.textContent = 'AssignInsert at least the title.'; lrError.classList.remove('d-none'); return; }
             lrError.classList.add('d-none');
 
             // emetti evento “registrazione + add”
@@ -110,7 +110,7 @@ const LayerPanel = (() => {
                 dispatch('layer:add-cog', { layer_data: layer_data });
             } else {
                 console.error('Tipo layer non supportato:', pendingReg.type);
-                lrError.textContent = 'Tipo layer non supportato.';
+                lrError.textContent = 'Layer type is not supported.';
                 lrError.classList.remove('d-none');
                 return;
             }
@@ -145,9 +145,9 @@ const LayerPanel = (() => {
 
     function reloadProjectLayers() {
         const project_id = localStorage.getItem('project_id');
-        if (!project_id) { listWrap.innerHTML = '<div class="text-secondary">Nessun progetto selezionato.</div>'; return; }
+        if (!project_id) { listWrap.innerHTML = '<div class="text-secondary">No selected project.</div>'; return; }
 
-        listWrap.innerHTML = '<span class="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span><span style="color: whitesmoke;">Caricamento layers ...</span>';
+        listWrap.innerHTML = '<span class="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span><span style="color: whitesmoke;">Loading layers ...</span>';
         let thread_id = localStorage.getItem('thread_id');
         // POST
         fetch(Routes.Agent.LAYERS(thread_id), {
@@ -162,13 +162,13 @@ const LayerPanel = (() => {
             })
             .catch(err => {
                 console.error(err);
-                listWrap.innerHTML = '<div class="text-danger">Impossibile caricare i layers.</div>';
+                listWrap.innerHTML = '<div class="text-danger">Loading layers failed.</div>';
             });
     }
 
     function renderLayerList(layers) {
         if (!layers.length) {
-            listWrap.innerHTML = '<div class="text-secondary">Questo progetto non ha ancora layers.</div>';
+            listWrap.innerHTML = '<div class="text-secondary">This project has no layers (yet).</div>';
             return;
         }
         listWrap.innerHTML = '';
@@ -192,7 +192,7 @@ const LayerPanel = (() => {
             layerInfo.innerHTML = `
             <div class="layer-title">${escapeHtml(layer.title || 'Untitled')}</div>
             <div class="small">
-                <span class="layer-toggle">visualizza dettagli</span>
+                <span class="layer-toggle">View details</span>
             </div>`;
 
             const left = document.createElement('div');
@@ -203,13 +203,13 @@ const LayerPanel = (() => {
             const right = document.createElement('div');
             right.className = 'layer-actions d-flex align-items-center gap-1';
             right.innerHTML = `
-            <button class="btn btn-sm btn-outline-light layer-eye" title="Mostra/Nascondi">
+            <button class="btn btn-sm btn-outline-light layer-eye" title="Show/Hide">
                 <span class="material-symbols-outlined">visibility_off</span>
             </button>
             <div class="dropdown">
                 <button class="btn btn-sm btn-outline-light" data-bs-toggle="dropdown" aria-expanded="false">⋯</button>
                 <ul class="dropdown-menu dropdown-menu-dark">
-                    <li><a class="dropdown-item" href="#" data-action="toggle"  data-title="${escapeAttr(layer.title)}">Mostra/Nascondi</a></li>
+                    <li><a class="dropdown-item" href="#" data-action="toggle"  data-title="${escapeAttr(layer.title)}">Show/Hide</a></li>
                     <li><a class="dropdown-item" href="#" data-action="download" data-title="${escapeAttr(layer.title)}">Download</a></li>
                 </ul>
             </div>
@@ -243,7 +243,7 @@ const LayerPanel = (() => {
             const toggleLink = left.querySelector('.layer-toggle');
             toggleLink.addEventListener('click', () => {
                 details.classList.toggle('d-none');
-                toggleLink.textContent = details.classList.contains('d-none') ? 'visualizza dettagli' : 'nascondi dettagli';
+                toggleLink.textContent = details.classList.contains('d-none') ? 'show details' : 'hide details';
             });
 
             // wiring azioni menu

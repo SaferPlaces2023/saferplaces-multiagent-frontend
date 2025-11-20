@@ -68,7 +68,7 @@ const TimeSlider = (() => {
     function setRange(aISO, bISO) {
         start = new Date(aISO);
         end = new Date(bISO);
-        if (!(+start) || !(+end) || end <= start) throw new Error('Range temporale non valido');
+        if (!(+start) || !(+end) || end <= start) throw new Error('Time range not valid');
         startLbl.textContent = fmtDate(start);
         endLbl.textContent = fmtDate(end);
         layoutTicks();

@@ -9,31 +9,31 @@
     <!-- 🔹 Sezione: Layers del progetto -->
     <div class="card p-3 mb-3">
         <div class="d-flex align-items-center justify-content-between mb-2">
-            <span class="text-secondary"><strong>Layers registrati</strong></span>
+            <span class="text-secondary"><strong>Registered layers</strong></span>
             <button id="reloadLayers" class="btn btn-outline-light btn-sm">↻</button>
         </div>
         <div id="projectLayersList" class="layer-list small">
-            <div class="text-secondary">Nessun layer (ancora).</div>
+            <div class="text-secondary">No layers (yet).</div>
         </div>
     </div>
 
     <!-- 🔸 Foldable: Aggiungi vector -->
     <div class="card p-0 mb-3">
         <button class="btn w-100 text-start px-3 py-2 d-flex justify-content-between align-items-center" data-bs-toggle="collapse" data-bs-target="#addVectorWrap" aria-expanded="false">
-            <span class="text-secondary"><strong>Aggiungi vector layer</strong></span>
-            <span class="small text-secondary">apri/chiudi</span>
+            <span class="text-secondary"><strong>Add vector layer</strong></span>
+            <span class="small text-secondary">open/close</span>
         </button>
         <div id="addVectorWrap" class="collapse px-3 pb-3 pt-1">
             
             <label class="form-label small">GeoJSON (URL)</label>
             <div class="input-group input-group-sm mb-2">
                 <input id="geojsonUrl" class="form-control" placeholder="https://…/dati.geojson">
-                <button class="btn btn-outline-light" id="btnGeojson">Aggiungi</button>
+                <button class="btn btn-outline-light" id="btnGeojson">Add</button>
             </div>
             
             <div class="form-check form-switch mb-2">
                 <input class="form-check-input" type="checkbox" id="regSwitchVector" checked>
-                <label class="form-check-label small" for="regSwitchVector">Registra nel progetto</label>
+                <label class="form-check-label small" for="regSwitchVector">Register in project</label>
             </div>
         </div>
     </div>
@@ -41,13 +41,13 @@
     <!-- 🔸 Foldable: Aggiungi raster -->
     <div class="card p-0">
         <button class="btn w-100 text-start px-3 py-2 d-flex justify-content-between align-items-center" data-bs-toggle="collapse" data-bs-target="#addRasterWrap" aria-expanded="false">
-            <span class="text-secondary"><strong>Aggiungi raster layer</strong></span>
-            <span class="small text-secondary">apri/chiudi</span>
+            <span class="text-secondary"><strong>Add raster layer</strong></span>
+            <span class="small text-secondary">open/close</span>
         </button>
         <div id="addRasterWrap" class="collapse px-3 pb-3 pt-1">
             <div class="form-check form-switch mb-2">
                 <input class="form-check-input" type="checkbox" id="regSwitchRaster" checked>
-                <label class="form-check-label small" for="regSwitchRaster">Registra nel progetto</label>
+                <label class="form-check-label small" for="regSwitchRaster">Register in project</label>
             </div>
             
             <label class="form-label small">COG (single band) (URL)</label>
@@ -62,7 +62,7 @@
                     <option>gray</option>
                     <option>terrain</option>
                 </select>
-                <button class="btn btn-outline-light" id="btnCog">Aggiungi</button>
+                <button class="btn btn-outline-light" id="btnCog">Add</button>
             </div>
         </div>
     </div>

@@ -140,7 +140,7 @@ const UserPanel = (() => {
     function renderProjects(projects) {
         projectsWrap.innerHTML = '';
         if (!projects.length) {
-            projectsWrap.innerHTML = '<div class="text-secondary small">Nessun altro progetto</div>';
+            projectsWrap.innerHTML = '<div class="text-secondary small">No other projects</div>';
             return;
         }
         for (const p of projects) {
@@ -151,8 +151,8 @@ const UserPanel = (() => {
         <div class="dropdown">
           <button class="btn btn-sm btn-outline-light" data-bs-toggle="dropdown" aria-expanded="false">⋯</button>
           <ul class="dropdown-menu dropdown-menu-dark">
-            <li><a class="dropdown-item" href="#" data-action="open" data-project="${p}">Apri</a></li>
-            <li><a class="dropdown-item" href="#" data-action="export" data-project="${p}">Esporta</a></li>
+            <li><a class="dropdown-item" href="#" data-action="open" data-project="${p}">Open</a></li>
+            <li><a class="dropdown-item" href="#" data-action="export" data-project="${p}">Export</a></li>
           </ul>
         </div>
       `;
@@ -175,7 +175,7 @@ const UserPanel = (() => {
         }
         const currentUser = localStorage.getItem(LS_USER);
         if (!currentUser) {
-            showNewProjError('Utente non valido. Riesegui l’accesso.');
+            showNewProjError('Invalid user. Access needed.');
             return;
         }
 
@@ -224,7 +224,7 @@ const UserPanel = (() => {
             })
             .catch(err => {
                 console.error(err);
-                showNewProjError('Creazione non riuscita. Riprova.');
+                showNewProjError('Creation failed. Try again.');
             })
             .finally(() => {
                 newProjCreateBtn.disabled = false;

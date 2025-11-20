@@ -21,7 +21,7 @@ const AIChat = (() => {
             chatBox.classList.toggle('full-height');
             const expanded = chatBox.classList.contains('full-height');
             expandBtn.textContent = expanded ? '⬏' : '⬍'; // cambia icona
-            expandBtn.title = expanded ? 'Riduci altezza' : 'Espandi a tutta altezza';
+            expandBtn.title = expanded ? 'Reduce height' : 'Expand at full height';
         });
         clearBtn.onclick = () => { 
             chatBody.innerHTML = '';
@@ -49,7 +49,7 @@ const AIChat = (() => {
             })
             .catch(err => {
                 console.error(err);
-                Toasts.error(t, 'Errore durante la creazione della chat.');
+                Toasts.error(t, 'Error whil creating new chat.');
             })
         };
 
@@ -66,30 +66,30 @@ const AIChat = (() => {
             let reply = '';
 
             if (/^help$/i.test(cmd)) {
-                reply = "Comandi disponibili:\n" +
-                    "/dark → stile scuro\n" +
-                    "/light → stile chiaro\n" +
-                    "/reset → vista su Roma\n" +
-                    "/clear → cancella chat";
+                reply = "Avaliable commands:\n" +
+                    "/dark → dark style\n" +
+                    "/light → light style\n" +
+                    "/reset → Rome view\n" +
+                    "/clear → Clean the chat";
             }
             else if (/^dark/i.test(cmd)) {
                 dispatch('map:set-style', { styleUrl: 'https://basemaps.cartocdn.com/gl/dark-matter-gl-style/style.json' });
-                reply = '🌓 Stile Dark Matter attivato.';
+                reply = '🌓 Dark Matter style activated.';
             }
             else if (/^light|positron/i.test(cmd)) {
                 dispatch('map:set-style', { styleUrl: 'https://basemaps.cartocdn.com/gl/positron-gl-style/style.json' });
-                reply = '☀️ Stile chiaro (Positron) attivato.';
+                reply = '☀️ Light Matter style activated.';
             }
             else if (/^reset/i.test(cmd)) {
                 dispatch('map:reset', {});
-                reply = '📍 Mappa resettata su Roma/Italia.';
+                reply = '📍 map setted in Rome/Italy.';
             }
             else if (/^clear/i.test(cmd)) {
                 chatBody.innerHTML = '';
-                reply = '🧹 Chat svuotata.';
+                reply = '🧹 Chat is empty.';
             }
             else {
-                reply = `Comando “/${cmd}” non riconosciuto. Scrivi /help per l'elenco.`;
+                reply = `Command “/${cmd}” not recognized. Write /help to see command list.`;
             }
 
             appendBubble(reply, 'ai');
@@ -130,13 +130,13 @@ const AIChat = (() => {
                             appendToolResponse(element);
                             dispatch('layer:reload-project-layers', {});
                         } else {
-                            appendBubble(element.content || '(nessuna risposta)', element.role || 'ai');
+                            appendBubble(element.content || '(no response)', element.role || 'ai');
                         }
                     });
             })
             .catch(err => {
                 hideTyping(typing);
-                appendBubble('Errore contattando l’agente 😢', 'ai');
+                appendBubble('Error contacting the agent 😢. Try send again the message', 'ai');
                 console.error(err);
             });
     }

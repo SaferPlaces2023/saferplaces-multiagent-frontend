@@ -12,13 +12,13 @@
     <div class="auth-card">
         <!-- STEP: USER -->
         <div id="authStepUser">
-            <h6 class="mb-2">Benvenuto 👋</h6>
-            <p class="small text-secondary mb-3">Inserisci il tuo <strong>user_id</strong> per continuare.</p>
+            <h6 class="mb-2">Welcome 👋</h6>
+            <p class="small text-secondary mb-3">Insert your <strong>user_id</strong> to continue.</p>
             <div class="input-group input-group-sm mb-2">
                 <input id="authUserId" class="form-control" placeholder="es. tommaso.r">
-                <button id="authSubmit" class="btn btn-success">Continua</button>
+                <button id="authSubmit" class="btn btn-success">Continue</button>
             </div>
-            <div id="authError" class="small text-danger d-none">Verifica non riuscita. Riprova.</div>
+            <div id="authError" class="small text-danger d-none">Check failed. Try again.</div>
         </div>
 
         <!-- AREA PROGETTO (stessa card) -->
@@ -29,28 +29,28 @@
                 <div id="authModeWrap" class="form-check form-switch d-none">
                     <input class="form-check-input" type="checkbox" id="authModeSwitch">
                     <label class="form-check-label small" for="authModeSwitch">
-                        Nuovo progetto
+                        New Project
                     </label>
                 </div>
             </div>
 
             <!-- Seleziona progetto esistente -->
             <fieldset id="authSectionSelect">
-                <label class="form-label small">Seleziona progetto</label>
+                <label class="form-label small">Select project</label>
                 <select id="authProjectSelect" class="form-select form-select-sm mb-2"></select>
             </fieldset>
 
             <!-- Crea nuovo progetto -->
             <fieldset id="authSectionCreate" disabled>
-                <label class="form-label small">Crea nuovo progetto</label>
+                <label class="form-label small">Create new project</label>
                 <div class="input-group input-group-sm mb-2">
                     <input id="authProjectName" class="form-control" placeholder="es. dev-023">
                 </div>
-                <div id="authProjError" class="small text-danger d-none">Creazione non riuscita.</div>
+                <div id="authProjError" class="small text-danger d-none">Creation failed.</div>
             </fieldset>
 
             <!-- pulsante azione unica -->
-            <button id="authProceed" class="btn btn-success btn-sm w-100 mt-1">Entra</button>
+            <button id="authProceed" class="btn btn-success btn-sm w-100 mt-1">Enter</button>
         </div>
     </div>
 </section>

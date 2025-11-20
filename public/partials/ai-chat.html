@@ -1,21 +1,21 @@
 <!-- Chat AI (DESTRO BASSO) -->
-<section class="chatbox" id="chatBox" aria-label="Chat con assistente AI">
+<section class="chatbox" id="chatBox" aria-label="AI assisted chat">
     <div class="chat-header">
         <div class="d-flex align-items-center gap-2">
             <span class="badge bg-success">AI</span>
-            <span class="chat-title">Assistente geospaziale</span>
+            <span class="chat-title">Saferplaces Agent</span>
         </div>
         <div class="d-flex align-items-center gap-2">
-            <button id="clearChat" class="btn btn-outline-light btn-sm">Pulisci</button>
-            <button id="chatExpandBtn" class="btn btn-outline-light btn-sm" title="Espandi/riduci altezza">⬍</button>
-            <button id="minChat" class="btn btn-secondary btn-sm" title="Riduci/espandi">–</button>
+            <button id="clearChat" class="btn btn-outline-light btn-sm">Clean</button>
+            <button id="chatExpandBtn" class="btn btn-outline-light btn-sm" title="Expand/Reduce height">⬍</button>
+            <button id="minChat" class="btn btn-secondary btn-sm" title="Reduce/Expand">–</button>
         </div>
     </div>
     <div class="chat-body" id="chatBody">
-        <div class="bubble ai">Ciao! Posso aiutarti a caricare dati (GeoJSON, Shapefile, COG) o a cambiare lo stile della mappa.</div>
+        <div class="bubble ai">Welcome! I'm here to help you with geospatial analysis, flood simulations, weather data, and more.<br>If you want details about what I can do, just ask and I'll guide you!.</div>
     </div>
     <div class="chat-input">
-        <input id="chatInput" class="form-control form-control-sm" placeholder="Scrivi un messaggio… (Invio per inviare)">
-        <button id="sendMsg" class="btn btn-success btn-sm fw-semibold">Invia</button>
+        <input id="chatInput" class="form-control form-control-sm" placeholder="Write a message… (Enter to send)">
+        <button id="sendMsg" class="btn btn-success btn-sm fw-semibold">Send</button>
     </div>
 </section>

@@ -4,8 +4,8 @@
 <!-- Pannello UTENTE (sinistra, esclusivo col pannello layer) -->
 <aside class="user-sidebar closed" id="userSidebar">
     <div class="d-flex justify-content-between align-items-center mb-2">
-        <strong>Utente</strong>
-        <button id="logoutBtn" class="btn btn-outline-danger btn-sm">Esci</button>
+        <strong>User</strong>
+        <button id="logoutBtn" class="btn btn-outline-danger btn-sm">Exit</button>
     </div>
 
     <div class="card p-3 mb-3">
@@ -18,24 +18,24 @@
     </div>
 
     <div class="d-flex align-items-center justify-content-between mb-2">
-        <strong>Progetti</strong>
-        <span class="small text-secondary">altri del tuo account</span>
+        <strong>Projects</strong>
+        <span class="small text-secondary">others from your account</span>
     </div>
 
     <!-- Mini sezione: Nuovo progetto -->
     <div class="card p-3 mb-2">
         <div class="d-flex align-items-center justify-content-between">
-            <strong class="me-2 text-secondary">Nuovo progetto</strong>
-            <button id="newProjBtn" class="btn btn-outline-light btn-sm">+ Crea</button>
+            <strong class="me-2 text-secondary">New project</strong>
+            <button id="newProjBtn" class="btn btn-outline-light btn-sm">+ Create</button>
         </div>
 
         <!-- form inline nascosto -->
         <div id="newProjForm" class="mt-2 d-none">
             <div class="input-group input-group-sm mb-2">
                 <input id="newProjName" class="form-control" placeholder="es. dev-023">
-                <button id="newProjCreateBtn" class="btn btn-success">Crea</button>
+                <button id="newProjCreateBtn" class="btn btn-success">Create</button>
             </div>
-            <div id="newProjError" class="small text-danger d-none">Creazione non riuscita.</div>
+            <div id="newProjError" class="small text-danger d-none">Creation failed.</div>
         </div>
     </div>
 

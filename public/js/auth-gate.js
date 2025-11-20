@@ -89,7 +89,7 @@ const AuthGate = (() => {
     // Step: verify user
     async function verifyUser() {
         const userId = (inputUser.value || '').trim();
-        if (!userId) return flash(errorUser, 'Inserisci uno user_id');
+        if (!userId) return flash(errorUser, 'Insert a user_id');
 
         // lock UI
         const prev = btnUser.textContent; btnUser.disabled = true; btnUser.textContent = 'Verifico…'; hide(errorUser);
@@ -110,7 +110,7 @@ const AuthGate = (() => {
             localStorage.setItem(LS_USER, currentUser);
 
             // prepara area progetto
-            userBadge.textContent = `utente: ${currentUser}`;
+            userBadge.textContent = `User: ${currentUser}`;
             buildProjectsUI(Array.isArray(data.projects) ? data.projects : []);
 
             let cardTopAfter = document.querySelector('.auth-card').getBoundingClientRect().top;
@@ -118,7 +118,7 @@ const AuthGate = (() => {
 
         } catch (e) {
             console.error(e);
-            flash(errorUser, 'Verifica non riuscita. Controlla lo user_id.');
+            flash(errorUser, 'Check failed. Check user_id.');
         } finally {
             btnUser.disabled = false; btnUser.textContent = prev;
         }
@@ -155,7 +155,7 @@ const AuthGate = (() => {
         sectionSelect.disabled = isCreate;
         sectionCreate.disabled = !isCreate;
 
-        btnProceed.textContent = isCreate ? 'Crea e entra' : 'Entra';
+        btnProceed.textContent = isCreate ? 'Create and enter' : 'Enter';
         hide(errorProj);
 
         if (isCreate) setTimeout(() => inputProjectName?.focus(), 50);
@@ -192,7 +192,7 @@ const AuthGate = (() => {
             })
             .catch(err => {
                 console.error(err);
-                flash(errorProj, 'Impossibile caricare il progetto. Riprova.');
+                flash(errorProj, 'Project loading is failed. Try again.');
             })
             .finally(() => {
                 btnProceed.disabled = false;
@@ -208,7 +208,7 @@ const AuthGate = (() => {
             if (!project) return;
         } else {
             const name = (inputProjectName.value || '').trim();
-            if (!name) return flash(errorProj, 'Inserisci un nome progetto');
+            if (!name) return flash(errorProj, 'Insert a project name');
             project = name;
         }
 
@@ -217,14 +217,14 @@ const AuthGate = (() => {
         btnProceed.disabled = true;
         btnProceed.innerHTML = `
             <span class="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>
-            caricamento progetto...
+            Project loading...
         `;
 
         try {
             load_user_project(currentUser, project);
         } catch (e) {
             console.error(e);
-            flash(errorProj, 'Operazione non riuscita.');
+            flash(errorProj, 'Operation failed.');
         } finally { }
     }
 
