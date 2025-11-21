@@ -121,17 +121,18 @@ const GeoMap = (() => {
         console.log('addVectorLayer', layer_data);
 
         // !!!: Handle error otherwise will spin forever
-        const t = Toasts.show(`Adding layer <i>"${layer_data.layer_data.title + '"</i>'} ...`); // spinner + messaggio
-
-        if (map.getStyle().layers.some(l => l.id === layer_data.id)) {
+        
+        const id = btoa(layer_data.layer_data.src)
+        
+        if (map.getStyle().layers.some(l => l.id.includes(id))) {
             // !!!: use contains id not strict equality
             // !!!: move this into if case add as id can be inside multiple layers with prefixes (see below)
             console.warn('Layer already exists:', layer_data.id);
-            Toasts.ok(t, `Layer <i>"${layer_data.layer_data.title}"</i> added`);
             return
         }
+        
+        const t = Toasts.show(`Adding layer <i>"${layer_data.layer_data.title + '"</i>'} ...`); // spinner + messaggio
 
-        const id = btoa(layer_data.layer_data.src) //uid('vec');
         // 1) chiedi al backend l'URL “render-ready”
 
         let thread_id = localStorage.getItem('thread_id');
@@ -197,17 +198,17 @@ const GeoMap = (() => {
         console.log('addCOG', layer_data);
 
         // !!!: Handle error otherwise will spin forever
-        const t = Toasts.show(`Adding layer <i>"${layer_data.layer_data.title + '"</i>'} ...`); // spinner + messaggio
-
-        if (map.getStyle().layers.some(l => l.id === layer_data.layer_data.id)) {
+        const id = btoa(layer_data.layer_data.src)
+        
+        if (map.getStyle().layers.some(l => l.id.includes(id))) {
             // !!!: use contains id not strict equality
             // !!!: move this into if case add as id can be inside multiple layers with prefixes (see below)
             console.warn('Layer already exists:', layer_data.layer_data.id);
-            Toasts.ok(t, `Layer <i>"${layer_data.layer_data.title}"</i> added`);
             return
         }
+        
+        const t = Toasts.show(`Adding layer <i>"${layer_data.layer_data.title + '"</i>'} ...`); // spinner + messaggio
 
-        const id = btoa(layer_data.layer_data.src)
 
         let thread_id = localStorage.getItem('thread_id');
         // const res = await fetch(`http://localhost:5000/t/${thread_id}/render`, {
@@ -225,7 +226,6 @@ const GeoMap = (() => {
         function getColorMap(render_info) {
             let colormap = 'BrewerBrBG10';
             if (layer_data.layer_data?.metadata?.surface_type === 'water-depth') {
-                console.log('aaaa')
                 colormap = 'CartoTealGrn';
                 const min = 0//render_info.metadata?.min || 0;
                 const max = 2;
