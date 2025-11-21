@@ -2,11 +2,12 @@ const Routes = (() => {
 
     const Agent = (() => {
 
+        let flask_base = '';
         let localhost_base = 'http://localhost:5000';
         let agent_base = 'agent';
         let ngrock_base = ' https://bdc1201eff1b.ngrok-free.app';
 
-        const BASE = agent_base
+        const BASE = flask_base
         const NEWTHREAD = `${BASE}/t`;
         const THREAD = (threadId) => `${BASE}/t/${threadId}`;
         const USER = `${BASE}/user`;

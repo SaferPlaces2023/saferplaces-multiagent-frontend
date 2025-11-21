@@ -15,16 +15,16 @@
 
 
     <!-- App CSS -->
-    <link href="css/base.css" rel="stylesheet">
-    <link href="css/index.css" rel="stylesheet">
-    <link href="css/auth-gate.css" rel="stylesheet">
-    <link href="css/geo-map.css" rel="stylesheet">
-    <link href="css/layer-panel.css" rel="stylesheet">
-    <link href="css/layer-register.css" rel="stylesheet">
-    <link href="css/user-panel.css" rel="stylesheet">
-    <link href="css/toasts.css" rel="stylesheet">
-    <link href="css/ai-chat.css" rel="stylesheet">
-    <link href="css/time-slider.css" rel="stylesheet">
+    <link href="public/css/base.css" rel="stylesheet">
+    <link href="public/css/index.css" rel="stylesheet">
+    <link href="public/css/auth-gate.css" rel="stylesheet">
+    <link href="public/css/geo-map.css" rel="stylesheet">
+    <link href="public/css/layer-panel.css" rel="stylesheet">
+    <link href="public/css/layer-register.css" rel="stylesheet">
+    <link href="public/css/user-panel.css" rel="stylesheet">
+    <link href="public/css/toasts.css" rel="stylesheet">
+    <link href="public/css/ai-chat.css" rel="stylesheet">
+    <link href="public/css/time-slider.css" rel="stylesheet">
 </head>
 
 <body class="bg-dark text-light">
@@ -32,7 +32,7 @@
     <div id="authGateLogo2" class="d-flex row align-items-center logo-container2">
         <div class="morph-pro2">
             <!-- <img class="logo" src="/imgs/SaferPlacesLogoInv.png" alt="Logo" /> -->
-            <img class="logo2" src="/imgs/SaferPlacesLogo.png" alt="Logo" />
+            <img class="logo2" src="public/imgs/SaferPlacesLogo.png" alt="Logo" />
             <!-- <img class="logo" src="/imgs/SaferPlacesLogoBW.png" alt="Logo" /> -->
             <!-- <img class="logo" src="/imgs/SaferPlacesLogoMask.png" alt="Logo" /> -->
         </div>
@@ -41,15 +41,15 @@
 
     <!-- Placeholder dei parziali -->
     <div id="appRoot">
-        <div data-include="partials/geo-map.html"></div>
-        <div data-include="partials/user-panel.html"></div>
-        <div data-include="partials/layer-panel.html"></div>
-        <div data-include="partials/layer-register.html"></div>
-        <div data-include="partials/ai-chat.html"></div>
-        <div data-include="partials/time-slider.html"></div>
+        <div data-include="public/partials/geo-map.html"></div>
+        <div data-include="public/partials/user-panel.html"></div>
+        <div data-include="public/partials/layer-panel.html"></div>
+        <div data-include="public/partials/layer-register.html"></div>
+        <div data-include="public/partials/ai-chat.html"></div>
+        <div data-include="public/partials/time-slider.html"></div>
     </div>
     <!-- Autenticazione -->
-    <div data-include="partials/auth-gate.html"></div>
+    <div data-include="public/partials/auth-gate.html"></div>
 
     <!-- Toast stack (bottom-center) -->
     <div id="toastStack" aria-live="polite" aria-atomic="true"></div>
@@ -62,15 +62,15 @@
     <script src="https://cdn.jsdelivr.net/npm/marked@12.0.2/marked.min.js"></script>
 
     <!-- App JS -->
-    <script src="js/_consts.js"></script>
-    <script src="js/geo-map.js"></script>
-    <script src="js/user-panel.js"></script>
-    <script src="js/layer-panel.js"></script>
-    <script src="js/ai-chat.js"></script>
-    <script src="js/auth-gate.js"></script>
-    <script src="js/time-slider.js"></script>
-    <script src="js/toasts.js"></script>
-    <script src="js/app.js"></script>
+    <script src="public/js/_consts.js"></script>
+    <script src="public/js/geo-map.js"></script>
+    <script src="public/js/user-panel.js"></script>
+    <script src="public/js/layer-panel.js"></script>
+    <script src="public/js/ai-chat.js"></script>
+    <script src="public/js/auth-gate.js"></script>
+    <script src="public/js/time-slider.js"></script>
+    <script src="public/js/toasts.js"></script>
+    <script src="public/js/app.js"></script>
 </body>
 
 </html>
