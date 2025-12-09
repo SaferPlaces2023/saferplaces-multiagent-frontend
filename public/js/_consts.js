@@ -14,7 +14,12 @@ const Routes = (() => {
         const LAYERS = (threadId) => `${THREAD(threadId)}/layers`;
         const RENDER = (threadId) => `${THREAD(threadId)}/render`;
 
-        return { BASE, NEWTHREAD, THREAD, USER, LAYERS, RENDER };
+        const LAYER_URL = `${BASE}/get-layer-url`;
+
+        return { 
+            BASE, NEWTHREAD, THREAD, USER, LAYERS, RENDER,
+            LAYER_URL
+        };
     })();
 
     return { Agent };

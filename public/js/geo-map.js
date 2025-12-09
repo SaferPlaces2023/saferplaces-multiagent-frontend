@@ -7,11 +7,11 @@ const GeoMap = (() => {
 
     const surfaceColorscalesMap = {
         'rain-timeseries': MaplibreCOGProtocol.colorScale({
-            colorScheme: 'BrewerRdYlBu10', 
+            colorScheme: 'BrewerRdYlBu10',
             min: 0, // layer_data.layer_data.metadata.min, 
             max: 50, //layer_data.layer_data.metadata.max, 
-            isContinuous: true, 
-            isReverse: true 
+            isContinuous: true,
+            isReverse: true
         })
     }
 
@@ -105,32 +105,48 @@ const GeoMap = (() => {
         );
     }
 
-    // async function addGeoJSON(url) {
-    //     const id = uid('geojson');
-    //     const data = await fetch(url).then(r => r.json());
-    //     reg[id] = { type: 'geojson', data };
-    //     map.addSource(id, { type: 'geojson', data });
-    //     map.addLayer({ id: id + 'fill', type: 'fill', source: id, filter: ['==', ['geometry-type'], 'Polygon'], paint: { 'fill-color': '#6ee7b7', 'fill-opacity': 0.25 } });
-    //     map.addLayer({ id: id + 'line', type: 'line', source: id, filter: ['==', ['geometry-type'], 'LineString'], paint: { 'line-color': '#6ee7b7', 'line-width': 2 } });
-    //     map.addLayer({ id: id + 'pt', type: 'circle', source: id, filter: ['==', ['geometry-type'], 'Point'], paint: { 'circle-color': '#6ee7b7', 'circle-radius': 4 } });
 
-    //     customLayerIds.add(id);
-    //     dispatch('layer:added', { id, type: 'geojson' });
-    // }
+    function zoomToBounds(bbox, padding = 20, duration = 1500) {
+        console.log("zoomToBounds", bbox);
+
+        const targetSW = [bbox[0], bbox[1]];
+        const targetNE = [bbox[2], bbox[3]];
+
+        // Bounds attuali della mappa
+        const current = map.getBounds();
+        const curSW = current.getSouthWest();
+        const curNE = current.getNorthEast();
+
+        // Verifica se la view corrente è interamente dentro la target bbox
+        const isInside =
+            curSW.lng >= targetSW[0] &&
+            curSW.lat >= targetSW[1] &&
+            curNE.lng <= targetNE[0] &&
+            curNE.lat <= targetNE[1];
+
+        if (!isInside) {
+            map.fitBounds([targetSW, targetNE], {
+                padding,
+                duration
+            });
+        }
+    }
+
+
     async function addVectorLayer(layer_data) {
         console.log('addVectorLayer', layer_data);
 
         // !!!: Handle error otherwise will spin forever
-        
+
         const id = btoa(layer_data.layer_data.src)
-        
+
         if (map.getStyle().layers.some(l => l.id.includes(id))) {
             // !!!: use contains id not strict equality
             // !!!: move this into if case add as id can be inside multiple layers with prefixes (see below)
             console.warn('Layer already exists:', layer_data.id);
             return
         }
-        
+
         const t = Toasts.show(`Adding layer <i>"${layer_data.layer_data.title + '"</i>'} ...`); // spinner + messaggio
 
         // 1) chiedi al backend l'URL “render-ready”
@@ -153,13 +169,13 @@ const GeoMap = (() => {
         // GeoJSON (in EPSG:4326)
         const data = await fetch(renderUrl).then(r => r.json());
         map.addSource(id, { type: 'geojson', data });
-        
+
         let view = {
             layout: {
                 visibility: 'none',
             }
         }
-            
+
         map.addLayer({
             id: id + '-fill',
             type: 'fill',
@@ -191,22 +207,25 @@ const GeoMap = (() => {
 
         Toasts.ok(t, `Layer <i>"${layer_data.layer_data.title}"</i> added`);
 
+        zoomToBounds((bboxObj => [bboxObj.minx, bboxObj.miny, bboxObj.maxx, bboxObj.maxy])(info.metadata['bounding-box-wgs84']));
+
         return id;
     }
+
 
     async function addCOG(layer_data, view_params = {}) {
         console.log('addCOG', layer_data);
 
         // !!!: Handle error otherwise will spin forever
         const id = btoa(layer_data.layer_data.src)
-        
+
         if (map.getStyle().layers.some(l => l.id.includes(id))) {
             // !!!: use contains id not strict equality
             // !!!: move this into if case add as id can be inside multiple layers with prefixes (see below)
             console.warn('Layer already exists:', layer_data.layer_data.id);
             return
         }
-        
+
         const t = Toasts.show(`Adding layer <i>"${layer_data.layer_data.title + '"</i>'} ...`); // spinner + messaggio
 
 
@@ -275,14 +294,14 @@ const GeoMap = (() => {
             }
             let paint = {
                 paint: {
-                    'raster-opacity': 0.6,
+                    'raster-opacity': 0.6,  // DOC: Only valid for 'type'='raster' (e.g. invalid for 'hillshade')
                 }
             }
             map.addSource(`hipso_${id}`, dem_sources[`hipso_${id}`]);
             map.addSource(`hillshade_${id}`, dem_sources[`hillshade_${id}`]);
             map.addSource(`terrain_${id}`, dem_sources[`terrain_${id}`]);
             map.addLayer({ ...dem_layers[0], ...view, ...paint });
-            map.addLayer({ ...dem_layers[1], ...view, ...paint });
+            map.addLayer({ ...dem_layers[1], ...view });
             map.setTerrain(dem_terrain);
         } else if (surface_type === 'rain-timeseries') {
 
@@ -320,13 +339,13 @@ const GeoMap = (() => {
                     cog_layer
                 }));
                 TimeSlider.setRange(
-                    new Date(dStart.setUTCHours(0,0,0,0)).toISOString(),
-                    new Date(new Date(dEnd.setDate(dEnd.getUTCDate()+1)).setUTCHours(0,0,0,0)).toISOString()
+                    new Date(dStart.setUTCHours(0, 0, 0, 0)).toISOString(),
+                    new Date(new Date(dEnd.setDate(dEnd.getUTCDate() + 1)).setUTCHours(0, 0, 0, 0)).toISOString()
                 )
-                let interval = { 
+                let interval = {
                     start: tStart,
                     end: tEnd,
-                    label: layer_data.layer_data.title, 
+                    label: layer_data.layer_data.title,
                     // color: '#6ee7b7' 
                 }
                 TimeSlider.setIntervals([interval]);
@@ -334,45 +353,6 @@ const GeoMap = (() => {
                 console.error('Error setting time slider intervals:', e);
                 Toasts.error(t, `Error setting time slider intervals: ${e.message}`);
             }
-
-
-
-            // let b = 0;
-            // let n_bands = layer_data.layer_data.metadata.n_bands
-
-            // const colorScale = MaplibreCOGProtocol.colorScale({
-            //     colorScheme: 'BrewerRdYlBu10', 
-            //     min: 0, // layer_data.layer_data.metadata.min, 
-            //     max: 50, //layer_data.layer_data.metadata.max, 
-            //     isContinuous: true, 
-            //     isReverse: true 
-            // });
-
-            // function showBand(band) {
-            //     MaplibreCOGProtocol.setColorFunction(renderUrl, (pixel, color, metadata) => {
-            //         const value = pixel[band];
-            //         if (value === metadata.noData) {
-            //             color[3] = 0;
-            //         } else {
-            //             const [r, g, b] = colorScale(value * metadata.scale + metadata.offset);
-            //             color[0] = r;
-            //             color[1] = g;
-            //             color[2] = b;
-            //             color[3] = value > 0 ? 224 : 50
-            //         }
-            //     });
-            // }
-            // setInterval(() => {
-            //     // !!!: check every 0.1s it's quite unefficient (bisogna trovare il modo di abilitare o non abilitare) ... however, it works fast
-            //     if (isLayerVisible(id)) {
-            //         b = (b + 1) % n_bands;
-            //         showBand(b);
-            //         if (map.getLayer(id)) {
-            //             map.removeLayer(id);
-            //             map.addLayer({...cog_layer, ...{ layout: { visibility: 'visible' } }});
-            //         }
-            //     }
-            // }, 300);
 
         } else {
             let cog_source = {
@@ -400,9 +380,13 @@ const GeoMap = (() => {
         }
 
         Toasts.ok(t, `Layer <i>"${layer_data.layer_data.title}"</i> added`);
+
+        LayerPanel.sidebarOpen();
+
+        zoomToBounds((bboxObj => [bboxObj.minx, bboxObj.miny, bboxObj.maxx, bboxObj.maxy])(layer_data.layer_data.metadata['bounding-box-wgs84']));
     }
 
-    
+
     function renderTimestampRasters(timestamp) {
         TimeSlider.getTimestampItems(timestamp, 'raster-band').forEach(item => {
             let layer_id = item.layer_id;
@@ -425,7 +409,7 @@ const GeoMap = (() => {
                     }
                 });
                 map.removeLayer(layer_id);
-                map.addLayer({...cog_layer, ...{ layout: { visibility: 'visible' } }});
+                map.addLayer({ ...cog_layer, ...{ layout: { visibility: 'visible' } } });
             }
         })
     }
@@ -436,9 +420,13 @@ const GeoMap = (() => {
     }
 
     function toggleLayerMapVisibility(layer_data) {
+        console.log('toggleLayerMapVisibility', layer_data);
         map.getStyle().layers.filter(l => l.id.includes(layer_data.id)).forEach(l => {
             const visibility = map.getLayoutProperty(l.id, 'visibility');
             map.setLayoutProperty(l.id, 'visibility', visibility === 'visible' ? 'none' : 'visible');
+            if (map.getLayoutProperty(l.id, 'visibility') === 'visible' && layer_data.metadata?.['bounding-box-wgs84']) {
+                zoomToBounds((bboxObj => [bboxObj.minx, bboxObj.miny, bboxObj.maxx, bboxObj.maxy])(layer_data.metadata['bounding-box-wgs84']));
+            }
         });
     }
 

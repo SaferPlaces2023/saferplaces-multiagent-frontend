@@ -17,9 +17,6 @@ const LayerPanel = (() => {
     let lrConfirm;
     let lrError;
 
-    // endpoint demo: adattalo al tuo backend
-    // const ENDPOINT_LAYERS = 'http://localhost:5000/layers'; // GET/POST ?project_id=...
-
     function init() {
         sidebar = document.getElementById('sidebar');
         badge = document.getElementById('layerCount');
@@ -29,12 +26,6 @@ const LayerPanel = (() => {
 
         document.getElementById('toggleBtn').onclick = () => sidebar.classList.toggle('closed');
 
-        // Bottoni add layer (vector/raster)
-        // document.getElementById('btnGeojson').onclick = () => {
-        //     const url = document.getElementById('geojsonUrl').value.trim();
-        //     if (!url) return;
-        //     dispatch('layer:add-geojson', { url });
-        // };
         // Vector: GeoJSON
         document.getElementById('btnGeojson').onclick = () => {
             const url = document.getElementById('geojsonUrl').value.trim();
@@ -45,20 +36,7 @@ const LayerPanel = (() => {
             else dispatch('layer:add-geojson', { layer_data: { ...base_layer_data, register: false } });
         };
 
-        // TODO: Shapefiles will be handled like geojson (vector)
-        // document.getElementById('btnShp').onclick = () => {
-        //     const url = document.getElementById('shpUrl').value.trim();
-        //     if (!url) return;
-        //     dispatch('layer:add-shp', { url });
-        // };
-
-        // document.getElementById('btnCog').onclick = () => {
-        //     const url = document.getElementById('cogUrl').value.trim();
-        //     if (!url) return;
-        //     const colormap = document.getElementById('cmap').value;
-        //     const opacity = document.getElementById('rasterOpacity').value;
-        //     dispatch('layer:add-cog', { url, colormap, opacity });
-        // };
+        // Raster: COG
         document.getElementById('btnCog').onclick = () => {
             const url = document.getElementById('cogUrl').value.trim();
             if (!url) return;
@@ -92,8 +70,6 @@ const LayerPanel = (() => {
             if (!title) { lrError.textContent = 'AssignInsert at least the title.'; lrError.classList.remove('d-none'); return; }
             lrError.classList.add('d-none');
 
-            // emetti evento “registrazione + add”
-            // puoi usare due step backend: 1) registra metadati 2) render-layer -> qui emettiamo un unico evento “intent”
             const layer_data = {
                 src: pendingReg.src,
                 title: title,
@@ -119,6 +95,19 @@ const LayerPanel = (() => {
         };
     }
 
+
+    function sidebarOpen() {
+        if (sidebar.classList.contains('closed')) {
+            sidebar.classList.remove('closed');
+        }
+    }
+    function sidebarClose() {
+        if (!sidebar.classList.contains('closed')) {
+            sidebar.classList.add('closed');
+        }
+    }
+
+
     let pendingReg = null;
 
     function openRegModal(payload) {
@@ -131,7 +120,7 @@ const LayerPanel = (() => {
         regModal.classList.remove('hidden');
         setTimeout(() => lrTitle.focus(), 30);
 
-        document.getElementById("lrDesc").addEventListener("input", function() {
+        document.getElementById("lrDesc").addEventListener("input", function () {
             this.style.height = "auto";
             this.style.height = this.scrollHeight + "px";
         });
@@ -178,8 +167,8 @@ const LayerPanel = (() => {
             item.className = 'layer-item';
             item.setAttribute('draggable', 'true');
             item.dataset.layerKey = btoa(layer.src)
-            item.dataset.layerData = JSON.stringify({...layer, ...{id: item.dataset.layerKey}}); // per passare dati al backend se serve
-            
+            item.dataset.layerData = JSON.stringify({ ...layer, ...{ id: item.dataset.layerKey } }); // per passare dati al backend se serve
+
             // header riga
             const row = document.createElement('div');
             row.className = 'layer-row';
@@ -209,7 +198,7 @@ const LayerPanel = (() => {
             <div class="dropdown">
                 <button class="btn btn-sm btn-outline-light" data-bs-toggle="dropdown" aria-expanded="false">⋯</button>
                 <ul class="dropdown-menu dropdown-menu-dark">
-                    <li><a class="dropdown-item" href="#" data-action="toggle"  data-title="${escapeAttr(layer.title)}">Show/Hide</a></li>
+                    <!-- <li><a class="dropdown-item" href="#" data-action="toggle"  data-title="${escapeAttr(layer.title)}">Show/Hide</a></li> -->
                     <li><a class="dropdown-item" href="#" data-action="download" data-title="${escapeAttr(layer.title)}">Download</a></li>
                 </ul>
             </div>
@@ -217,10 +206,13 @@ const LayerPanel = (() => {
 
             right.querySelector('.layer-eye').addEventListener('click', () => {
                 // toggle visibilità layer nella mappa
-                dispatch('map:toggle-layer-visibility', JSON.parse(item.dataset.layerData) )
+                dispatch('map:toggle-layer-visibility', JSON.parse(item.dataset.layerData))
 
-                right.querySelector('.layer-eye span').textContent = right.querySelector('.layer-eye span').textContent === 'visibility' ? 'visibility_off' : 'visibility';                
+                right.querySelector('.layer-eye span').textContent = right.querySelector('.layer-eye span').textContent === 'visibility' ? 'visibility_off' : 'visibility';
             });
+            right.querySelector('[data-action="download"]').addEventListener('click', () => {
+                downloadLayer(JSON.parse(item.dataset.layerData));
+            })
 
 
             // row.appendChild(dragHandle);
@@ -335,11 +327,53 @@ const LayerPanel = (() => {
         document.dispatchEvent(new CustomEvent('layers:reordered', { detail: { order } }));
     }
 
+    function downloadLayer(layer_data) {
+
+        console.log('downloadLayer', layer_data);
+
+        function download(url, filename = null) {
+            fetch(url)
+            .then(res => res.blob())
+            .then(blob => {
+                const a = document.createElement('a');
+                a.href = URL.createObjectURL(blob);
+                a.download = filename || url.split('/').pop();
+                a.click();
+                URL.revokeObjectURL(a.href);
+            });
+        }
+
+        const url = layer_data.metadata?.download_url
+        if (!url) {
+            // post with src as payload
+            fetch(Routes.Agent.LAYER_URL, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ src: layer_data.src })
+            })
+            .then(res => res.json())
+            .then(data => {
+                if (data?.download_url) {
+                    console.log('Download URL:', data.download_url);
+                    download(data.download_url);
+                } else {
+                    console.error('No download URL provided by backend');
+                }
+            })
+            .catch(err => {
+                console.error('Error fetching download URL:', err);
+            });
+        } else {
+            download(url);
+        }
+        
+    }
+
     function dispatch(name, detail) { document.dispatchEvent(new CustomEvent(name, { detail })); }
 
     // helpers XSS-safe
     function escapeHtml(s) { return String(s).replace(/[&<>"']/g, m => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[m])); }
     function escapeAttr(s) { return escapeHtml(s).replace(/"/g, '&quot;'); }
 
-    return { init, reloadProjectLayers, listWrap };
+    return { init, reloadProjectLayers, listWrap, sidebarOpen, sidebarClose };
 })();
