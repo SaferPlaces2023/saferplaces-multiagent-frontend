@@ -49,7 +49,7 @@ const AIChat = (() => {
             })
             .catch(err => {
                 console.error(err);
-                Toasts.error(t, 'Error whil creating new chat.');
+                Toasts.error(t, 'Error while creating new chat.');
             })
         };
 
