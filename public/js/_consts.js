@@ -11,13 +11,14 @@ const Routes = (() => {
         const NEWTHREAD = `${BASE}/t`;
         const THREAD = (threadId) => `${BASE}/t/${threadId}`;
         const USER = `${BASE}/user`;
+        const STATE = (threadId) => `${THREAD(threadId)}/state`;
         const LAYERS = (threadId) => `${THREAD(threadId)}/layers`;
         const RENDER = (threadId) => `${THREAD(threadId)}/render`;
 
         const LAYER_URL = `${BASE}/get-layer-url`;
 
         return { 
-            BASE, NEWTHREAD, THREAD, USER, LAYERS, RENDER,
+            BASE, NEWTHREAD, THREAD, USER, STATE, LAYERS, RENDER,
             LAYER_URL
         };
     })();

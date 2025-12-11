@@ -1,0 +1,173 @@
+<!-- partials/chat-settings.html -->
+<section id="chatSettings" class="cs-card closed">
+    <!-- Sezione 1: Available tools -->
+
+
+    <div class="card cs-section">
+        <button class="btn w-100 text-start px-3 py-2 d-flex justify-content-between align-items-center" data-bs-toggle="collapse" data-bs-target="#csTools" aria-expanded="true">
+            <span><strong>Available tools</strong></span>
+            <span class="small text-secondary">open/close</span>
+        </button>
+
+        <div id="csTools" class="collapse">
+            <div class="p-3 pt-2">
+                <!-- Safer Places API Tools -->
+                <div class="cs-group mb-2">
+                    <div class="d-flex align-items-center justify-content-between">
+                        <div>
+                            <div class="fw-semibold d-flex col-12 align-items-center">
+                                SaferPlaces API tools
+                                <span class="tooltip-icon-wrapper ms-2 d-flex col align-items-center">
+                                    <span class="material-symbols-outlined fs-5 settings-info" data-tooltip-id="SaferPlacesApiToolsTooltip">info</span>
+                                </span>
+                            </div>
+                            <div class="small text-secondary">Models and simulations</div>
+                        </div>
+                        <div class="form-check form-switch m-0">
+                            <input class="form-check-input available-tools-switch" type="checkbox" id="csSaferPlacesAll" checked>
+                            <label class="form-check-label small" for="csSaferPlacesAll">Enable</label>
+                        </div>
+                    </div>
+
+                    <div>
+                        <!-- <button class="btn btn-sm btn-light" data-bs-toggle="collapse" data-bs-target="#csSaferPlacesList" aria-expanded="false">Dettagli</button> -->
+                        <span class="small text-secondary open-details fw-bold" data-bs-toggle="collapse" data-bs-target="#csSaferPlacesList">View details</span>
+                        <div id="csSaferPlacesList" class="collapse mt-2">
+                            <div class="row g-2">
+                                <div class="col-12">
+                                    <div class="form-check form-switch">
+                                        <input class="form-check-input cs-sub cs-sp" type="checkbox" id="tool_sp_digital_twin" checked data-key="sp:digital_twin" data-tool-name="digital_twin_tool">
+                                        <div class="d-flex col align-items-center">
+                                            <label class="form-check-label" for="tool_sp_digital_twin">Digital-Twin tool</label>
+                                            <span class="tooltip-icon-wrapper ms-2 d-flex col align-items-center">
+                                                <span class="material-symbols-outlined fs-5 settings-info" data-tooltip-id="DigitalTwinToolTooltip">info</span>
+                                            </span>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="col-12">
+                                    <div class="form-check form-switch">
+                                        <input class="form-check-input cs-sub cs-sp" type="checkbox" id="tool_sp_saferrain" checked data-key="sp:saferrain" data-tool-name="safer_rain_tool">
+                                        <div class="d-flex col align-items-center">
+                                            <label class="form-check-label" for="tool_sp_saferrain">Safer-Rain tool</label>
+                                            <span class="tooltip-icon-wrapper ms-2 d-flex col align-items-center">
+                                                <span class="material-symbols-outlined fs-5 settings-info" data-tooltip-id="SaferRainToolTooltip">info</span>
+                                            </span>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="col-12">
+                                    <div class="form-check form-switch">
+                                        <input class="form-check-input cs-sub cs-sp" type="checkbox" id="tool_sp_saferbuildings" checked data-key="sp:saferrain" data-tool-name="saferbuildings_tool">
+                                        <div class="d-flex col align-items-center">
+                                            <label class="form-check-label" for="tool_sp_saferbuildings">Safer-Buildings tool</label>
+                                            <span class="tooltip-icon-wrapper ms-2 d-flex col align-items-center">
+                                                <span class="material-symbols-outlined fs-5 settings-info" data-tooltip-id="SaferBuildingsToolTooltip">info</span>
+                                            </span>
+                                        </div>
+                                    </div>
+                                </div>
+                                <!-- aggiungi altri tool SP se servono -->
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Safer Cast API Tools -->
+                <div class="cs-group mb-2">
+                    <div class="d-flex align-items-center justify-content-between">
+                        <div>
+                            <div class="fw-semibold d-flex col align-items-center">
+                                SaferCast API Tools
+                                <span class="tooltip-icon-wrapper ms-2 d-flex col align-items-center">
+                                    <span class="material-symbols-outlined fs-5 settings-info" data-tooltip-id="SaferCastApiToolsTooltip">info</span>
+                                </span>
+                            </div>
+                            <!-- <div class="small text-secondary">Whole family or single tool</div> -->
+                            <div class="small text-secondary">Historic and forecast data retrieval</div>
+                        </div>
+                        <div class="form-check form-switch m-0">
+                            <input class="form-check-input" type="checkbox" id="csSaferCastAll" checked>
+                            <label class="form-check-label small" for="csSaferCastAll">Enable</label>
+                        </div>
+                    </div>
+
+                    <div>
+                        <!-- <button class="btn btn-sm btn-outline-light" data-bs-toggle="collapse" data-bs-target="#csSaferCastList" aria-expanded="false">Dettagli</button> -->
+                        <span class="small text-secondary open-details fw-bold" data-bs-toggle="collapse" data-bs-target="#csSaferCastList">View details</span>
+                        <div id="csSaferCastList" class="collapse mt-2">
+                            <div class="row g-2">
+                                <div class="col-12">
+                                    <div class="form-check form-switch">
+                                        <input class="form-check-input cs-sub cs-sc" type="checkbox" id="tool_sc_dpc_retriever" checked data-key="sc:nowcast" data-tool-name="dpc_retriever_tool">
+                                        <div class="d-flex col align-items-center">
+                                            <label class="form-check-label" for="tool_sc_dpc_retriever">DPC Retriever tool</label>
+                                            <span class="tooltip-icon-wrapper ms-2 d-flex col align-items-center">
+                                                <span class="material-symbols-outlined fs-5 settings-info" data-tooltip-id="DPCRetrieverToolTooltip">info</span>
+                                            </span>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="col-12">
+                                    <div class="form-check form-switch">
+                                        <input class="form-check-input cs-sub cs-sc" type="checkbox" id="tool_sc_icon2i_retriever" checked data-key="sc:forecast" data-tool-name="icon2i_retriever_tool">
+                                        <div class="d-flex col align-items-center">
+                                            <label class="form-check-label" for="tool_sc_icon2i_retriever">ICON-2I Retriever tool</label>
+                                            <span class="tooltip-icon-wrapper ms-2 d-flex col align-items-center">
+                                                <span class="material-symbols-outlined fs-5 settings-info" data-tooltip-id="ICON2IRetrieverToolTooltip">info</span>
+                                            </span>
+                                        </div>
+                                    </div>
+                                </div>
+                                <!-- aggiungi altri tool SC se servono -->
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Geospatial Tools (singolo switch) -->
+                <div class="cs-group">
+                    <div class="d-flex align-items-center justify-content-between">
+                        <div>
+                            <div class="fw-semibold d-flex col align-items-center">
+                                Geospatial Tool
+                                <span class="tooltip-icon-wrapper ms-2 d-flex col align-items-center">
+                                    <span class="material-symbols-outlined fs-5 settings-info" data-tooltip-id="GeospatialOpsToolTooltip">info</span>
+                                </span>
+                            </div>
+                            <div class="small text-secondary">Geospatial operation between layers</div>
+                        </div>
+                        <div class="form-check form-switch m-0">
+                            <input class="form-check-input" type="checkbox" id="tool_geospatial_ops" checked data-tool-name="geospatial_ops_tool">
+                            <label class="form-check-label small" for="tool_geospatial_ops">Enable</label>
+                        </div>
+                    </div>
+                    <!-- se in futuro vuoi i dettagli, aggiungi una collapse come sopra -->
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Sezione 2: Placeholder per altre impostazioni -->
+    <div class="card cs-section">
+        <button class="btn w-100 text-start px-3 py-2 d-flex justify-content-between align-items-center" data-bs-toggle="collapse" data-bs-target="#csMore" aria-expanded="false">
+            <span><strong>Action execution control</strong></span>
+            <span class="small text-secondary">open/close</span>
+        </button>
+        <div id="csMore" class="collapse">
+            <div class="p-3 pt-2">
+                <div class="d-flex align-items-center justify-content-between">
+                    <div>
+                        <div class="fw-semibold">Confirm parameters</div>
+                        <!-- <div class="small text-secondary">Whole family or single tool</div> -->
+                        <div class="small text-secondary">Ask for human confirmation on tool parameters before its execution</div>
+                    </div>
+                    <div class="form-check form-switch m-0">
+                        <input class="form-check-input" type="checkbox" id="csConfirmToolExecution" checked>
+                        <label class="form-check-label small" for="csConfirmToolExecution">Enable</label>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>

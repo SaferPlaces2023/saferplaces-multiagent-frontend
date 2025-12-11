@@ -6,11 +6,15 @@
             <span class="chat-title">Saferplaces Agent</span>
         </div>
         <div class="d-flex align-items-center gap-2">
+            <button id="chatSettingsBtn" class="btn btn-outline-light btn-sm">Settings</button>
             <button id="clearChat" class="btn btn-outline-light btn-sm">Clean</button>
-            <button id="chatExpandBtn" class="btn btn-outline-light btn-sm" title="Expand/Reduce height">⬍</button>
-            <button id="minChat" class="btn btn-secondary btn-sm" title="Reduce/Expand">–</button>
+            <!-- <button id="chatExpandBtn" class="btn btn-outline-light btn-sm" title="Expand/Reduce height">⬍</button> -->
+            <button id="minChat" class="btn btn-secondary btn-sm" title="Reduce/Expand">⤡</button>
         </div>
     </div>
+    
+    <div data-include="public/partials/ai-chat-settings.html"></div>
+
     <div class="chat-body" id="chatBody">
         <div class="bubble ai">Welcome! I'm here to help you with geospatial analysis, flood simulations, weather data, and more.<br>If you want details about what I can do, just ask and I'll guide you!.</div>
     </div>

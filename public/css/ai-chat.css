@@ -15,14 +15,15 @@
     border: 1px solid rgba(255, 255, 255, 0.06);
     transition: height 0.3s ease, width 0.3s ease;
 }
-.chatbox.full-height .chat-body {
-    height: calc(100vh - 160px);
+.chatbox,
+.chatbox .chat-body {
+    height: calc(100vh - 60px);
 }
-.chatbox.full-height {
+.chatbox {
     width: min(35vw, 600px);
 }
 .chatbox.min {
-    height: 56px;
+    height: 56px !important;
 }
 
 /* Header */

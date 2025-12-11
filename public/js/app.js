@@ -1,12 +1,30 @@
 // Mini loader per includere i parziali e poi inizializzare i moduli
 (async function includeAndInit() {
-    // 1) include partials
-    const hosts = document.querySelectorAll('[data-include]');
-    await Promise.all(Array.from(hosts).map(async host => {
-        const url = host.getAttribute('data-include');
-        const html = await fetch(url).then(r => r.text());
-        host.outerHTML = html; // sostituisce il placeholder col contenuto
-    }));
+    // 1) include partials // DOC: [OLD way]
+    // const hosts = document.querySelectorAll('[data-include]');
+    // await Promise.all(Array.from(hosts).map(async host => {
+    //     const url = host.getAttribute('data-include');
+    //     const html = await fetch(url).then(r => r.text());
+    //     host.outerHTML = html; // sostituisce il placeholder col contenuto
+    // }));
+    // DOC: [NEW way] include partials recursively
+    async function loadIncludes(root = document) {
+        const hosts = root.querySelectorAll('[data-include]');
+        if (hosts.length === 0) return;
+
+        await Promise.all(Array.from(hosts).map(async host => {
+            const url = host.getAttribute('data-include');
+            const html = await fetch(url).then(r => r.text());
+            
+            // Inserisce l'HTML ma mantiene il nodo così possiamo ricontrollarlo
+            host.innerHTML = html;
+            host.removeAttribute('data-include');
+
+            // scansiona ricorsivamente nuovi include dentro questo host
+            await loadIncludes(host);
+        }));
+    }
+    await loadIncludes();
 
     // 2) inizializza moduli (ora gli elementi esistono nel DOM)
     GeoMap.init();          // crea mappa e registra API

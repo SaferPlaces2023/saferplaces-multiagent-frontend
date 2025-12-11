@@ -199,7 +199,7 @@ const LayerPanel = (() => {
                 <button class="btn btn-sm btn-outline-light" data-bs-toggle="dropdown" aria-expanded="false">⋯</button>
                 <ul class="dropdown-menu dropdown-menu-dark">
                     <!-- <li><a class="dropdown-item" href="#" data-action="toggle"  data-title="${escapeAttr(layer.title)}">Show/Hide</a></li> -->
-                    <li><a class="dropdown-item" href="#" data-action="download" data-title="${escapeAttr(layer.title)}">Download</a></li>
+                    <li><a class="dropdown-item" data-action="download">Download</a></li>
                 </ul>
             </div>
             `;

@@ -10,6 +10,7 @@ const AIChat = (() => {
         minBtn = document.getElementById('minChat');
         expandBtn = document.getElementById('chatExpandBtn');
         clearBtn = document.getElementById('clearChat');
+        settingsBtn = document.getElementById('chatSettingsBtn');
 
         marked.setOptions({ breaks: true, mangle: false, headerIds: false });
 
@@ -17,12 +18,12 @@ const AIChat = (() => {
             chatBox.classList.toggle('min');
             if (!chatBox.classList.contains('min')) setTimeout(() => chatInput.focus(), 150);
         };
-        expandBtn.addEventListener('click', () => {
-            chatBox.classList.toggle('full-height');
-            const expanded = chatBox.classList.contains('full-height');
-            expandBtn.textContent = expanded ? '⬏' : '⬍'; // cambia icona
-            expandBtn.title = expanded ? 'Reduce height' : 'Expand at full height';
-        });
+        // expandBtn.addEventListener('click', () => {
+        //     chatBox.classList.toggle('full-height');
+        //     const expanded = chatBox.classList.contains('full-height');
+        //     expandBtn.textContent = expanded ? '⬏' : '⬍'; // cambia icona
+        //     expandBtn.title = expanded ? 'Reduce height' : 'Expand at full height';
+        // });
         clearBtn.onclick = () => { 
             chatBody.innerHTML = '';
             const LS_USER = 'user_id';
@@ -52,11 +53,22 @@ const AIChat = (() => {
                 Toasts.error(t, 'Error while creating new chat.');
             })
         };
+        settingsBtn.onclick = () => {
+            ChatSettings.togglePanel();
+        }
 
         sendBtn.onclick = send;
         chatInput.addEventListener('keydown', e => {
             if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); send(); }
         });
+
+        ChatSettings.init();
+    }
+
+    function invokeSend(message) {
+        if (!message || message.trim() === '') return;
+        chatInput.value = message;
+        send();
     }
 
     function send() {
@@ -264,5 +276,5 @@ const AIChat = (() => {
     function dispatch(name, detail) { document.dispatchEvent(new CustomEvent(name, { detail })); }
 
     // API opzionale
-    return { init, appendBubble, showTyping, hideTyping };
+    return { init, appendBubble, showTyping, hideTyping, invokeSend };
 })();
