@@ -56,6 +56,7 @@ const GeoMap = (() => {
         map.on('load', () => {
             // Aggiungi edifici 3D
             // add_3d_buildings();
+            DrawTools.init(map);
         });
     }
 
@@ -435,5 +436,5 @@ const GeoMap = (() => {
 
     function dispatch(name, detail) { document.dispatchEvent(new CustomEvent(name, { detail })); }
 
-    return { init, addVectorLayer, addCOG, setStyle, resetView, toggleLayerMapVisibility, renderTimestampRasters };
+    return { init, addVectorLayer, addCOG, setStyle, resetView, toggleLayerMapVisibility, renderTimestampRasters, zoomToBounds };
 })();

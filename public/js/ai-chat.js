@@ -144,6 +144,12 @@ const AIChat = (() => {
                         } else {
                             appendBubble(element.content || '(no response)', element.role || 'ai');
                         }
+
+                        if (element.role === 'interrupt' && element.state_updates != null) {
+                            if (Object.hasOwn(element.state_updates, 'user_drawn_shapes')) {
+                                dispatch('draw-tool:update-user-drawn-shapes', { user_drawn_shapes: element.state_updates.user_drawn_shapes });
+                            }
+                        }
                     });
             })
             .catch(err => {

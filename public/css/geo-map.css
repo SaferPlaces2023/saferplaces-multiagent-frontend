@@ -7,24 +7,211 @@
 /* Topbar centrale sopra la mappa */
 .topbar {
     position: fixed;
+    width: 80%;
     left: 50%;
     top: 16px;
     transform: translateX(-50%);
-    background: rgba(18, 18, 20, 0.85);
-    backdrop-filter: blur(8px);
-    border-radius: 50px;
     z-index: 5;
+}
+
+.style-bar {
+    background: rgba(18, 18, 20, 0.9);
+    backdrop-filter: blur(8px);
+    border-radius: 14px;
     box-shadow: 0 8px 25px rgba(0, 0, 0, 0.3);
 }
 
-.topbar span {
-    width: 150px;
+.style-bar select {
+    width: 50%;
 }
 
-.topbar select {
-    min-width: 180px;
+
+
+/* Draw toolbar (glass, coerente con il resto UI) */
+.draw-toolbar {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 8px;
+    background: rgba(18, 18, 20, .9);
+    border: 1px solid rgba(255, 255, 255, .08);
+    border-radius: 14px;
+    backdrop-filter: blur(8px);
+    box-shadow: 0 18px 48px rgba(0, 0, 0, .35);
 }
 
-.topbar button {
-    width: 150px;
+.dt-btn {
+    width: 28px;
+    height: 28px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    border: 1px solid rgba(255, 255, 255, .10);
+    background: rgba(255, 255, 255, .04);
+    color: #e8eaed;
+    border-radius: 10px;
+    cursor: pointer;
+    transition: transform .12s ease, background .12s ease, border-color .12s ease;
+}
+
+.dt-btn:hover {
+    background: rgba(255, 255, 255, .07);
+    border-color: rgba(255, 255, 255, .16);
+    transform: translateY(-1px);
+}
+
+.dt-btn:active {
+    transform: translateY(0);
+}
+
+.dt-btn:focus {
+    outline: none;
+    box-shadow: 0 0 0 3px rgba(110, 231, 183, .18);
+}
+
+.dt-btn .material-symbols-outlined {
+    font-size: 16px;
+    line-height: 1;
+}
+
+/* stato attivo (se vuoi applicarlo via JS: .dt-btn.active) */
+.dt-btn.active {
+    border-color: rgba(110, 231, 183, .65);
+    box-shadow: 0 0 0 3px rgba(110, 231, 183, .14);
+}
+
+/* separatore verticale */
+.dt-sep {
+    width: 1px;
+    height: 26px;
+    background: rgba(255, 255, 255, .12);
+}
+
+/* bottone delete */
+.dt-danger {
+    border-color: rgba(248, 113, 113, .25);
+}
+
+.dt-danger:hover {
+    border-color: rgba(248, 113, 113, .45);
+    background: rgba(248, 113, 113, .10);
+}
+
+#draw-confirm {
+    display: inline-flex;
+}
+
+#draw-confirm.closed {
+    display: none;
+}
+
+
+.dt-panel.hidden {
+    display: none;
+}
+
+.dt-panel {
+    position: fixed;
+    top: 100%;
+    left: 0;
+    margin-top: 8px;
+    padding: 10px;
+    background: rgba(18, 18, 20, .95);
+    border: 1px solid rgba(255, 255, 255, .08);
+    border-radius: 14px;
+    backdrop-filter: blur(8px);
+    box-shadow: 0 18px 48px rgba(0, 0, 0, .35);
+    color: #e8eaed;
+    width: 100%;
+    /* min-width: max(150%, 320px); */
+}
+
+.dt-panel-head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 8px;
+}
+
+.dt-badge {
+    font-size: .8rem;
+    color: #9aa0a6;
+    border: 1px solid rgba(255, 255, 255, .10);
+    padding: 2px 8px;
+    border-radius: 999px;
+}
+
+.dt-panel-item {
+    padding: 8px 8px;
+    border-top: 1px dashed rgba(255, 255, 255, .10);
+}
+
+.dt-panel-item:first-child {
+    border-top: none;
+}
+
+.dt-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 10px;
+}
+
+.collection-btn {
+    align-items: center;
+    justify-content: center;
+    display: inline-flex;
+    width: 28px;
+    height: 28px;
+}
+.collection-btn .material-symbols-outlined {
+    font-size: 16px;
+    line-height: 1;
+}
+
+.dt-meta {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+}
+
+.dt-name {
+    font-weight: 600;
+}
+
+.dt-type {
+    font-size: .8rem;
+    color: #9aa0a6;
+}
+
+.dt-actions {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.dt-link {
+    border: none;
+    background: transparent;
+    padding: 0;
+    color: #9aa0a6;
+    text-decoration: underline;
+    cursor: pointer;
+    font-size: .85rem;
+}
+
+.dt-details {
+    margin-top: 6px;
+    padding: 8px;
+    border: 1px solid rgba(255, 255, 255, .08);
+    background: rgba(255, 255, 255, .03);
+    border-radius: 10px;
+}
+
+.dt-details.hidden {
+    display: none;
+}
+
+.dt-collection-hidden .material-symbols-outlined {
+    opacity: .55;
 }

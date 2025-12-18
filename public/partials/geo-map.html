@@ -1,43 +1,99 @@
 <!-- Contenitore mappa + topbar -->
 <div id="map" aria-label="MapLibre map"></div>
 
-<div class="topbar px-3 py-2 d-flex gap-2 align-items-center shadow">
-    <span class="small text-secondary">Map style</span>
-    <select id="styleSelect" class="form-select form-select-sm bg-dark text-light border-secondary">
-        <!-- 🌍 Stili MapLibre compatibili -->
-        <option value="https://demotiles.maplibre.org/style.json">MapLibre Basic</option>
+<div class="topbar d-flex col align-items-center justify-content-center gap-3">
+    <div class="style-bar px-3 py-2 d-flex gap-2 align-items-center shadow justify-content-between">
+        <span class="small text-secondary">Map style</span>
+        <select id="styleSelect" class="form-select form-select-sm bg-dark text-light border-secondary">
+            <!-- 🌍 Stili MapLibre compatibili -->
+            <option value="https://demotiles.maplibre.org/style.json">MapLibre Basic</option>
 
-        <!-- 🟢 CARTO -->
-        <option value="https://basemaps.cartocdn.com/gl/positron-gl-style/style.json">Carto Positron (light)</option>
-        <option value="https://basemaps.cartocdn.com/gl/dark-matter-gl-style/style.json">Carto Dark Matter (dark)</option>
-        <option value="https://basemaps.cartocdn.com/gl/voyager-gl-style/style.json">Carto Voyager</option>
+            <!-- 🟢 CARTO -->
+            <option value="https://basemaps.cartocdn.com/gl/positron-gl-style/style.json">Carto Positron (light)</option>
+            <option value="https://basemaps.cartocdn.com/gl/dark-matter-gl-style/style.json">Carto Dark Matter (dark)</option>
+            <option value="https://basemaps.cartocdn.com/gl/voyager-gl-style/style.json">Carto Voyager</option>
 
-        <!-- 🗺️ MAPTILER --> <!-- DOC: Need Api-Key -->
-        <!-- <option value="https://api.maptiler.com/maps/basic-v2/style.json?key=get_your_own_OpIi9ZULNHzrESv6T2vL">MapTiler Basic</option>
-        <option value="https://api.maptiler.com/maps/bright-v2/style.json?key=get_your_own_OpIi9ZULNHzrESv6T2vL">MapTiler Bright</option>
-        <option value="https://api.maptiler.com/maps/darkmatter/style.json?key=get_your_own_OpIi9ZULNHzrESv6T2vL">MapTiler Dark Matter</option>
-        <option value="https://api.maptiler.com/maps/streets-v2/style.json?key=get_your_own_OpIi9ZULNHzrESv6T2vL">MapTiler Streets</option>
-        <option value="https://api.maptiler.com/maps/terrain/style.json?key=get_your_own_OpIi9ZULNHzrESv6T2vL">MapTiler Terrain</option>
-        <option value="https://api.maptiler.com/maps/satellite/style.json?key=get_your_own_OpIi9ZULNHzrESv6T2vL">MapTiler Satellite</option> -->
-        <option value="https://api.maptiler.com/maps/hybrid/style.json?key=eKTWCeR7phLWdM7M4myh" selected>MapTiler Satellite</option>
+            <!-- 🗺️ MAPTILER --> <!-- DOC: Need Api-Key -->
+            <!-- <option value="https://api.maptiler.com/maps/basic-v2/style.json?key=get_your_own_OpIi9ZULNHzrESv6T2vL">MapTiler Basic</option>
+            <option value="https://api.maptiler.com/maps/bright-v2/style.json?key=get_your_own_OpIi9ZULNHzrESv6T2vL">MapTiler Bright</option>
+            <option value="https://api.maptiler.com/maps/darkmatter/style.json?key=get_your_own_OpIi9ZULNHzrESv6T2vL">MapTiler Dark Matter</option>
+            <option value="https://api.maptiler.com/maps/streets-v2/style.json?key=get_your_own_OpIi9ZULNHzrESv6T2vL">MapTiler Streets</option>
+            <option value="https://api.maptiler.com/maps/terrain/style.json?key=get_your_own_OpIi9ZULNHzrESv6T2vL">MapTiler Terrain</option>
+            <option value="https://api.maptiler.com/maps/satellite/style.json?key=get_your_own_OpIi9ZULNHzrESv6T2vL">MapTiler Satellite</option> -->
+            <option value="https://api.maptiler.com/maps/hybrid/style.json?key=eKTWCeR7phLWdM7M4myh" selected>MapTiler Satellite</option>
 
-        <!-- 🟣 STADIA MAPS -->
-        <option value="https://tiles.stadiamaps.com/styles/alidade_smooth/style.json?api_key=961bdf77-3689-48c2-b079-80c0d4169115">Stadia Alidade Smooth</option>
-        <option value="https://tiles.stadiamaps.com/styles/alidade_smooth_dark/style.json?api_key=961bdf77-3689-48c2-b079-80c0d4169115">Stadia Alidade Smooth Dark</option>ù
-        <option value="https://tiles.stadiamaps.com/styles/outdoors/style.json?api_key=961bdf77-3689-48c2-b079-80c0d4169115">Stadia Outdoors</option>
-        <option value="https://tiles.stadiamaps.com/styles/osm_bright/style.json?api_key=961bdf77-3689-48c2-b079-80c0d4169115">Stadia OSM Bright</option>
-        <option value="https://tiles.stadiamaps.com/styles/alidade_satellite.json?api_key=961bdf77-3689-48c2-b079-80c0d4169115">Stadia Satellite</option>
-         
+            <!-- 🟣 STADIA MAPS -->
+            <option value="https://tiles.stadiamaps.com/styles/alidade_smooth/style.json?api_key=961bdf77-3689-48c2-b079-80c0d4169115">Stadia Alidade Smooth</option>
+            <option value="https://tiles.stadiamaps.com/styles/alidade_smooth_dark/style.json?api_key=961bdf77-3689-48c2-b079-80c0d4169115">Stadia Alidade Smooth Dark</option>ù
+            <option value="https://tiles.stadiamaps.com/styles/outdoors/style.json?api_key=961bdf77-3689-48c2-b079-80c0d4169115">Stadia Outdoors</option>
+            <option value="https://tiles.stadiamaps.com/styles/osm_bright/style.json?api_key=961bdf77-3689-48c2-b079-80c0d4169115">Stadia OSM Bright</option>
+            <option value="https://tiles.stadiamaps.com/styles/alidade_satellite.json?api_key=961bdf77-3689-48c2-b079-80c0d4169115">Stadia Satellite</option>
 
-        <!-- 🟠 OPENMAPTILES --> <!-- DOC: Need Api-Key -->
-        <!-- <option value="https://api.maptiler.com/maps/topo/style.json?key=get_your_own_OpIi9ZULNHzrESv6T2vL">OpenMapTiles Topo</option>
-        <option value="https://api.maptiler.com/maps/dataviz/style.json?key=get_your_own_OpIi9ZULNHzrESv6T2vL">OpenMapTiles Dataviz</option>
-        <option value="https://api.maptiler.com/maps/toner/style.json?key=get_your_own_OpIi9ZULNHzrESv6T2vL">OpenMapTiles Toner</option> -->
 
-        <!-- 🔵 MAPLIBRE EXAMPLES -->
-        <option value="https://demotiles.maplibre.org/style.json">MapLibre Demo Basic</option>
-        <option value="https://raw.githubusercontent.com/maplibre/demotiles/main/style.json">MapLibre Demo (raw GitHub)</option>
+            <!-- 🟠 OPENMAPTILES --> <!-- DOC: Need Api-Key -->
+            <!-- <option value="https://api.maptiler.com/maps/topo/style.json?key=get_your_own_OpIi9ZULNHzrESv6T2vL">OpenMapTiles Topo</option>
+            <option value="https://api.maptiler.com/maps/dataviz/style.json?key=get_your_own_OpIi9ZULNHzrESv6T2vL">OpenMapTiles Dataviz</option>
+            <option value="https://api.maptiler.com/maps/toner/style.json?key=get_your_own_OpIi9ZULNHzrESv6T2vL">OpenMapTiles Toner</option> -->
 
-    </select>
-    <button id="resetView" class="btn btn-success btn-sm fw-semibold">Reset view</button>
+            <!-- 🔵 MAPLIBRE EXAMPLES -->
+            <option value="https://demotiles.maplibre.org/style.json">MapLibre Demo Basic</option>
+            <option value="https://raw.githubusercontent.com/maplibre/demotiles/main/style.json">MapLibre Demo (raw GitHub)</option>
+
+        </select>
+        <button id="resetView" class="btn btn-success btn-sm fw-semibold">Reset view</button>
+    </div>
+
+    <div class="draw-toolbar px-3" role="toolbar" aria-label="Draw tools">
+        <span class="small text-secondary">Draw tools</span>
+
+        <div class="dt-sep mx-2" aria-hidden="true"></div>
+
+        <button id="dtCollections" class="dt-btn" title="Collections" aria-label="Collections">
+            <span class="material-symbols-outlined">inventory_2</span>
+        </button>
+
+        <!-- pannello sotto toolbar (inizialmente nascosto) -->
+        <div id="dtCollectionsPanel" class="dt-panel hidden" aria-label="Draw collections panel">
+            <div class="dt-panel-head">
+                <strong>Drawn Collections</strong>
+                <span class="dt-badge" id="dtCollectionsCount">0</span>
+            </div>
+            <div id="dtCollectionsList" class="dt-panel-list"></div>
+        </div>
+
+        <div class="dt-sep mx-2" aria-hidden="true"></div>
+
+        <button id="dtPoint" class="dt-btn" title="Point" aria-label="Point">
+            <span class="material-symbols-outlined">location_on</span>
+        </button>
+        <button id="dtLine" class="dt-btn" title="Line" aria-label="Line" disabled>
+            <span class="material-symbols-outlined">polyline</span>
+        </button>
+        <button id="dtBbox" class="dt-btn" title="BBox" aria-label="BBox">
+            <span class="material-symbols-outlined">crop_free</span>
+        </button>
+        <button id="dtPoly" class="dt-btn" title="Polygon" aria-label="Polygon">
+            <span class="material-symbols-outlined">pentagon</span>
+        </button>
+
+        <div class="dt-sep mx-2" aria-hidden="true"></div>
+
+        <button id="dtEdit" class="dt-btn" title="Edit" aria-label="Edit">
+            <span class="material-symbols-outlined">edit</span>
+        </button>
+        <button id="dtDel" class="dt-btn dt-danger" title="Delete" aria-label="Delete" disabled>
+            <span class="material-symbols-outlined">delete</span>
+        </button>
+
+        <div id="draw-confirm" class="gap-1 closed">
+            <div class="dt-sep mx-2" aria-hidden="true"></div>
+
+            <button id="dtSave" class="dt-btn dt-success" title="Save" aria-label="Save">
+                <span class="material-symbols-outlined">check</span>
+            </button>
+            <button id="dtCancel" class="dt-btn dt-danger" title="Cancel" aria-label="Cancel">
+                <span class="material-symbols-outlined">close</span>
+            </button>
+        </div>
+    </div>
 </div>
