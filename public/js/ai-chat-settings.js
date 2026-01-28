@@ -12,7 +12,7 @@ const ChatSettings = (() => {
 
     const toolSwitchIds = [
         'tool_sp_digital_twin', 'tool_sp_saferrain', 'tool_sp_saferbuildings',
-        'tool_sc_dpc_retriever', 'tool_sc_icon2i_retriever',
+        'tool_sc_dpc_retriever', 'tool_sc_icon2i_retriever', 'tool_sc_meteoblue_retriever',
         'tool_geospatial_ops'
     ]
 
@@ -65,6 +65,10 @@ Structure your response clearly, using well-separated sections and concise expla
         'ICON2IRetrieverToolTooltip': {
             text: "The ICON2I Retriever Tool retrieves forecast data from the ICON-2I model, providing weather parameters like precipitation, temperature, wind, and cloud cover for chosen areas and time ranges.",
             askBotPrompt: askToolDescriptionTemplate('ICON-2I Retriever Tool')
+        },
+        'MeteoblueRetrieverToolTooltip': {
+            text: "The Meteoblue Retriever Tool accesses high-resolution meteorological data from the Meteoblue service, offering parameters such as temperature, precipitation, wind speed, and humidity for globally locations and timeframes.",
+            askBotPrompt: askToolDescriptionTemplate('Meteoblue Retriever Tool')
         },
 
         'GeospatialOpsToolTooltip': {

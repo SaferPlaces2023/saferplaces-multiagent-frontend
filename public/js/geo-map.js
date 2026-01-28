@@ -29,6 +29,7 @@ const GeoMap = (() => {
         map.addControl(new maplibregl.ScaleControl({ unit: 'metric' }));
         map.addControl(new maplibregl.GlobeControl(), 'top-right');
 
+        map.setMaxPitch(75);
 
         map.on('style.load', () => {
             map.setProjection({ type: 'globe' });
@@ -303,7 +304,7 @@ const GeoMap = (() => {
             map.addSource(`terrain_${id}`, dem_sources[`terrain_${id}`]);
             map.addLayer({ ...dem_layers[0], ...view, ...paint });
             map.addLayer({ ...dem_layers[1], ...view });
-            map.setTerrain(dem_terrain);
+            map.setTerrain({...dem_terrain, exaggeration: 1.5});
         } else if (surface_type === 'rain-timeseries') {
 
             // Multiband timeserie "animation"
@@ -339,6 +340,7 @@ const GeoMap = (() => {
                     surface_type: surface_type,
                     cog_layer
                 }));
+                debugger
                 TimeSlider.setRange(
                     new Date(dStart.setUTCHours(0, 0, 0, 0)).toISOString(),
                     new Date(new Date(dEnd.setDate(dEnd.getUTCDate() + 1)).setUTCHours(0, 0, 0, 0)).toISOString()
