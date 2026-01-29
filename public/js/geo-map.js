@@ -7,9 +7,9 @@ const GeoMap = (() => {
 
     const surfaceColorscalesMap = {
         'rain-timeseries': MaplibreCOGProtocol.colorScale({
-            colorScheme: 'BrewerRdYlBu10',
+            colorScheme: 'BrewerSpectral11',
             min: 0, // layer_data.layer_data.metadata.min, 
-            max: 50, //layer_data.layer_data.metadata.max, 
+            max: 200, //layer_data.layer_data.metadata.max, 
             isContinuous: true,
             isReverse: true
         })
@@ -304,7 +304,7 @@ const GeoMap = (() => {
             map.addSource(`terrain_${id}`, dem_sources[`terrain_${id}`]);
             map.addLayer({ ...dem_layers[0], ...view, ...paint });
             map.addLayer({ ...dem_layers[1], ...view });
-            map.setTerrain({...dem_terrain, exaggeration: 1.5});
+            map.setTerrain({ ...dem_terrain, exaggeration: 1.5 });
         } else if (surface_type === 'rain-timeseries') {
 
             // Multiband timeserie "animation"
@@ -327,24 +327,54 @@ const GeoMap = (() => {
             map.addLayer({ ...cog_layer, ...view });
 
             try {
-                let tStart = `${layer_data.layer_data.metadata.time_start}${layer_data.layer_data.metadata.time_start.endsWith('Z') ? '' : 'Z'}`
-                let dStart = new Date(tStart);
-                let tEnd = `${layer_data.layer_data.metadata.time_end}${layer_data.layer_data.metadata.time_end.endsWith('Z') ? '' : 'Z'}`;
-                let dEnd = new Date(tEnd);
-                let timestamps = TimeSlider.dateRange(dStart, dEnd, layer_data.layer_data.metadata.n_bands).map(d => d.toISOString())
-                timestamps.forEach((ts, ts_idx) => TimeSlider.registerTimestampItem(ts, {
-                    type: 'raster-band',
-                    layer_id: id,
-                    render_url: renderUrl,
-                    band: ts_idx + 1,
-                    surface_type: surface_type,
-                    cog_layer
-                }));
-                debugger
+                const tStart = layer_data.layer_data.metadata.time_start.endsWith('Z')
+                    ? layer_data.layer_data.metadata.time_start
+                    : `${layer_data.layer_data.metadata.time_start}Z`;
+
+                const tEnd = layer_data.layer_data.metadata.time_end.endsWith('Z')
+                    ? layer_data.layer_data.metadata.time_end
+                    : `${layer_data.layer_data.metadata.time_end}Z`;
+
+                const dStart = new Date(tStart);
+                const dEnd = new Date(tEnd);
+
+                // timestamps evenly spaced, sempre UTC
+                const timestamps = TimeSlider
+                    .dateRange(dStart, dEnd, layer_data.layer_data.metadata.n_bands)
+                    .map(d => d.toISOString());
+
+                timestamps.forEach((ts, ts_idx) =>
+                    TimeSlider.registerTimestampItem(ts, {
+                        type: 'raster-band',
+                        layer_id: id,
+                        render_url: renderUrl,
+                        band: ts_idx + 1,
+                        surface_type,
+                        cog_layer
+                    })
+                );
+
+                // range UTC midnight → UTC midnight +1 (minus 2 hours)
+                const rangeStart = new Date(Date.UTC(
+                    dStart.getUTCFullYear(),
+                    dStart.getUTCMonth(),
+                    dStart.getUTCDate(),
+                    0, 0, 0, 0
+                ) - (2 * 60 * 60 * 1000)); // minus 2 hours
+
+                const rangeEnd = new Date(Date.UTC(
+                    dEnd.getUTCFullYear(),
+                    dEnd.getUTCMonth(),
+                    dEnd.getUTCDate() + 1,
+                    0, 0, 0, 0
+                ) + (2 * 60 * 60 * 1000)); // minus 2 hours
+
                 TimeSlider.setRange(
-                    new Date(dStart.setUTCHours(0, 0, 0, 0)).toISOString(),
-                    new Date(new Date(dEnd.setDate(dEnd.getUTCDate() + 1)).setUTCHours(0, 0, 0, 0)).toISOString()
-                )
+                    rangeStart.toISOString(),
+                    rangeEnd.toISOString()
+                );
+
+
                 let interval = {
                     start: tStart,
                     end: tEnd,
