@@ -435,10 +435,13 @@ const GeoMap = (() => {
                         color[3] = 0;
                     } else {
                         const [r, g, b] = surfaceColorscalesMap[surface_type](value * metadata.scale + metadata.offset);
+
+                        zero_one_v = Math.max(Math.min(value / 50, 1), 0); // assuming max 100 mm/h for rain
+
                         color[0] = r;
                         color[1] = g;
                         color[2] = b;
-                        color[3] = value > 0 ? 224 : 50; // alpha
+                        color[3] = zero_one_v > 0 ? Math.min((Math.pow(Math.e, zero_one_v-1)),1) * 180 : 10; // alpha
                     }
                 });
                 map.removeLayer(layer_id);
