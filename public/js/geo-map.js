@@ -59,6 +59,41 @@ const GeoMap = (() => {
             // add_3d_buildings();
             DrawTools.init(map);
         });
+
+
+        document.getElementById("btnCesiumLaunch").addEventListener("click", () => {
+
+            const user_id = localStorage.getItem("user_id");
+            const project_id = localStorage.getItem("project_id");
+            const thread_id = localStorage.getItem("thread_id")
+
+            const form = document.createElement("form");
+            form.method = "POST";
+            form.action = "/cesium-viewer";
+            form.target = "_blank";
+
+            const input1 = document.createElement("input");
+            input1.type = "hidden";
+            input1.name = "user_id";
+            input1.value = user_id;
+
+            const input2 = document.createElement("input");
+            input2.type = "hidden";
+            input2.name = "project_id";
+            input2.value = project_id;
+
+            const input3 = document.createElement("input");
+            input3.type = "hidden";
+            input3.name = "thread_id";
+            input3.value = thread_id;
+
+            form.appendChild(input1);
+            form.appendChild(input2);
+            form.appendChild(input3);
+
+            document.body.appendChild(form);
+            form.submit();
+        })
     }
 
     function add_3d_buildings() {
