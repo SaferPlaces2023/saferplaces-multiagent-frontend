@@ -16,3 +16,5 @@ __run_ngrock-host.bat
 nginx.local.conf
 docker-compose.local.yml
 Dockerfile.local
+
+public/ext/safer-3d-cesium
