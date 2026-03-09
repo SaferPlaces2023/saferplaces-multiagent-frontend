@@ -7,26 +7,13 @@
  * - Creazione nuovo progetto
  * - Switch tra progetti
  * - Logout e pulizia storage
+ * 
+ * Dipendenze: _utils.js, _consts.js
  */
 const UserPanel = (() => {
     // =========================================================================
-    // COSTANTI
+    // DOM_IDS MAPPING
     // =========================================================================
-    const CONSTANTS = {
-        LS_THREAD_ID: 'thread_id',
-        LS_USER_ID: 'user_id',
-        LS_PROJECT_ID: 'project_id',
-        ENDPOINT_USER: 'http://localhost:5000/user',
-        FOCUS_DELAY_MS: 50,
-        TOAST_DURATION_MS: 2500,
-        ERR_INVALID_PROJECT_NAME: 'Inserisci un nome progetto',
-        ERR_INVALID_USER: 'Invalid user. Access needed.',
-        ERR_CREATION_FAILED: 'Creation failed. Try again.',
-        ERR_HTTP_PREFIX: 'HTTP ',
-        ERR_INVALID_RESPONSE: 'Invalid response',
-        MSG_NO_PROJECTS: 'No other projects'
-    };
-
     const DOM_IDS = {
         userSidebar: 'userSidebar',
         toggleUserBtn: 'toggleUserBtn',
@@ -57,21 +44,9 @@ const UserPanel = (() => {
      * Inizializza il modulo UserPanel
      */
     function init() {
-        cacheElements();
+        domElements = cacheElements(DOM_IDS);
         bindEvents();
         fillInfo();
-    }
-
-    /**
-     * Cachea i riferimenti agli elementi DOM
-     */
-    function cacheElements() {
-        Object.entries(DOM_IDS).forEach(([key, id]) => {
-            domElements[key] = document.getElementById(id);
-            if (!domElements[key]) {
-                console.warn(`[UserPanel] Elemento DOM non trovato: ${id}`);
-            }
-        });
     }
 
     /**
@@ -87,7 +62,7 @@ const UserPanel = (() => {
         });
         domElements.toggleBtn?.addEventListener('click', () => {
             if (domElements.userSidebar) {
-                domElements.userSidebar.classList.add('closed');
+                domElements.userSidebar.classList.add(CSS_CLASSES.CLOSED);
             }
         });
         domElements.userProjects?.addEventListener('click', handleProjectMenuAction);
@@ -99,10 +74,10 @@ const UserPanel = (() => {
     function handleToggleUserPanel() {
         if (!domElements.userSidebar || !domElements.layerSidebar) return;
 
-        domElements.layerSidebar.classList.add('closed');
-        domElements.userSidebar.classList.toggle('closed');
+        domElements.layerSidebar.classList.add(CSS_CLASSES.CLOSED);
+        domElements.userSidebar.classList.toggle(CSS_CLASSES.CLOSED);
 
-        if (!domElements.userSidebar.classList.contains('closed')) {
+        if (!domElements.userSidebar.classList.contains(CSS_CLASSES.CLOSED)) {
             fillInfo();
             loadProjects();
         }
@@ -112,9 +87,7 @@ const UserPanel = (() => {
      * Gestisce il logout
      */
     function handleLogout() {
-        localStorage.removeItem(CONSTANTS.LS_THREAD_ID);
-        localStorage.removeItem(CONSTANTS.LS_USER_ID);
-        localStorage.removeItem(CONSTANTS.LS_PROJECT_ID);
+        clearSession();
         location.reload();
     }
 
@@ -124,9 +97,9 @@ const UserPanel = (() => {
     function handleToggleNewProjectForm() {
         if (!domElements.newProjForm) return;
 
-        domElements.newProjForm.classList.toggle('d-none');
-        if (!domElements.newProjForm.classList.contains('d-none')) {
-            setTimeout(() => domElements.newProjName?.focus(), CONSTANTS.FOCUS_DELAY_MS);
+        domElements.newProjForm.classList.toggle(CSS_CLASSES.D_NONE);
+        if (!domElements.newProjForm.classList.contains(CSS_CLASSES.D_NONE)) {
+            delayedFocus(domElements.newProjName, TIMING.FOCUS_DELAY_MS);
         }
     }
 
@@ -165,7 +138,7 @@ const UserPanel = (() => {
             return;
         }
 
-        const currentUser = localStorage.getItem(CONSTANTS.LS_USER_ID);
+        const currentUser = getStorageValue(STORAGE_KEYS.USER_ID);
         if (!currentUser) return;
 
         // Prova AuthGate se disponibile
@@ -181,12 +154,12 @@ const UserPanel = (() => {
             body: JSON.stringify({ user_id: currentUser, project_id: projectId })
         })
             .then(response => {
-                if (!response.ok) throw new Error(`${CONSTANTS.ERR_HTTP_PREFIX}${response.status}`);
+                if (!response.ok) throw new Error(`HTTP ${response.status}`);
                 return response.json();
             })
             .then(data => {
-                validateProjectResponse(data);
-                saveProjectToStorage(data);
+                validateThreadResponse(data);
+                saveSessionToStorage(data);
                 fillInfo();
             })
             .catch(err => {
@@ -214,19 +187,19 @@ const UserPanel = (() => {
         const projectName = (domElements.newProjName?.value || '').trim();
 
         if (!projectName) {
-            showProjectError(CONSTANTS.ERR_INVALID_PROJECT_NAME);
+            showProjectError(ERRORS.INVALID_PROJECT_NAME);
             return;
         }
 
-        const currentUser = localStorage.getItem(CONSTANTS.LS_USER_ID);
+        const currentUser = getStorageValue(STORAGE_KEYS.USER_ID);
         if (!currentUser) {
-            showProjectError(CONSTANTS.ERR_INVALID_USER);
+            showProjectError(ERRORS.INVALID_USER);
             return;
         }
 
         if (!Routes?.Agent?.NEWTHREAD) {
             console.error('[UserPanel] Routes.Agent.NEWTHREAD non configurato');
-            showProjectError(CONSTANTS.ERR_CREATION_FAILED);
+            showProjectError(ERRORS.CREATION_FAILED);
             return;
         }
 
@@ -238,12 +211,12 @@ const UserPanel = (() => {
             body: JSON.stringify({ user_id: currentUser, project_id: projectName })
         })
             .then(response => {
-                if (!response.ok) throw new Error(`${CONSTANTS.ERR_HTTP_PREFIX}${response.status}`);
+                if (!response.ok) throw new Error(`HTTP ${response.status}`);
                 return response.json();
             })
             .then(data => {
-                validateProjectResponse(data);
-                saveProjectToStorage(data);
+                validateThreadResponse(data);
+                saveSessionToStorage(data);
                 resetProjectForm();
                 fillInfo();
                 loadProjects();
@@ -251,7 +224,7 @@ const UserPanel = (() => {
             })
             .catch(err => {
                 console.error('[UserPanel] Error creating project:', err);
-                showProjectError(CONSTANTS.ERR_CREATION_FAILED);
+                showProjectError(ERRORS.CREATION_FAILED);
             })
             .finally(() => {
                 lockProjectButton(false);
@@ -262,18 +235,18 @@ const UserPanel = (() => {
      * Carica la lista progetti dal backend
      */
     function loadProjects() {
-        const currentUser = localStorage.getItem(CONSTANTS.LS_USER_ID);
-        const currentProject = localStorage.getItem(CONSTANTS.LS_PROJECT_ID);
+        const currentUser = getStorageValue(STORAGE_KEYS.USER_ID);
+        const currentProject = getStorageValue(STORAGE_KEYS.PROJECT_ID);
 
         if (!currentUser) return;
 
-        fetch(CONSTANTS.ENDPOINT_USER, {
+        fetch(Routes.Agent.USER, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ user_id: currentUser })
         })
             .then(response => {
-                if (!response.ok) throw new Error(`${CONSTANTS.ERR_HTTP_PREFIX}${response.status}`);
+                if (!response.ok) throw new Error(`HTTP ${response.status}`);
                 return response.json();
             })
             .then(data => {
@@ -297,7 +270,7 @@ const UserPanel = (() => {
         domElements.userProjects.innerHTML = '';
 
         if (!projects || projects.length === 0) {
-            domElements.userProjects.innerHTML = `<div class="text-secondary small">${CONSTANTS.MSG_NO_PROJECTS}</div>`;
+            domElements.userProjects.innerHTML = `<div class="text-secondary small">${ERRORS.NO_PROJECTS}</div>`;
             return;
         }
 
@@ -336,35 +309,14 @@ const UserPanel = (() => {
      */
     function fillInfo() {
         if (domElements.infoUserId) {
-            domElements.infoUserId.textContent = localStorage.getItem(CONSTANTS.LS_USER_ID) || '—';
+            domElements.infoUserId.textContent = getStorageValue(STORAGE_KEYS.USER_ID) || '—';
         }
         if (domElements.infoProjectId) {
-            domElements.infoProjectId.textContent = localStorage.getItem(CONSTANTS.LS_PROJECT_ID) || '—';
+            domElements.infoProjectId.textContent = getStorageValue(STORAGE_KEYS.PROJECT_ID) || '—';
         }
         if (domElements.infoThreadId) {
-            const threadId = localStorage.getItem(CONSTANTS.LS_THREAD_ID) || '—';
+            const threadId = getStorageValue(STORAGE_KEYS.THREAD_ID) || '—';
             domElements.infoThreadId.innerHTML = `<code>${escapeHtml(threadId)}</code>`;
-        }
-    }
-
-    /**
-     * Salva i dati del progetto in localStorage
-     * @param {Object} data - Oggetto con thread_id, user_id, project_id
-     */
-    function saveProjectToStorage(data) {
-        localStorage.setItem(CONSTANTS.LS_THREAD_ID, data.thread_id);
-        localStorage.setItem(CONSTANTS.LS_USER_ID, data.user_id);
-        localStorage.setItem(CONSTANTS.LS_PROJECT_ID, data.project_id);
-    }
-
-    /**
-     * Valida la risposta di un progetto dal backend
-     * @param {Object} data - Dati da validare
-     * @throws {Error} Se la risposta non è valida
-     */
-    function validateProjectResponse(data) {
-        if (!data?.thread_id || !data?.user_id || !data?.project_id) {
-            throw new Error(CONSTANTS.ERR_INVALID_RESPONSE);
         }
     }
 
@@ -379,11 +331,8 @@ const UserPanel = (() => {
     function showProjectError(message) {
         if (!domElements.newProjError) return;
 
-        domElements.newProjError.textContent = message;
-        domElements.newProjError.classList.remove('d-none');
-        setTimeout(() => {
-            domElements.newProjError?.classList.add('d-none');
-        }, CONSTANTS.TOAST_DURATION_MS);
+        showFlash(domElements.newProjError, message);
+        delayedHide(domElements.newProjError, TIMING.TOAST_DURATION_MS);
     }
 
     /**
@@ -394,7 +343,7 @@ const UserPanel = (() => {
             domElements.newProjName.value = '';
         }
         if (domElements.newProjForm) {
-            domElements.newProjForm.classList.add('d-none');
+            domElements.newProjForm.classList.add(CSS_CLASSES.D_NONE);
         }
     }
 
@@ -422,27 +371,11 @@ const UserPanel = (() => {
      */
     function closeUserSidebar() {
         if (domElements.userSidebar) {
-            domElements.userSidebar.classList.add('closed');
+            domElements.userSidebar.classList.add(CSS_CLASSES.CLOSED);
         }
         if (domElements.layerSidebar) {
-            domElements.layerSidebar.classList.remove('closed');
+            domElements.layerSidebar.classList.remove(CSS_CLASSES.CLOSED);
         }
-    }
-
-    // =========================================================================
-    // UTILITY
-    // =========================================================================
-
-    /**
-     * Escapa stringhe per evitare XSS in innerHTML
-     * @param {string} str - Stringa da escapare
-     * @returns {string} Stringa escapata
-     */
-    function escapeHtml(str) {
-        if (typeof str !== 'string') return '';
-        const div = document.createElement('div');
-        div.textContent = str;
-        return div.innerHTML;
     }
 
     // =========================================================================

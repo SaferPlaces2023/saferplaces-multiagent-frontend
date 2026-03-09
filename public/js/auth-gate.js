@@ -6,33 +6,13 @@
  * 2. Carica lista progetti
  * 3. Toggle tra selezione progetto (se esistenti) e creazione nuovo
  * 4. Processa accesso e dispatch evento 'auth:ready'
+ * 
+ * Dipendenze: _utils.js, _consts.js
  */
 const AuthGate = (() => {
     // =========================================================================
-    // COSTANTI
+    // DOM_IDS MAPPING
     // =========================================================================
-    const CONSTANTS = {
-        LS_THREAD_ID: 'thread_id',
-        LS_USER_ID: 'user_id',
-        LS_PROJECT_ID: 'project_id',
-        FOCUS_DELAY_MS: 50,
-        TOAST_DURATION_MS: 2500,
-        MODE_SELECT: 'select',
-        MODE_CREATE: 'create',
-        ERR_INSERT_USER_ID: 'Insert a user_id',
-        ERR_CHECK_FAILED: 'Check failed. Check user_id.',
-        ERR_INSERT_PROJECT_NAME: 'Insert a project name',
-        ERR_INVALID_THREAD_RESPONSE: 'Errore nel recupero del thread_id.',
-        ERR_THREAD_RESPONSE_INVALID: 'Invalid response from server',
-        ERR_PROJECT_LOADING: 'Project loading is failed. Try again.',
-        ERR_LOAD_PROJECT_CACHED: 'Impossibile caricare il progetto. Riprova.',
-        ERR_OPERATION_FAILED: 'Operation failed.',
-        MSG_VERIFYING: 'Verifico…',
-        MSG_LOADING: 'Project loading...',
-        MSG_ENTER: 'Entra',
-        MSG_CREATE_ENTER: 'Create and enter'
-    };
-
     const DOM_IDS = {
         authGate: 'authGate',
         authGateLogo: 'authGateLogo',
@@ -56,6 +36,13 @@ const AuthGate = (() => {
     // =========================================================================
     // STATO INTERNO
     // =========================================================================
+    
+    // Costanti locali per modalità
+    const CONSTANTS = {
+        MODE_SELECT: 'select',
+        MODE_CREATE: 'create'
+    };
+    
     let domElements = {};
     let currentUser = null;
     let mode = CONSTANTS.MODE_SELECT;
@@ -68,21 +55,9 @@ const AuthGate = (() => {
      * Inizializza il modulo AuthGate
      */
     function init() {
-        cacheElements();
+        domElements = cacheElements(DOM_IDS);
         bindEvents();
         checkCachedSession();
-    }
-
-    /**
-     * Cachea i riferimenti agli elementi DOM
-     */
-    function cacheElements() {
-        Object.entries(DOM_IDS).forEach(([key, id]) => {
-            domElements[key] = document.getElementById(id);
-            if (!domElements[key]) {
-                console.warn(`[AuthGate] Elemento DOM non trovato: ${id}`);
-            }
-        });
     }
 
     /**
@@ -103,9 +78,9 @@ const AuthGate = (() => {
      * Verifica se esiste una sessione già attiva in localStorage
      */
     function checkCachedSession() {
-        const user = localStorage.getItem(CONSTANTS.LS_USER_ID);
-        const project = localStorage.getItem(CONSTANTS.LS_PROJECT_ID);
-        const thread = localStorage.getItem(CONSTANTS.LS_THREAD_ID);
+        const user = getStorageValue(STORAGE_KEYS.USER_ID);
+        const project = getStorageValue(STORAGE_KEYS.PROJECT_ID);
+        const thread = getStorageValue(STORAGE_KEYS.THREAD_ID);
 
         if (!user || !project) {
             showGate();
@@ -127,7 +102,7 @@ const AuthGate = (() => {
     async function handleVerifyUser() {
         const userId = (domElements.authUserId?.value || '').trim();
         if (!userId) {
-            showFlash(domElements.authError, CONSTANTS.ERR_INSERT_USER_ID);
+            showFlash(domElements.authError, ERRORS.INSERT_USER_ID);
             return;
         }
 
@@ -154,7 +129,7 @@ const AuthGate = (() => {
             const data = await response.json();
 
             currentUser = data.user_id || userId;
-            localStorage.setItem(CONSTANTS.LS_USER_ID, currentUser);
+            setStorageValue(STORAGE_KEYS.USER_ID, currentUser);
 
             // Costruisci UI progetti
             const projects = Array.isArray(data.projects) ? data.projects : [];
@@ -169,7 +144,7 @@ const AuthGate = (() => {
 
         } catch (error) {
             console.error('[AuthGate] Error verifying user:', error);
-            showFlash(domElements.authError, CONSTANTS.ERR_CHECK_FAILED);
+            showFlash(domElements.authError, ERRORS.CHECK_FAILED);
         } finally {
             setUserButtonLoading(false);
         }
@@ -183,7 +158,7 @@ const AuthGate = (() => {
         if (!domElements.authSubmit) return;
         domElements.authSubmit.disabled = loading;
         domElements.authSubmit.dataset.originalText = domElements.authSubmit.dataset.originalText || domElements.authSubmit.textContent;
-        domElements.authSubmit.textContent = loading ? CONSTANTS.MSG_VERIFYING : domElements.authSubmit.dataset.originalText;
+        domElements.authSubmit.textContent = loading ? MESSAGES.VERIFYING : domElements.authSubmit.dataset.originalText;
     }
 
     // =========================================================================
@@ -244,7 +219,7 @@ const AuthGate = (() => {
 
         // Aggiorna testo bottone
         if (domElements.authProceed) {
-            domElements.authProceed.textContent = isCreate ? CONSTANTS.MSG_CREATE_ENTER : CONSTANTS.MSG_ENTER;
+            domElements.authProceed.textContent = isCreate ? MESSAGES.CREATE_ENTER : MESSAGES.ENTER;
         }
 
         hideFlash(domElements.authProjError);
@@ -252,7 +227,7 @@ const AuthGate = (() => {
         // Focus appropriato
         const focusEl = isCreate ? domElements.authProjectName : domElements.authProjectSelect;
         if (focusEl) {
-            setTimeout(() => focusEl.focus(), CONSTANTS.FOCUS_DELAY_MS);
+            delayedFocus(focusEl, TIMING.FOCUS_DELAY_MS);
         }
     }
 
@@ -272,7 +247,7 @@ const AuthGate = (() => {
         } else {
             const name = (domElements.authProjectName?.value || '').trim();
             if (!name) {
-                showFlash(domElements.authProjError, CONSTANTS.ERR_INSERT_PROJECT_NAME);
+                showFlash(domElements.authProjError, ERRORS.INSERT_PROJECT_NAME);
                 return;
             }
             projectId = name;
@@ -284,7 +259,7 @@ const AuthGate = (() => {
             await loadUserProject(currentUser, projectId);
         } catch (error) {
             console.error('[AuthGate] Error in proceed:', error);
-            showFlash(domElements.authProjError, CONSTANTS.ERR_OPERATION_FAILED);
+            showFlash(domElements.authProjError, ERRORS.OPERATION_FAILED);
         }
     }
 
@@ -324,9 +299,7 @@ const AuthGate = (() => {
             validateThreadResponse(data);
 
             // Salva in localStorage
-            localStorage.setItem(CONSTANTS.LS_THREAD_ID, data.thread_id);
-            localStorage.setItem(CONSTANTS.LS_USER_ID, data.user_id);
-            localStorage.setItem(CONSTANTS.LS_PROJECT_ID, data.project_id);
+            saveSessionToStorage(data);
 
             // Finalizza
             setTimeout(() => {
@@ -335,22 +308,11 @@ const AuthGate = (() => {
 
         } catch (error) {
             console.error('[AuthGate] Error loading project:', error);
-            const message = threadId ? CONSTANTS.ERR_LOAD_PROJECT_CACHED : CONSTANTS.ERR_PROJECT_LOADING;
+            const message = threadId ? ERRORS.LOAD_PROJECT_CACHED : ERRORS.PROJECT_LOADING;
             showFlash(domElements.authProjError, message);
             throw error;
         } finally {
             setProceedButtonLoading(false);
-        }
-    }
-
-    /**
-     * Valida la risposta dal thread endpoint
-     * @param {Object} data - Dati da validare
-     * @throws {Error} Se la risposta non è valida
-     */
-    function validateThreadResponse(data) {
-        if (!data?.thread_id || !data?.user_id || !data?.project_id) {
-            throw new Error(CONSTANTS.ERR_INVALID_THREAD_RESPONSE);
         }
     }
 
@@ -365,10 +327,10 @@ const AuthGate = (() => {
             domElements.authProceed.dataset.originalHtml = domElements.authProceed.innerHTML;
             domElements.authProceed.innerHTML = `
                 <span class="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>
-                ${CONSTANTS.MSG_LOADING}
+                ${MESSAGES.LOADING}
             `;
         } else {
-            domElements.authProceed.innerHTML = domElements.authProceed.dataset.originalHtml || CONSTANTS.MSG_ENTER;
+            domElements.authProceed.innerHTML = domElements.authProceed.dataset.originalHtml || MESSAGES.ENTER;
         }
     }
 
@@ -407,59 +369,25 @@ const AuthGate = (() => {
      * Mostra l'authGate
      */
     function showGate() {
-        if (domElements.appRoot) domElements.appRoot.classList.add('blurred');
-        if (domElements.authGate) domElements.authGate.classList.remove('hidden');
-        if (domElements.authGateLogo) domElements.authGateLogo.classList.remove('hidden');
+        if (domElements.appRoot) domElements.appRoot.classList.add(CSS_CLASSES.BLURRED);
+        if (domElements.authGate) domElements.authGate.classList.remove(CSS_CLASSES.HIDDEN);
+        if (domElements.authGateLogo) domElements.authGateLogo.classList.remove(CSS_CLASSES.HIDDEN);
     }
 
     /**
      * Nasconde l'authGate
      */
     function hideGate() {
-        if (domElements.appRoot) domElements.appRoot.classList.remove('blurred');
-        if (domElements.authGate) domElements.authGate.classList.add('hidden');
-        if (domElements.authGateLogo) domElements.authGateLogo.classList.add('hidden');
-    }
-
-    /**
-     * Imposta visibilità di un elemento
-     * @param {HTMLElement} element - Elemento
-     * @param {boolean} visible - true per mostrare, false per nascondere
-     */
-    function visibility(element, visible) {
-        if (!element) return;
-        if (visible) {
-            element.classList.remove('d-none');
-        } else {
-            element.classList.add('d-none');
-        }
-    }
-
-    /**
-     * Mostra un messaggio di errore temporaneo
-     * @param {HTMLElement} element - Elemento dove mostrare il messaggio
-     * @param {string} message - Messaggio da mostrare
-     */
-    function showFlash(element, message) {
-        if (!element) return;
-        element.textContent = message;
-        element.classList.remove('d-none');
-    }
-
-    /**
-     * Nasconde un messaggio di errore
-     * @param {HTMLElement} element - Elemento da nascondere
-     */
-    function hideFlash(element) {
-        if (!element) return;
-        element.classList.add('d-none');
+        if (domElements.appRoot) domElements.appRoot.classList.remove(CSS_CLASSES.BLURRED);
+        if (domElements.authGate) domElements.authGate.classList.add(CSS_CLASSES.HIDDEN);
+        if (domElements.authGateLogo) domElements.authGateLogo.classList.add(CSS_CLASSES.HIDDEN);
     }
 
     /**
      * Focus sull'input utente
      */
     function focusUserInput() {
-        setTimeout(() => domElements.authUserId?.focus(), CONSTANTS.FOCUS_DELAY_MS);
+        delayedFocus(domElements.authUserId, TIMING.FOCUS_DELAY_MS);
     }
 
     // =========================================================================

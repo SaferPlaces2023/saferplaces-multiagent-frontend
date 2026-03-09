@@ -6,44 +6,21 @@
  * - Comunicazione con backend agent
  * - Rendering messaggi, tool calls e tool responses
  * - Gestione del thread (creazione, switch)
+ * 
+ * Dipendenze: _utils.js, _consts.js
  */
 const AIChat = (() => {
     // =========================================================================
-    // COSTANTI
+    // DOM_IDS MAPPING
     // =========================================================================
-    const CONSTANTS = {
-        LS_USER_ID: 'user_id',
-        LS_PROJECT_ID: 'project_id',
-        LS_THREAD_ID: 'thread_id',
-        FOCUS_DELAY_MS: 150,
-        TYPING_LABEL: 'in calcolo…',
-        ERR_NO_THREAD: 'No active thread. Create a new chat first.',
-        ERR_AGENT_CONTACT: 'Error contacting the agent 😢. Try send again the message',
-        ERR_CREATE_CHAT: 'Error while creating new chat.',
-        MSG_CREATE_CHAT: 'Creating a new chat ...'
-    };
-
     const DOM_IDS = {
         chatBox: 'chatBox',
         chatBody: 'chatBody',
         chatInput: 'chatInput',
         sendBtn: 'sendMsg',
         minBtn: 'minChat',
-        expandBtn: 'chatExpandBtn',
         clearBtn: 'clearChat',
         settingsBtn: 'chatSettingsBtn'
-    };
-
-    const CSS_CLASSES = {
-        MIN: 'min',
-        BUBBLE: 'bubble',
-        USER: 'user',
-        AI: 'ai',
-        TOOL_ITEM: 'tool-item',
-        TOOL_HEAD: 'tool-head',
-        TOOL_ID: 'tool-id',
-        TOOL_ARGS: 'tool-args',
-        TYPING: 'typing'
     };
 
     // =========================================================================
@@ -59,22 +36,10 @@ const AIChat = (() => {
      * Inizializza il modulo AIChat
      */
     function init() {
-        cacheElements();
+        domElements = cacheElements(DOM_IDS);
         configureMarked();
         bindEvents();
         ChatSettings.init();
-    }
-
-    /**
-     * Cachea i riferimenti agli elementi DOM
-     */
-    function cacheElements() {
-        Object.entries(DOM_IDS).forEach(([key, id]) => {
-            domElements[key] = document.getElementById(id);
-            if (!domElements[key]) {
-                console.warn(`[AIChat] Elemento DOM non trovato: ${id}`);
-            }
-        });
     }
 
     /**
@@ -113,7 +78,7 @@ const AIChat = (() => {
         
         domElements.chatBox.classList.toggle(CSS_CLASSES.MIN);
         if (!domElements.chatBox.classList.contains(CSS_CLASSES.MIN)) {
-            setTimeout(() => domElements.chatInput?.focus(), CONSTANTS.FOCUS_DELAY_MS);
+            delayedFocus(domElements.chatInput, TIMING.FOCUS_DELAY_MS);
         }
     }
 
@@ -159,10 +124,10 @@ const AIChat = (() => {
         
         domElements.chatBody.innerHTML = '';
 
-        const toastId = Toasts.show(CONSTANTS.MSG_CREATE_CHAT);
+        const toastId = Toasts.show(MESSAGES.CREATING_CHAT);
         
-        const userId = localStorage.getItem(CONSTANTS.LS_USER_ID);
-        const projectId = localStorage.getItem(CONSTANTS.LS_PROJECT_ID);
+        const userId = getStorageValue(STORAGE_KEYS.USER_ID);
+        const projectId = getStorageValue(STORAGE_KEYS.PROJECT_ID);
 
         const payload = {
             user_id: userId,
@@ -181,9 +146,7 @@ const AIChat = (() => {
             return response.json();
         })
         .then(data => {
-            localStorage.setItem(CONSTANTS.LS_THREAD_ID, data.thread_id);
-            localStorage.setItem(CONSTANTS.LS_USER_ID, data.user_id);
-            localStorage.setItem(CONSTANTS.LS_PROJECT_ID, data.project_id);
+            saveSessionToStorage(data);
 
             const message = `New chat created [ <code>${data.thread_id}</code> ]`;
             Toasts.ok(toastId, message);
@@ -191,7 +154,7 @@ const AIChat = (() => {
         })
         .catch(error => {
             console.error('[AIChat] Error creating new thread:', error);
-            Toasts.error(toastId, CONSTANTS.ERR_CREATE_CHAT);
+            Toasts.error(toastId, ERRORS.CREATE_CHAT_FAILED);
         });
     }
 
@@ -215,16 +178,16 @@ const AIChat = (() => {
         const typingIndicator = showTyping();
 
         try {
-            const threadId = localStorage.getItem(CONSTANTS.LS_THREAD_ID);
+            const threadId = getStorageValue(STORAGE_KEYS.THREAD_ID);
             if (!threadId) {
                 hideTyping(typingIndicator);
-                appendBubble(CONSTANTS.ERR_NO_THREAD, CSS_CLASSES.AI);
+                appendBubble(ERRORS.NO_ACTIVE_THREAD, CSS_CLASSES.AI);
                 return;
             }
 
             if (!Routes?.Agent?.THREAD) {
                 hideTyping(typingIndicator);
-                appendBubble(CONSTANTS.ERR_AGENT_CONTACT, CSS_CLASSES.AI);
+                appendBubble(ERRORS.AGENT_CONTACT, CSS_CLASSES.AI);
                 console.error('[AIChat] Routes.Agent.THREAD non configurato');
                 return;
             }
@@ -237,7 +200,7 @@ const AIChat = (() => {
 
             if (!response.ok) {
                 hideTyping(typingIndicator);
-                appendBubble(CONSTANTS.ERR_AGENT_CONTACT, CSS_CLASSES.AI);
+                appendBubble(ERRORS.AGENT_CONTACT, CSS_CLASSES.AI);
                 console.error(`[AIChat] HTTP ${response.status}: ${response.statusText}`);
                 return;
             }
@@ -249,7 +212,7 @@ const AIChat = (() => {
 
         } catch (error) {
             hideTyping(typingIndicator);
-            appendBubble(CONSTANTS.ERR_AGENT_CONTACT, CSS_CLASSES.AI);
+            appendBubble(ERRORS.AGENT_CONTACT, CSS_CLASSES.AI);
             console.error('[AIChat] Error sending message:', error);
         }
     }
@@ -353,7 +316,7 @@ const AIChat = (() => {
      * @param {string} label - Etichetta da mostrare
      * @returns {HTMLElement} L'elemento dell'indicatore
      */
-    function showTyping(label = CONSTANTS.TYPING_LABEL) {
+    function showTyping(label = MESSAGES.TYPING) {
         if (!domElements.chatBody) return null;
 
         const wrapper = document.createElement('div');
@@ -475,31 +438,6 @@ const AIChat = (() => {
         details.appendChild(pre);
 
         return details;
-    }
-
-    // =========================================================================
-    // UTILITY
-    // =========================================================================
-
-    /**
-     * Dispatchea un CustomEvent
-     * @param {string} eventName - Nome dell'evento
-     * @param {Object} detail - Dettagli dell'evento
-     */
-    function dispatchEvent(eventName, detail) {
-        document.dispatchEvent(new CustomEvent(eventName, { detail }));
-    }
-
-    /**
-     * Escapa stringhe per evitare XSS in context di innerHTML
-     * @param {string} str - Stringa da escapare
-     * @returns {string} Stringa escapata
-     */
-    function escapeHtml(str) {
-        if (typeof str !== 'string') return '';
-        const div = document.createElement('div');
-        div.textContent = str;
-        return div.innerHTML;
     }
 
     // =========================================================================
