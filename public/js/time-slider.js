@@ -1,270 +1,711 @@
-// TimeSlider: slider temporale con play, velocità, ticks orari e intervalli evidenziati.
-// API:
-// TimeSlider.init({ startISO, endISO, valueISO?, stepMinutes?:60, intervals?:[{start,end,label,color}] })
-// TimeSlider.setRange(startISO, endISO)
-// TimeSlider.setValue(iso)
-// TimeSlider.setIntervals(list)
-// TimeSlider.play(), TimeSlider.pause(), TimeSlider.isPlaying()
-
+/**
+ * TimeSlider - Componente slider temporale per layers multibanda
+ * 
+ * Responsabilità:
+ * - Slider temporale con drag, play, velocità
+ * - Visualizzazione di tick orari e intervalli evidenziati
+ * - Tracking timestamp di items associati
+ * 
+ * Dipendenze: _utils.js, _consts.js
+ */
 const TimeSlider = (() => {
-    let el, track, ticks, handle, wrap, tooltip, highlights, playBtn, speedSel, nowLbl, startLbl, endLbl;
-    let start = null, end = null, value = null;
-    let stepMinutes = 5;
-    let timer = null;
+    
+    const MODULE_SUMMARY = {
+        // COSTANTI E CONFIGURAZIONE
+        TIME_SLIDER_CONSTANTS: 'Costanti: colori, icone, timing, step, delays',
+        DOM_IDS: 'Mapping ID elementi DOM: slider, track, handle, ticks, highlights',
 
-    let intervalColors = [
-        '#6ee7b7',
-        '#60a5fa',
-        '#f472b6',
-        '#facc15',
-        '#fb923c',
-        '#f87171',
-        '#a78bfa',
-        '#34d399',
-        '#38bdf8',
-        '#c084fc',
-    ]
+        // STATO INTERNO
+        domElements: 'Cache riferimenti DOM elements dalla mappa DOM_IDS',
+        startDate: 'Data di inizio intervallo slider',
+        endDate: 'Data di fine intervallo slider',
+        currentValue: 'Valore corrente (data) dello slider',
+        stepMinutes: 'Granularità step in minuti (default 60)',
+        playTimer: 'ID timer per riproduzione automatica',
+        timestampRegister: 'Map: ISO date → array items registrati',
+        colorIndex: 'Contatore colori per assegnazione intervalli',
 
+        // INIZIALIZZAZIONE
+        init: 'Entry point: cachea DOM, imposta range/value/intervals, bind events',
+        bindEvents: 'Bind: toggle, play, speed change, track click, handle drag',
+
+        // RANGE E VALORE
+        setRange: 'Imposta intervallo start-end, valida, calcola ticks, aggiusta value',
+        setValue: 'Imposta valore corrente, calcola posizione %, dispatcha change event',
+
+        // INTERVALLI E HIGHLIGHTS
+        clearIntervals: 'Pulisce HTML highlights e reset colorIndex',
+        setIntervals: 'Popola highlights con intervalli, assegna colori, bind tooltips',
+
+        // DRAG AND DROP
+        enableHandleDrag: 'Setup pointerdown/up/move listeners per drag handle',
+        handleTrackPointerDown: 'Gestisce click su track: sposta handle a posizione',
+        moveHandleToClientX: 'Converte clientX a data, snappa a minutes, setValue',
+
+        // LAYOUT TICKS
+        layoutTicks: 'Calcola scaling, rimuove/crea label ticks ogni 2 ore con etichette',
+
+        // PLAY / PAUSE
+        play: 'Avvia timer: stepForward ogni interval ms (da speed select)',
+        pause: 'Ferma timer riproduzione automatica',
+        togglePlay: 'Toggle tra play e pause',
+        isPlaying: 'Restituisce true se timer attivo',
+        stepForward: 'Incrementa valore di stepMinutes, para se >= endDate',
+
+        // TOOLTIP
+        showTooltip: 'Mostra tooltip con testo, posiziona su evento',
+        moveTooltip: 'Sposta tooltip seguendo clientX',
+        hideTooltip: 'Nascondi tooltip aggiungendo classe hidden',
+
+        // TIMESTAMP REGISTRY
+        registerTimestampItem: 'Registra item in Map[ISO date] → array di items',
+        getTimestampItems: 'Recupera items da Map per ISO date, filtrabile per type',
+
+        // UTILITY - CALCOLATORI
+        calculatePercentBetween: 'Percentuale 0-100 tra startDate e endDate per una data',
+        calculatePositionPercent: 'Calcolo % pinzato 0-100',
+        snapToMinutes: 'Snappa data al multiplo più vicino di minuti',
+        isValidDate: 'Valida se Date è valida (not NaN)',
+        hexToRgba: 'Converte hex #rrggbb a rgba(r,g,b,alpha)',
+
+        // UTILITY - FORMATTATORI
+        formatDate: 'Formatta Date come YYYY-MM-DD',
+        formatHour: 'Formatta ora come HH:00',
+        formatDateTime: 'Formatta come YYYY-MM-DD HH:MM',
+        padZero: 'Padda numero con zero',
+
+        // EVENTS
+        dispatchChange: 'Dispatcha evento "timeslider:change" con {iso, date}',
+
+        // PUBLIC UTILITIES
+        dateRange: 'Genera array di N date distribute tra start e end',
+
+        // EXPORTED API
+        'return.init': 'Inizializzazione componente',
+        'return.setRange': 'Imposta intervallo temporale',
+        'return.setValue': 'Imposta valore corrente',
+        'return.setIntervals': 'Imposta intervalli highlighting',
+        'return.clearIntervals': 'Pulisce intervalli',
+        'return.play': 'Avvia riproduzione automatica',
+        'return.pause': 'Pausa riproduzione',
+        'return.togglePlay': 'Toggle play/pause',
+        'return.isPlaying': 'Verifica se in riproduzione',
+        'return.dateRange': 'Genera range di date',
+        'return.registerTimestampItem': 'Registra item per timestamp',
+        'return.getTimestampItems': 'Recupera items per timestamp',
+        'return.timestampRegister': 'Accesso diretto alla Map di registry'
+    }
+
+    // =========================================================================
+    // COSTANTI LOCALI
+    // =========================================================================
+    const TIME_SLIDER_CONSTANTS = {
+        DEFAULT_STEP_MINUTES: 60,
+        DESIRED_PX_PER_HOUR: 60,
+        SCALE_MIN: 0.4,
+        SCALE_MAX: 3,
+        DEFAULT_TRACK_WIDTH: 600,
+        TICK_INTERVAL_HOURS: 2,
+        TOOLTIP_DELAY_MS: 100,
+        INTERVAL_COLORS: [
+            '#6ee7b7', '#60a5fa', '#f472b6', '#facc15', '#fb923c',
+            '#f87171', '#a78bfa', '#34d399', '#38bdf8', '#c084fc'
+        ],
+        PLAY_ICON: '<span class="material-symbols-outlined">play_arrow</span>',
+        PAUSE_ICON: '<span class="material-symbols-outlined">pause</span>',
+        DEFAULT_PLAY_INTERVAL_MS: 500
+    };
+
+    // =========================================================================
+    // DOM_IDS MAPPING
+    // =========================================================================
+    const DOM_IDS = {
+        timeSlider: 'timeSlider',
+        tsToggleBtn: 'tsToggleBtn',
+        tsTrackWrap: 'tsTrackWrap',
+        tsTrack: 'tsTrack',
+        tsTicks: 'tsTicks',
+        tsHandle: 'tsHandle',
+        tsHighlights: 'tsHighlights',
+        tsTooltip: 'tsTooltip',
+        tsPlay: 'tsPlay',
+        tsSpeed: 'tsSpeed',
+        tsNow: 'tsNow',
+        tsStartLabel: 'tsStartLabel',
+        tsEndLabel: 'tsEndLabel'
+    };
+
+    // =========================================================================
+    // STATO INTERNO
+    // =========================================================================
+    let domElements = {};
+    let startDate = null;
+    let endDate = null;
+    let currentValue = null;
+    let stepMinutes = TIME_SLIDER_CONSTANTS.DEFAULT_STEP_MINUTES;
+    let playTimer = null;
     let timestampRegister = new Map();
+    let colorIndex = 0;
 
+    // =========================================================================
+    // INIZIALIZZAZIONE
+    // =========================================================================
+
+    /**
+     * Inizializza il componente TimeSlider
+     * @param {Object} config - Configurazione
+     * @param {string} config.startISO - Data inizio ISO
+     * @param {string} config.endISO - Data fine ISO
+     * @param {string} [config.valueISO] - Data iniziale slider
+     * @param {number} [config.stepMinutes] - Step in minuti (default 60)
+     * @param {Array<Object>} [config.intervals] - Array di intervalli { start, end, label?, color? }
+     */
     function init({ startISO, endISO, valueISO, stepMinutes: step = 60, intervals = [] }) {
-        el = document.getElementById('timeSlider');
-        track = document.getElementById('tsTrack');
-        ticks = document.getElementById('tsTicks');
-        handle = document.getElementById('tsHandle');
-        wrap = document.getElementById('tsTrackWrap');
-        tooltip = document.getElementById('tsTooltip');
-        highlights = document.getElementById('tsHighlights');
-        playBtn = document.getElementById('tsPlay');
-        speedSel = document.getElementById('tsSpeed');
-        nowLbl = document.getElementById('tsNow');
-        startLbl = document.getElementById('tsStartLabel');
-        endLbl = document.getElementById('tsEndLabel');
-
-        document.getElementById('tsToggleBtn').onclick = () => el.classList.toggle('closed');
-
-        stepMinutes = step || stepMinutes || 60;
+        domElements = cacheElements(DOM_IDS);
+        
+        stepMinutes = step || TIME_SLIDER_CONSTANTS.DEFAULT_STEP_MINUTES;
+        colorIndex = 0;
 
         setRange(startISO, endISO);
         setValue(valueISO || startISO);
         setIntervals(intervals);
 
-        // UI
-        el.classList.remove('hidden');
-        // drag
-        enableDrag();
-        // play
-        playBtn.addEventListener('click', togglePlay);
-        speedSel.addEventListener('change', () => { if (isPlaying()) { pause(); play(); } });
-        // click su track
-        track.addEventListener('pointerdown', onTrackPointer);
+        bindEvents();
+        
+        // Mostra componente, disabilita se nessun intervallo
+        if (domElements.timeSlider) {
+            domElements.timeSlider.classList.remove('hidden');
+        }
 
-        if (intervals.length > 0) {
-            el.classList.remove('closed');
-            el.classList.remove('disabled');
+        if (intervals.length === 0 && domElements.timeSlider) {
+            domElements.timeSlider.classList.add('disabled', 'closed');
         }
     }
 
-    function setRange(aISO, bISO) {
-        start = new Date(aISO);
-        end = new Date(bISO);
-        if (!(+start) || !(+end) || end <= start) throw new Error('Time range not valid');
-        startLbl.textContent = fmtDate(start);
-        endLbl.textContent = fmtDate(end);
-        layoutTicks();
-        if (value === null || value < start || value > end) setValue(aISO);
+    /**
+     * Associa i listener agli eventi principali
+     */
+    function bindEvents() {
+        if (!domElements.tsToggleBtn) return;
+
+        domElements.tsToggleBtn.addEventListener('click', () => {
+            if (domElements.timeSlider) {
+                domElements.timeSlider.classList.toggle('closed');
+            }
+        });
+
+        domElements.tsPlay?.addEventListener('click', togglePlay);
+        domElements.tsSpeed?.addEventListener('change', () => {
+            if (isPlaying()) {
+                pause();
+                play();
+            }
+        });
+
+        domElements.tsTrack?.addEventListener('pointerdown', handleTrackPointerDown);
+        enableHandleDrag();
     }
 
+    // =========================================================================
+    // RANGE E VALORE
+    // =========================================================================
+
+    /**
+     * Imposta l'intervallo di tempo dello slider
+     * @param {string} aISO - Data inizio ISO
+     * @param {string} bISO - Data fine ISO
+     * @throws {Error} Se l'intervallo non è valido
+     */
+    function setRange(aISO, bISO) {
+        startDate = new Date(aISO);
+        endDate = new Date(bISO);
+
+        if (!isValidDate(startDate) || !isValidDate(endDate) || endDate <= startDate) {
+            throw new Error('[TimeSlider] Time range not valid');
+        }
+
+        if (domElements.tsStartLabel) {
+            domElements.tsStartLabel.textContent = formatDate(startDate);
+        }
+        if (domElements.tsEndLabel) {
+            domElements.tsEndLabel.textContent = formatDate(endDate);
+        }
+
+        layoutTicks();
+
+        if (currentValue === null || currentValue < startDate || currentValue > endDate) {
+            setValue(aISO);
+        }
+    }
+
+    /**
+     * Imposta il valore corrente dello slider
+     * @param {string} iso - Data ISO
+     */
     function setValue(iso) {
-        value = new Date(iso);
-        if (!(+value)) value = new Date(start);
-        const p = posPct(value);
-        handle.style.left = p + '%';
-        nowLbl.textContent = fmtDateTime(value);
+        currentValue = new Date(iso);
+
+        if (!isValidDate(currentValue)) {
+            currentValue = new Date(startDate);
+        }
+
+        const percent = calculatePositionPercent(currentValue);
+        if (domElements.tsHandle) {
+            domElements.tsHandle.style.left = percent + '%';
+        }
+
+        if (domElements.tsNow) {
+            domElements.tsNow.textContent = formatDateTime(currentValue);
+        }
+
         dispatchChange();
     }
 
+    // =========================================================================
+    // INTERVALLI E HIGHLIGHTS
+    // =========================================================================
+
+    /**
+     * Pulisce tutti gli intervalli visualizzati
+     */
     function clearIntervals() {
-        highlights.innerHTML = '';
-        // ???: timestampRegister.clear();
+        if (domElements.tsHighlights) {
+            domElements.tsHighlights.innerHTML = '';
+        }
+        colorIndex = 0;
     }
 
+    /**
+     * Imposta gli intervalli visualizzati come highlighting
+     * @param {Array<Object>} list - Array di { start, end, label?, color? }
+     */
     function setIntervals(list) {
-        // highlights.innerHTML = '';
-        let n_intervals = highlights.children.length;
         if (!Array.isArray(list)) return;
-        for (const it of list) {
-            const s = new Date(it.start), e = new Date(it.end);
-            if (!(+s) || !(+e) || e <= start || s >= end) continue;
-            const left = Math.max(0, pctBetween(s));
-            const right = Math.min(100, pctBetween(e));
-            const w = Math.max(0, right - left);
-            const div = document.createElement('div');
-            div.className = 'ts-highlight';
-            div.style.left = left + '%';
-            div.style.width = w + '%';
-            it.color = it.color || intervalColors[n_intervals++ % intervalColors.length];
-            if (it.color) {
-                div.style.background = `linear-gradient(180deg, ${hexOr(it.color, .20)}, ${hexOr(it.color, .08)})`;
-                div.style.borderLeftColor = hexOr(it.color, .35);
-                div.style.borderRightColor = hexOr(it.color, .35);
+
+        list.forEach(interval => {
+            const intervalStart = new Date(interval.start);
+            const intervalEnd = new Date(interval.end);
+
+            // Skip se fuori range
+            if (!isValidDate(intervalStart) || !isValidDate(intervalEnd) || 
+                intervalEnd <= startDate || intervalStart >= endDate) {
+                return;
             }
-            // tooltip
-            if (it.label) {
-                div.addEventListener('pointerenter', (ev) => showTooltip(ev, it.label));
-                div.addEventListener('pointermove', (ev) => moveTooltip(ev));
-                div.addEventListener('pointerleave', () => hideTooltip());
+
+            const leftPercent = Math.max(0, calculatePercentBetween(intervalStart));
+            const rightPercent = Math.min(100, calculatePercentBetween(intervalEnd));
+            const width = Math.max(0, rightPercent - leftPercent);
+
+            const highlight = document.createElement('div');
+            highlight.className = 'ts-highlight';
+            highlight.style.left = leftPercent + '%';
+            highlight.style.width = width + '%';
+
+            // Assegna colore
+            const color = interval.color || TIME_SLIDER_CONSTANTS.INTERVAL_COLORS[colorIndex++ % TIME_SLIDER_CONSTANTS.INTERVAL_COLORS.length];
+            if (color) {
+                highlight.style.background = `linear-gradient(180deg, ${hexToRgba(color, 0.20)}, ${hexToRgba(color, 0.08)})`;
+                highlight.style.borderLeftColor = hexToRgba(color, 0.35);
+                highlight.style.borderRightColor = hexToRgba(color, 0.35);
             }
-            highlights.appendChild(div);
-        }
+
+            // Tooltip su hover
+            if (interval.label) {
+                highlight.addEventListener('pointerenter', (e) => showTooltip(e, interval.label));
+                highlight.addEventListener('pointermove', (e) => moveTooltip(e));
+                highlight.addEventListener('pointerleave', hideTooltip);
+            }
+
+            if (domElements.tsHighlights) {
+                domElements.tsHighlights.appendChild(highlight);
+            }
+        });
     }
 
-    // --- internals ---
-    function enableDrag() {
+    // =========================================================================
+    // DRAG AND DROP
+    // =========================================================================
+
+    /**
+     * Abilita il drag del handle
+     */
+    function enableHandleDrag() {
+        if (!domElements.tsHandle) return;
+
         let dragging = false;
-        handle.addEventListener('pointerdown', (e) => {
-            dragging = true; handle.setPointerCapture(e.pointerId);
+
+        domElements.tsHandle.addEventListener('pointerdown', (e) => {
+            dragging = true;
+            domElements.tsHandle.setPointerCapture(e.pointerId);
         });
-        handle.addEventListener('pointerup', (e) => {
-            dragging = false; handle.releasePointerCapture(e.pointerId);
+
+        domElements.tsHandle.addEventListener('pointerup', (e) => {
+            dragging = false;
+            domElements.tsHandle.releasePointerCapture(e.pointerId);
         });
-        handle.addEventListener('pointermove', (e) => {
-            if (!dragging) return;
-            moveToClientX(e.clientX);
+
+        domElements.tsHandle.addEventListener('pointermove', (e) => {
+            if (dragging) {
+                moveHandleToClientX(e.clientX);
+            }
         });
     }
 
-    function onTrackPointer(e) {
-        moveToClientX(e.clientX);
+    /**
+     * Gestisce il click sul track
+     * @param {PointerEvent} e
+     */
+    function handleTrackPointerDown(e) {
+        moveHandleToClientX(e.clientX);
     }
 
-    function moveToClientX(x) {
-        const rect = track.getBoundingClientRect();
-        const clampX = Math.max(rect.left, Math.min(x, rect.right));
+    /**
+     * Sposta l'handle a una posizione X
+     * @param {number} clientX - Posizione X in viewport
+     */
+    function moveHandleToClientX(clientX) {
+        if (!domElements.tsTrack) return;
+
+        const rect = domElements.tsTrack.getBoundingClientRect();
+        const clampX = Math.max(rect.left, Math.min(clientX, rect.right));
         const ratio = (clampX - rect.left) / rect.width;
-        const ts = start.getTime() + ratio * (end.getTime() - start.getTime());
-        const snapped = snapToMinutes(new Date(ts), stepMinutes);
-        setValue(snapped.toISOString());
+
+        const timestamp = startDate.getTime() + ratio * (endDate.getTime() - startDate.getTime());
+        const snappedDate = snapToMinutes(new Date(timestamp), stepMinutes);
+
+        setValue(snappedDate.toISOString());
     }
 
+    // =========================================================================
+    // LAYOUT TICKS
+    // =========================================================================
+
+    /**
+     * Calcola e layout i tick orari sul track
+     */
     function layoutTicks() {
-        // base: ripetizione ogni 60px = 1h; ridimensioniamo in base alla durata
+        if (!domElements.tsTrack || !domElements.tsTicks) return;
 
-        const hours = (end - start) / (1000 * 60 * 60);
-        const desiredPxPerHour = 60; // target
-        const width = track.clientWidth || 600;
-        const scale = Math.max(0.4, Math.min(3, width / (hours * desiredPxPerHour)));
-        ticks.style.transform = `scaleX(${scale})`;
+        const hours = (endDate - startDate) / (1000 * 60 * 60);
+        const width = domElements.tsTrack.clientWidth || TIME_SLIDER_CONSTANTS.DEFAULT_TRACK_WIDTH;
+        const scale = Math.max(
+            TIME_SLIDER_CONSTANTS.SCALE_MIN,
+            Math.min(
+                TIME_SLIDER_CONSTANTS.SCALE_MAX,
+                width / (hours * TIME_SLIDER_CONSTANTS.DESIRED_PX_PER_HOUR)
+            )
+        );
 
-        // ticks.style.display = 'none'    // !!!: viene brutto a video, disabilito per ora
+        domElements.tsTicks.style.transform = `scaleX(${scale})`;
 
-        // etichette ogni ora + data alle 00
-        const labels = track.querySelectorAll('.ts-tick-label');
-        labels.forEach(l => l.remove());
-        const startH = new Date(start);
-        startH.setMinutes(0, 0, 0);
-        for (let t = +startH; t <= +end; t += 3600 * 2e3) {
+        // Crea label per ogni 2 ore
+        const existingLabels = domElements.tsTrack.querySelectorAll('.ts-tick-label');
+        existingLabels.forEach(l => l.remove());
+
+        const startHour = new Date(startDate);
+        startHour.setMinutes(0, 0, 0);
+
+        for (let t = +startHour; t <= +endDate; t += TIME_SLIDER_CONSTANTS.TICK_INTERVAL_HOURS * 3600 * 1000) {
             const dt = new Date(t);
-            const p = pctBetween(dt);
-            if (p < 0 || p > 100) continue;
-            const lab = document.createElement('div');
-            lab.className = 'ts-tick-label';
-            lab.style.position = 'absolute';
-            lab.style.left = p + '%';
-            lab.style.top = '25%';
-            lab.style.transform = 'translateX(-50%)';
-            lab.style.color = '#9aa0a6';
-            lab.style.fontSize = '.7rem';
-            lab.style.marginTop = '0px';
-            lab.textContent = (dt.getHours() === 0) ? fmtDate(dt) : fmtHour(dt);
-            track.appendChild(lab);
+            const percent = calculatePercentBetween(dt);
+
+            if (percent < 0 || percent > 100) continue;
+
+            const label = document.createElement('div');
+            label.className = 'ts-tick-label';
+            label.style.position = 'absolute';
+            label.style.left = percent + '%';
+            label.style.top = '25%';
+            label.style.transform = 'translateX(-50%)';
+            label.style.color = '#9aa0a6';
+            label.style.fontSize = '.7rem';
+            label.style.marginTop = '0px';
+            label.textContent = (dt.getHours() === 0) ? formatDate(dt) : formatHour(dt);
+
+            domElements.tsTrack.appendChild(label);
         }
     }
 
-    function play() {
-        if (timer) return;
-        const interval = +speedSel.value || 500; // ms per step
-        timer = setInterval(() => stepForward(), interval);
-        playBtn.innerHTML = '<span class="material-symbols-outlined">pause</span>';
-    }
-    function pause() {
-        if (!timer) return;
-        clearInterval(timer); timer = null;
-        playBtn.innerHTML = '<span class="material-symbols-outlined">play_arrow</span>';
-    }
-    function togglePlay() { isPlaying() ? pause() : play(); }
-    function isPlaying() { return !!timer; }
+    // =========================================================================
+    // PLAY / PAUSE
+    // =========================================================================
 
+    /**
+     * Avvia la riproduzione automatica
+     */
+    function play() {
+        if (playTimer) return;
+
+        const interval = +domElements.tsSpeed?.value || TIME_SLIDER_CONSTANTS.DEFAULT_PLAY_INTERVAL_MS;
+        playTimer = setInterval(stepForward, interval);
+
+        if (domElements.tsPlay) {
+            domElements.tsPlay.innerHTML = TIME_SLIDER_CONSTANTS.PAUSE_ICON;
+        }
+    }
+
+    /**
+     * Pausa la riproduzione automatica
+     */
+    function pause() {
+        if (!playTimer) return;
+
+        clearInterval(playTimer);
+        playTimer = null;
+
+        if (domElements.tsPlay) {
+            domElements.tsPlay.innerHTML = TIME_SLIDER_CONSTANTS.PLAY_ICON;
+        }
+    }
+
+    /**
+     * Toggle play/pause
+     */
+    function togglePlay() {
+        isPlaying() ? pause() : play();
+    }
+
+    /**
+     * Verifica se la riproduzione è attiva
+     * @returns {boolean}
+     */
+    function isPlaying() {
+        return !!playTimer;
+    }
+
+    /**
+     * Avanza di uno step (usato in play)
+     */
     function stepForward() {
-        const next = new Date(value.getTime() + stepMinutes * 60 * 1000);
-        if (next > end) { pause(); return; }
+        const next = new Date(currentValue.getTime() + stepMinutes * 60 * 1000);
+
+        if (next > endDate) {
+            pause();
+            return;
+        }
+
         setValue(next.toISOString());
     }
 
-    function dispatchChange() {
-        document.dispatchEvent(new CustomEvent('timeslider:change', {
-            detail: { iso: value.toISOString(), date: new Date(value) }
-        }));
+    // =========================================================================
+    // TOOLTIP
+    // =========================================================================
+
+    /**
+     * Mostra il tooltip con un testo
+     * @param {PointerEvent} e
+     * @param {string} text
+     */
+    function showTooltip(e, text) {
+        if (!domElements.tsTooltip) return;
+
+        domElements.tsTooltip.textContent = text;
+        domElements.tsTooltip.classList.remove('hidden');
+        moveTooltip(e);
     }
 
-    // tooltip
-    function showTooltip(ev, text) {
-        tooltip.textContent = text;
-        tooltip.classList.remove('hidden');
-        moveTooltip(ev);
-    }
-    function moveTooltip(ev) {
-        const rect = wrap.getBoundingClientRect();
-        tooltip.style.left = (ev.clientX - rect.left) + 'px';
-    }
-    function hideTooltip() { tooltip.classList.add('hidden'); }
+    /**
+     * Sposta il tooltip seguendo il mouse
+     * @param {PointerEvent} e
+     */
+    function moveTooltip(e) {
+        if (!domElements.tsTooltip || !domElements.tsTrackWrap) return;
 
-    // utils
-    function pctBetween(dt) { return ((dt - start) / (end - start)) * 100; }
-    function posPct(dt) { return Math.max(0, Math.min(100, pctBetween(dt))); }
-    function snapToMinutes(d, m) {
-        const ms = m * 60 * 1000;
-        return new Date(Math.round(d.getTime() / ms) * ms);
+        const rect = domElements.tsTrackWrap.getBoundingClientRect();
+        domElements.tsTooltip.style.left = (e.clientX - rect.left) + 'px';
     }
-    function pad(n) { return (n < 10 ? '0' : '') + n; }
-    function fmtDate(d) { return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`; }
-    function fmtHour(d) { return `${pad(d.getHours())}:00`; }
-    function fmtDateTime(d) { return `${fmtDate(d)} ${pad(d.getHours())}:${pad(d.getMinutes())}`; }
-    function hexOr(color, alpha = .2) {
-        // accetta hex #rrggbb o CSS color; per semplicità gestiamo solo hex con alpha
-        if (/^#([0-9a-f]{6})$/i.test(color)) {
-            const r = parseInt(color.slice(1, 3), 16), g = parseInt(color.slice(3, 5), 16), b = parseInt(color.slice(5, 7), 16);
-            return `rgba(${r},${g},${b},${alpha})`;
+
+    /**
+     * Nasconde il tooltip
+     */
+    function hideTooltip() {
+        if (domElements.tsTooltip) {
+            domElements.tsTooltip.classList.add('hidden');
         }
-        return color; // fallback
     }
 
-    // funzione per creare array di date
-    function dateRange(start, end, n) {
-        const dates = [];
-        const step = (end - start) / (n - 1);
-        for (let i = 0; i < n; i++) {
-            dates.push(new Date(start.getTime() + step * i));
-        }
-        return dates;
-    }
+    // =========================================================================
+    // TIMESTAMP REGISTRY
+    // =========================================================================
 
+    /**
+     * Registra un item associato a uno specifico timestamp
+     * @param {string} isoDate - Data ISO
+     * @param {Object} item - Oggetto item da registrare
+     */
     function registerTimestampItem(isoDate, item) {
-        timestampRegister.set(
-            isoDate, 
-            timestampRegister.has(isoDate) ? [...timestampRegister.get(isoDate), item] : [item]
-        );
+        const existing = timestampRegister.get(isoDate);
+        timestampRegister.set(isoDate, existing ? [...existing, item] : [item]);
 
-        if (el && el.classList.contains('disabled')) {
-            el.classList.remove('disabled');
+        // Abilita componente se era disabilitato
+        if (domElements.timeSlider && domElements.timeSlider.classList.contains('disabled')) {
+            domElements.timeSlider.classList.remove('disabled');
         }
     }
 
+    /**
+     * Recupera gli items registrati per un timestamp
+     * @param {string} isoDate - Data ISO
+     * @param {string} [itemType] - Tipo di item da filtrare (opzionale)
+     * @returns {Array}
+     */
     function getTimestampItems(isoDate, itemType = null) {
         const items = timestampRegister.get(isoDate) || [];
         return itemType ? items.filter(it => it.type === itemType) : items;
     }
 
-    // public
-    return { init, setRange, setValue, setIntervals, clearIntervals, play, pause, isPlaying, dateRange, timestampRegister, registerTimestampItem, getTimestampItems };
+    // =========================================================================
+    // UTILITY - CALCOLATORI
+    // =========================================================================
+
+    /**
+     * Calcola la percentuale tra start e end per una data
+     * @param {Date} dt
+     * @returns {number} Percentuale 0-100
+     */
+    function calculatePercentBetween(dt) {
+        if (!startDate || !endDate) return 0;
+        return ((dt - startDate) / (endDate - startDate)) * 100;
+    }
+
+    /**
+     * Calcola la percentuale pinzata (0-100)
+     * @param {Date} dt
+     * @returns {number}
+     */
+    function calculatePositionPercent(dt) {
+        return Math.max(0, Math.min(100, calculatePercentBetween(dt)));
+    }
+
+    /**
+     * Snappa una data al multiplo più vicino di minuti
+     * @param {Date} d
+     * @param {number} minutes
+     * @returns {Date}
+     */
+    function snapToMinutes(d, minutes) {
+        const ms = minutes * 60 * 1000;
+        return new Date(Math.round(d.getTime() / ms) * ms);
+    }
+
+    /**
+     * Valida se un oggetto è una Date valida
+     * @param {Date} d
+     * @returns {boolean}
+     */
+    function isValidDate(d) {
+        return d instanceof Date && !isNaN(d.getTime());
+    }
+
+    /**
+     * Converte hex color a rgba con alpha
+     * @param {string} color - Colore hex #rrggbb
+     * @param {number} alpha - Valore alpha 0-1
+     * @returns {string} rgba(r,g,b,a)
+     */
+    function hexToRgba(color, alpha = 0.2) {
+        if (/^#([0-9a-f]{6})$/i.test(color)) {
+            const r = parseInt(color.slice(1, 3), 16);
+            const g = parseInt(color.slice(3, 5), 16);
+            const b = parseInt(color.slice(5, 7), 16);
+            return `rgba(${r},${g},${b},${alpha})`;
+        }
+        return color; // fallback
+    }
+
+    // =========================================================================
+    // UTILITY - FORMATTATORI
+    // =========================================================================
+
+    /**
+     * Formatta una data come YYYY-MM-DD
+     * @param {Date} d
+     * @returns {string}
+     */
+    function formatDate(d) {
+        return `${d.getFullYear()}-${padZero(d.getMonth() + 1)}-${padZero(d.getDate())}`;
+    }
+
+    /**
+     * Formatta l'ora come HH:00
+     * @param {Date} d
+     * @returns {string}
+     */
+    function formatHour(d) {
+        return `${padZero(d.getHours())}:00`;
+    }
+
+    /**
+     * Formatta data e ora come YYYY-MM-DD HH:MM
+     * @param {Date} d
+     * @returns {string}
+     */
+    function formatDateTime(d) {
+        return `${formatDate(d)} ${padZero(d.getHours())}:${padZero(d.getMinutes())}`;
+    }
+
+    /**
+     * Padda un numero con zero
+     * @param {number} n
+     * @returns {string}
+     */
+    function padZero(n) {
+        return (n < 10 ? '0' : '') + n;
+    }
+
+    // =========================================================================
+    // EVENTS
+    // =========================================================================
+
+    /**
+     * Dispatcha evento di cambio valore
+     */
+    function dispatchChange() {
+        dispatchEvent('timeslider:change', {
+            iso: currentValue.toISOString(),
+            date: new Date(currentValue)
+        });
+    }
+
+    // =========================================================================
+    // PUBLIC UTILITIES
+    // =========================================================================
+
+    /**
+     * Genera un array di date tra start e end
+     * @param {Date} start
+     * @param {Date} end
+     * @param {number} count - Numero di date da generare
+     * @returns {Array<Date>}
+     */
+    function dateRange(start, end, count) {
+        const dates = [];
+        const step = (end - start) / (count - 1);
+
+        for (let i = 0; i < count; i++) {
+            dates.push(new Date(start.getTime() + step * i));
+        }
+
+        return dates;
+    }
+
+    // =========================================================================
+    // EXPORTED API
+    // =========================================================================
+
+    return {
+        init,
+        setRange,
+        setValue,
+        setIntervals,
+        clearIntervals,
+        play,
+        pause,
+        togglePlay,
+        isPlaying,
+        dateRange,
+        registerTimestampItem,
+        getTimestampItems,
+        timestampRegister
+    };
 })();
