@@ -1,24 +1,62 @@
-<!-- Chat AI (DESTRO BASSO) -->
+<!-- Chat AI (RIGHT BOTTOM) -->
 <section class="chatbox" id="chatBox" aria-label="AI assisted chat">
+    
+    <!-- ============= HEADER ============= -->
     <div class="chat-header">
+        <!-- Title Section -->
         <div class="d-flex align-items-center gap-2">
             <span class="badge bg-success">AI</span>
             <span class="chat-title">Saferplaces Agent</span>
         </div>
+        
+        <!-- Action Buttons Section -->
         <div class="d-flex align-items-center gap-2">
-            <button id="chatSettingsBtn" class="btn btn-outline-light btn-sm">Settings</button>
-            <button id="clearChat" class="btn btn-outline-light btn-sm">Clean</button>
-            <button id="minChat" class="btn btn-secondary btn-sm" title="Reduce/Expand">⤡</button>
+            <button 
+                id="chatSettingsBtn" 
+                class="btn btn-outline-light btn-sm" 
+                title="Open chat settings">
+                Settings
+            </button>
+            <button 
+                id="clearChat" 
+                class="btn btn-outline-light btn-sm" 
+                title="Start new chat thread">
+                Clean
+            </button>
+            <button 
+                id="minChat" 
+                class="btn btn-secondary btn-sm" 
+                title="Minimize/Expand chat">
+                ⤡
+            </button>
         </div>
     </div>
     
+    <!-- ============= SETTINGS PANEL ============= -->
     <div data-include="public/partials/ai-chat-settings.html"></div>
 
+    <!-- ============= MESSAGE BODY ============= -->
     <div class="chat-body" id="chatBody">
-        <div class="bubble ai">Welcome! I'm here to help you with geospatial analysis, flood simulations, weather data, and more.<br>If you want details about what I can do, just ask and I'll guide you!.</div>
+        <div class="bubble ai">
+            Welcome! I'm here to help you with geospatial analysis, flood simulations, weather data, and more.<br>
+            If you want details about what I can do, just ask and I'll guide you!.
+        </div>
     </div>
+
+    <!-- ============= INPUT AREA ============= -->
     <div class="chat-input">
-        <input id="chatInput" class="form-control form-control-sm" placeholder="Write a message… (Enter to send)">
-        <button id="sendMsg" class="btn btn-success btn-sm fw-semibold">Send</button>
+        <input 
+            id="chatInput" 
+            class="form-control form-control-sm" 
+            type="text"
+            placeholder="Write a message… (Enter to send)"
+            aria-label="Chat message input">
+        <button 
+            id="sendMsg" 
+            class="btn btn-success btn-sm fw-semibold"
+            title="Send message (Enter)">
+            Send
+        </button>
     </div>
+
 </section>

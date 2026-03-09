@@ -1,59 +1,159 @@
-<!-- Sidebar SINISTRA -->
-<button class="btn btn-secondary btn-sm toggle-btn" id="toggleBtn">☰</button>
-<aside class="sidebar closed shadow-lg" id="sidebar">
+<!-- ============================================================================= -->
+<!-- LAYER PANEL - Layer management sidebar (left side) -->
+<!-- ============================================================================= -->
+
+<!-- ============= TOGGLE BUTTON ============= -->
+<button 
+    class="btn btn-secondary btn-sm toggle-btn" 
+    id="toggleBtn"
+    type="button"
+    title="Toggle layer panel"
+    aria-label="Toggle layer panel">
+    ☰
+</button>
+
+<!-- ============= LAYER PANEL SIDEBAR ============= -->
+<aside 
+    class="sidebar closed shadow-lg" 
+    id="sidebar"
+    role="complementary"
+    aria-label="Layer panel with registered and custom layers">
+    
+    <!-- ============= HEADER: Section Title + Badge + Reload ============= -->
     <div class="d-flex justify-content-between align-items-center mb-2">
         <strong>Layers</strong>
-        <span class="badge bg-success" id="layerCount">0</span>
+        <span 
+            class="badge bg-success" 
+            id="layerCount"
+            aria-label="Number of layers">
+            0
+        </span>
     </div>
 
-    <!-- 🔹 Sezione: Layers del progetto -->
+    <!-- ============= REGISTERED LAYERS SECTION ============= -->
     <div class="card p-3 mb-3">
+        
+        <!-- Section Header -->
         <div class="d-flex align-items-center justify-content-between mb-2">
             <span class="text-secondary"><strong>Registered layers</strong></span>
-            <button id="reloadLayers" class="btn btn-outline-light btn-sm">↻</button>
+            <button 
+                id="reloadLayers" 
+                class="btn btn-outline-light btn-sm"
+                type="button"
+                title="Reload project layers">
+                ↻
+            </button>
         </div>
-        <div id="projectLayersList" class="layer-list small">
+        
+        <!-- Layers List Container -->
+        <div 
+            id="projectLayersList" 
+            class="layer-list small"
+            role="list"
+            aria-label="Project layers list">
             <div class="text-secondary">No layers (yet).</div>
         </div>
     </div>
 
-    <!-- 🔸 Foldable: Aggiungi vector -->
+    <!-- ============= ADD VECTOR LAYER SECTION (Collapsible) ============= -->
     <div class="card p-0 mb-3">
-        <button class="btn w-100 text-start px-3 py-2 d-flex justify-content-between align-items-center" data-bs-toggle="collapse" data-bs-target="#addVectorWrap" aria-expanded="false">
+        
+        <!-- Collapse Toggle Button -->
+        <button 
+            class="btn w-100 text-start px-3 py-2 d-flex justify-content-between align-items-center" 
+            data-bs-toggle="collapse" 
+            data-bs-target="#addVectorWrap" 
+            aria-expanded="false"
+            aria-controls="addVectorWrap"
+            type="button"
+            title="Toggle vector layer section">
             <span class="text-secondary"><strong>Add vector layer</strong></span>
             <span class="small text-secondary">open/close</span>
         </button>
+        
+        <!-- Vector Section Content (Hidden by default) -->
         <div id="addVectorWrap" class="collapse px-3 pb-3 pt-1">
             
-            <label class="form-label small">GeoJSON (URL)</label>
+            <!-- GeoJSON URL Input -->
+            <label class="form-label small" for="geojsonUrl">GeoJSON (URL)</label>
             <div class="input-group input-group-sm mb-2">
-                <input id="geojsonUrl" class="form-control" placeholder="https://…/dati.geojson">
-                <button class="btn btn-outline-light" id="btnGeojson">Add</button>
+                <input 
+                    id="geojsonUrl" 
+                    class="form-control" 
+                    type="url"
+                    placeholder="https://…/dati.geojson"
+                    aria-label="GeoJSON source URL">
+                <button 
+                    class="btn btn-outline-light" 
+                    id="btnGeojson"
+                    type="button"
+                    title="Add GeoJSON layer">
+                    Add
+                </button>
             </div>
             
+            <!-- Register Toggle -->
             <div class="form-check form-switch mb-2">
-                <input class="form-check-input" type="checkbox" id="regSwitchVector" checked>
-                <label class="form-check-label small" for="regSwitchVector">Register in project</label>
+                <input 
+                    class="form-check-input" 
+                    type="checkbox" 
+                    id="regSwitchVector" 
+                    checked
+                    aria-label="Register vector layer in project">
+                <label class="form-check-label small" for="regSwitchVector">
+                    Register in project
+                </label>
             </div>
         </div>
     </div>
 
-    <!-- 🔸 Foldable: Aggiungi raster -->
+    <!-- ============= ADD RASTER LAYER SECTION (Collapsible) ============= -->
     <div class="card p-0">
-        <button class="btn w-100 text-start px-3 py-2 d-flex justify-content-between align-items-center" data-bs-toggle="collapse" data-bs-target="#addRasterWrap" aria-expanded="false">
+        
+        <!-- Collapse Toggle Button -->
+        <button 
+            class="btn w-100 text-start px-3 py-2 d-flex justify-content-between align-items-center" 
+            data-bs-toggle="collapse" 
+            data-bs-target="#addRasterWrap" 
+            aria-expanded="false"
+            aria-controls="addRasterWrap"
+            type="button"
+            title="Toggle raster layer section">
             <span class="text-secondary"><strong>Add raster layer</strong></span>
             <span class="small text-secondary">open/close</span>
         </button>
+        
+        <!-- Raster Section Content (Hidden by default) -->
         <div id="addRasterWrap" class="collapse px-3 pb-3 pt-1">
+            
+            <!-- Register Toggle -->
             <div class="form-check form-switch mb-2">
-                <input class="form-check-input" type="checkbox" id="regSwitchRaster" checked>
-                <label class="form-check-label small" for="regSwitchRaster">Register in project</label>
+                <input 
+                    class="form-check-input" 
+                    type="checkbox" 
+                    id="regSwitchRaster" 
+                    checked
+                    aria-label="Register raster layer in project">
+                <label class="form-check-label small" for="regSwitchRaster">
+                    Register in project
+                </label>
             </div>
             
-            <label class="form-label small">COG (single band) (URL)</label>
+            <!-- COG URL + Colormap -->
+            <label class="form-label small" for="cogUrl">COG (single band) (URL)</label>
             <div class="input-group input-group-sm mb-2">
-                <input id="cogUrl" class="form-control" placeholder="https://…/raster.tif">
-                <select id="cmap" class="form-select bg-dark text-light">
+                <input 
+                    id="cogUrl" 
+                    class="form-control" 
+                    type="url"
+                    placeholder="https://…/raster.tif"
+                    aria-label="Cloud Optimized GeoTIFF source URL">
+                
+                <!-- Colormap Selector -->
+                <select 
+                    id="cmap" 
+                    class="form-select bg-dark text-light"
+                    aria-label="Colormap for raster visualization">
                     <option>viridis</option>
                     <option>inferno</option>
                     <option>magma</option>
@@ -62,8 +162,17 @@
                     <option>gray</option>
                     <option>terrain</option>
                 </select>
-                <button class="btn btn-outline-light" id="btnCog">Add</button>
+                
+                <!-- Add Button -->
+                <button 
+                    class="btn btn-outline-light" 
+                    id="btnCog"
+                    type="button"
+                    title="Add COG raster layer">
+                    Add
+                </button>
             </div>
         </div>
     </div>
+
 </aside>

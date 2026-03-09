@@ -1,29 +1,93 @@
-<!-- Overlay registrazione layer -->
-<section id="layerRegModal" class="layer-reg hidden" aria-modal="true" role="dialog">
+<!-- ============================================================================= -->
+<!-- LAYER REGISTRATION MODAL - Modal for registeringcustom layers (GeoJSON/COG) -->
+<!-- ============================================================================= -->
+
+<section 
+    id="layerRegModal" 
+    class="layer-reg hidden" 
+    aria-modal="true" 
+    role="dialog"
+    aria-labelledby="lrTitle"
+    aria-label="Layer registration form">
+    
+    <!-- ============= REGISTRATION CARD ============= -->
     <div class="layer-reg-card">
+        
+        <!-- ============= HEADER ============= -->
         <h6 class="mb-2">Register a new layer</h6>
-        <p class="small text-secondary mb-2">Confirm layer details before adding it to map.</p>
+        <p class="small text-secondary mb-2">
+            Confirm layer details before adding it to map.
+        </p>
 
+        <!-- ============= SOURCE URL (Read-only) ============= -->
         <div class="mb-2">
-            <label class="form-label small">Source (URL)</label>
-            <input id="lrSrc" class="form-control form-control-sm" readonly>
+            <label class="form-label small" for="lrSrc">Source (URL)</label>
+            <input 
+                id="lrSrc" 
+                class="form-control form-control-sm" 
+                type="url"
+                readonly
+                aria-label="Layer source URL (read-only)"
+                aria-describedby="lrSrcHint">
+            <small id="lrSrcHint" class="text-secondary d-block mt-1">
+                Auto-populated from source
+            </small>
         </div>
 
+        <!-- ============= TITLE (Required) ============= -->
         <div class="mb-2">
-            <label class="form-label small">Title</label>
-            <input id="lrTitle" class="form-control form-control-sm" placeholder="es. Venice buildings">
+            <label class="form-label small" for="lrTitle">
+                Title
+                <span class="text-danger" title="Required field">*</span>
+            </label>
+            <input 
+                id="lrTitle" 
+                class="form-control form-control-sm" 
+                type="text"
+                placeholder="e.g., Venice buildings"
+                aria-label="Layer title (required)"
+                required>
         </div>
 
+        <!-- ============= DESCRIPTION (Optional) ============= -->
         <div class="mb-2">
-            <label class="form-label small">Description</label>
-            <textarea id="lrDesc" class="form-control form-control-sm" rows="2" placeholder="breve descrizione…" spellcheck="false"></textarea>
+            <label class="form-label small" for="lrDesc">Description</label>
+            <textarea 
+                id="lrDesc" 
+                class="form-control form-control-sm" 
+                rows="2" 
+                placeholder="Brief description…"
+                spellcheck="false"
+                aria-label="Layer description (optional)">
+            </textarea>
         </div>
 
+        <!-- ============= ACTION BUTTONS ============= -->
         <div class="d-flex justify-content-end gap-2 mt-3">
-            <button id="lrCancel" class="btn btn-outline-light btn-sm">Cancel</button>
-            <button id="lrConfirm" class="btn btn-success btn-sm">Confirm</button>
+            <button 
+                id="lrCancel" 
+                class="btn btn-outline-light btn-sm"
+                type="button"
+                title="Cancel registration">
+                Cancel
+            </button>
+            <button 
+                id="lrConfirm" 
+                class="btn btn-success btn-sm"
+                type="button"
+                title="Confirm and add layer">
+                Confirm
+            </button>
         </div>
 
-        <div id="lrError" class="small text-danger d-none mt-2">Insert at least the title.</div>
+        <!-- ============= ERROR MESSAGE ============= -->
+        <div 
+            id="lrError" 
+            class="small text-danger d-none mt-2"
+            role="alert"
+            aria-live="polite">
+            Insert at least the title.
+        </div>
     </div>
+    
 </section>

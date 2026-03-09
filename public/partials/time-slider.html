@@ -1,15 +1,52 @@
-<!-- Time Slider (bottom floating) -->
-<button class="btn btn-secondary btn-sm toggle-btn" id="tsToggleBtn"><span class="material-symbols-outlined">timer</span></button>
-<section id="timeSlider" class="ts-container closed" aria-label="Time slider">
-    <!-- <div class="disabled-text">Time slider is disabled — there's no time-based data to display.<br>Ask the agent about DPC radars or ICON / Meteoblue forecast.</div> -->
+<!-- ============================================================================= -->
+<!-- TIME SLIDER - Temporal navigation slider for multi-band time-series layers -->
+<!-- ============================================================================= -->
 
+<!-- ============= TOGGLE BUTTON (Bottom-left) ============= -->
+<button 
+    class="btn btn-secondary btn-sm toggle-btn" 
+    id="tsToggleBtn"
+    type="button"
+    title="Toggle time slider"
+    aria-label="Toggle time slider panel">
+    <span class="material-symbols-outlined">timer</span>
+</button>
+
+<!-- ============= TIME SLIDER SECTION ============= -->
+<section 
+    id="timeSlider" 
+    class="ts-container closed" 
+    aria-label="Time slider for temporal data navigation"
+    role="region"
+    aria-live="polite">
+    
+    <!-- ============= DISABLED STATE MESSAGE ============= -->
+    <!-- <div class="disabled-text">
+        Time slider is disabled — there's no time-based data to display.<br>
+        Ask the agent about DPC radars or ICON / Meteoblue forecast.
+    </div> -->
+
+    <!-- ============= TIME SLIDER CARD ============= -->
     <div class="ts-card">
+        
+        <!-- ============= HEADER: Controls + Speed + Current Time ============= -->
         <div class="ts-header">
             <div class="ts-controls">
-                <button id="tsPlay" class="btn btn-outline-light btn-sm" title="Play/Pausa">
+                
+                <!-- Play/Pause Button -->
+                <button 
+                    id="tsPlay" 
+                    class="btn btn-outline-light btn-sm" 
+                    type="button"
+                    title="Play/Pause timeline">
                     <span class="material-symbols-outlined">play_arrow</span>
                 </button>
-                <select id="tsSpeed" class="form-select form-select-sm ts-speed">
+                
+                <!-- Speed Selector -->
+                <select 
+                    id="tsSpeed" 
+                    class="form-select form-select-sm ts-speed"
+                    aria-label="Playback speed multiplier">
                     <option value="800">0.5×</option>
                     <option value="500" selected>1×</option>
                     <option value="250">2×</option>
@@ -17,30 +54,80 @@
                     <option value="50">10×</option>
                     <option value="25">20×</option>
                 </select>
-                <div id="tsNow" class="ts-now">—</div>
+                
+                <!-- Current Time Display -->
+                <div 
+                    id="tsNow" 
+                    class="ts-now"
+                    role="status"
+                    aria-label="Current time">
+                    —
+                </div>
             </div>
-            
         </div>
 
-        <div class="ts-track-wrap" id="tsTrackWrap">
-            <!-- aree evidenziate -->
-            <div class="ts-highlights" id="tsHighlights"></div>
+        <!-- ============= TRACK AREA: Handle, Highlights, Ticks, Tooltip ============= -->
+        <div 
+            class="ts-track-wrap" 
+            id="tsTrackWrap"
+            role="presentation">
+            
+            <!-- Highlighted Intervals -->
+            <div 
+                class="ts-highlights" 
+                id="tsHighlights"
+                role="presentation">
+            </div>
 
-            <!-- track + ticks + maniglia -->
-            <div class="ts-track" id="tsTrack">
-                <div class="ts-ticks" id="tsTicks"></div>
-                <div class="ts-handle" id="tsHandle" title="Trascina per cambiare ora">
+            <!-- Main Track with Ticks and Handle -->
+            <div 
+                class="ts-track" 
+                id="tsTrack"
+                role="slider"
+                aria-label="Timeline scrubber"
+                aria-valuemin="0"
+                aria-valuemax="100"
+                aria-valuenow="50"
+                tabindex="0">
+                
+                <!-- Tick Marks (Grid) -->
+                <div 
+                    class="ts-ticks" 
+                    id="tsTicks"
+                    role="presentation">
+                </div>
+                
+                <!-- Draggable Handle -->
+                <div 
+                    class="ts-handle" 
+                    id="tsHandle" 
+                    title="Drag to change time"
+                    role="presentation">
                     <div class="ts-handle-dot"></div>
                 </div>
             </div>
 
-            <!-- tooltip intervalli -->
-            <div class="ts-tooltip hidden" id="tsTooltip"></div>
+            <!-- Tooltip for Highlights -->
+            <div 
+                class="ts-tooltip hidden" 
+                id="tsTooltip"
+                role="tooltip">
+            </div>
         </div>
 
+        <!-- ============= RANGE LABELS: Start and End Times ============= -->
         <div class="ts-range justify-content-between mt-1 px-1">
-            <span id="tsStartLabel">—</span>
-            <span id="tsEndLabel">—</span>
+            <span 
+                id="tsStartLabel"
+                aria-label="Start date">
+                —
+            </span>
+            <span 
+                id="tsEndLabel"
+                aria-label="End date">
+                —
+            </span>
         </div>
     </div>
+    
 </section>

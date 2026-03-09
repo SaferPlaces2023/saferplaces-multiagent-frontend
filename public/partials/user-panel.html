@@ -1,47 +1,127 @@
-<!-- Bottone pannello utente (sopra all'hamburger) -->
-<button class="btn btn-primary btn-sm toggle-user-btn" id="toggleUserBtn">👤</button>
+<!-- ============================================================================= -->
+<!-- USER PANEL - User info, session data, and project management sidebar -->
+<!-- ============================================================================= -->
 
-<!-- Pannello UTENTE (sinistra, esclusivo col pannello layer) -->
-<aside class="user-sidebar closed" id="userSidebar">
+<!-- ============= TOGGLE BUTTON (Top-left) ============= -->
+<button 
+    class="btn btn-primary btn-sm toggle-user-btn" 
+    id="toggleUserBtn"
+    type="button"
+    title="Open user panel"
+    aria-label="Toggle user panel">
+    👤
+</button>
+
+<!-- ============= USER PANEL SIDEBAR ============= -->
+<aside 
+    class="user-sidebar closed" 
+    id="userSidebar"
+    role="complementary"
+    aria-label="User panel with session info and projects">
+    
+    <!-- ============= HEADER: Title + Exit Button ============= -->
     <div class="d-flex justify-content-between align-items-center mb-2">
         <strong>User</strong>
-        <button id="logoutBtn" class="btn btn-outline-danger btn-sm">Exit</button>
+        <button 
+            id="logoutBtn" 
+            class="btn btn-outline-danger btn-sm"
+            type="button"
+            title="Logout and clear session">
+            Exit
+        </button>
     </div>
 
+    <!-- ============= SESSION INFO CARD ============= -->
     <div class="card p-3 mb-3">
+        
+        <!-- User ID -->
         <div class="small text-secondary">user_id</div>
-        <div id="infoUserId" class="fw-semibold">—</div>
+        <div 
+            id="infoUserId" 
+            class="fw-semibold"
+            aria-label="Current user ID">
+            —
+        </div>
+        
+        <!-- Project ID -->
         <div class="small text-secondary mt-2">project_id</div>
-        <div id="infoProjectId" class="fw-semibold">—</div>
+        <div 
+            id="infoProjectId" 
+            class="fw-semibold"
+            aria-label="Current project ID">
+            —
+        </div>
+        
+        <!-- Thread ID -->
         <div class="small text-secondary mt-2">thread_id</div>
-        <div id="infoThreadId" class=""><code>—</code></div>
+        <div 
+            id="infoThreadId" 
+            class=""
+            aria-label="Current thread ID">
+            <code>—</code>
+        </div>
     </div>
 
+    <!-- ============= PROJECTS SECTION HEADER ============= -->
     <div class="d-flex align-items-center justify-content-between mb-2">
         <strong>Projects</strong>
         <span class="small text-secondary">others from your account</span>
     </div>
 
-    <!-- Mini sezione: Nuovo progetto -->
+    <!-- ============= NEW PROJECT CARD ============= -->
     <div class="card p-3 mb-2">
+        
+        <!-- Toggle Create Button -->
         <div class="d-flex align-items-center justify-content-between">
             <strong class="me-2 text-secondary">New project</strong>
-            <button id="newProjBtn" class="btn btn-outline-light btn-sm">+ Create</button>
+            <button 
+                id="newProjBtn" 
+                class="btn btn-outline-light btn-sm"
+                type="button"
+                title="Create a new project">
+                + Create
+            </button>
         </div>
 
-        <!-- form inline nascosto -->
-        <div id="newProjForm" class="mt-2 d-none">
+        <!-- Create Project Form (Hidden by default) -->
+        <div 
+            id="newProjForm" 
+            class="mt-2 d-none">
+            
+            <!-- Project Name Input -->
             <div class="input-group input-group-sm mb-2">
-                <input id="newProjName" class="form-control" placeholder="es. dev-023">
-                <button id="newProjCreateBtn" class="btn btn-success">Create</button>
+                <input 
+                    id="newProjName" 
+                    class="form-control" 
+                    type="text"
+                    placeholder="e.g., dev-023"
+                    aria-label="New project name">
+                <button 
+                    id="newProjCreateBtn" 
+                    class="btn btn-success"
+                    type="button"
+                    title="Create the new project">
+                    Create
+                </button>
             </div>
-            <div id="newProjError" class="small text-danger d-none">Creation failed.</div>
+            
+            <!-- Error Message -->
+            <div 
+                id="newProjError" 
+                class="small text-danger d-none"
+                role="alert">
+                Creation failed.
+            </div>
         </div>
     </div>
 
-
-    <div id="userProjects" class="mb-2">
-        <!-- DOC: projects will be palced here dynamically -->
+    <!-- ============= PROJECTS LIST ============= -->
+    <div 
+        id="userProjects" 
+        class="mb-2"
+        role="list"
+        aria-label="List of available projects">
+        <!-- Projects will be populated dynamically here -->
     </div>
 
 </aside>
