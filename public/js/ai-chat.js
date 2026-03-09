@@ -10,6 +10,54 @@
  * Dipendenze: _utils.js, _consts.js
  */
 const AIChat = (() => {
+
+    const MODULE_SUMMARY = {
+        // COSTANTI E CONFIGURAZIONE
+        DOM_IDS: 'Mapping ID elementi DOM: chatBox, chatInput, sendBtn, buttons',
+
+        // STATO INTERNO
+        domElements: 'Cache riferimenti DOM elements dalla mappa DOM_IDS',
+
+        // INIZIALIZZAZIONE
+        init: 'Entry point: cachea DOM, configura marked, bind events',
+        configureMarked: 'Configura libreria marked per il rendering markdown',
+        bindEvents: 'Bind: minimize, new thread, settings, send, keydown',
+
+        // GESTIONE EVENTI PRINCIPALI
+        handleToggleMinimize: 'Toggle classe "min" sulla chat box + focus input',
+        handleChatInputKeydown: 'Intercetta Enter (no Shift) → invia messaggio',
+
+        // PUBLIC API
+        invokeSend: 'API pubblica: invia messaggio programmaticamente',
+
+        // GESTIONE THREAD
+        onNewThread: 'Pulisce history, crea nuovo thread via backend POST',
+
+        // INVIO MESSAGGI
+        send: 'Invia messaggio a agent: fetch POST, gestisce typing, processing',
+        processAgentResponse: 'Normalizza risposta a array, processa ogni elemento',
+        processAgentElement: 'Routing: tool calls → tool responses → messaggi → state',
+        handleStateUpdate: 'Estrae state_updates e dispatcha draw-tool update',
+
+        // RENDERING - MESSAGGI E BOLLE
+        appendBubble: 'Crea bolla di messaggio, parse markdown se AI, scrolla',
+        showTyping: 'Mostra spinner + label "in calcolo..." nella chat',
+        hideTyping: 'Rimuove elemento typing indicator dal DOM',
+        scrollChatToBottom: 'Scrolla chat body al bottom',
+
+        // RENDERING - TOOL CALLS E RESPONSES
+        appendToolCall: 'Crea elemento details collassibile per tool call',
+        appendToolResponse: 'Crea elemento details collassibile per tool response',
+        createToolDetailsElement: 'Factory: crea <details> con title, id, args',
+
+        // EXPORTED API
+        'return.init': 'Inizializzazione modulo',
+        'return.appendBubble': 'Aggiungi bolla messaggio (pubblica per ChatSettings?)',
+        'return.showTyping': 'Mostra typing indicator (pubblica)',
+        'return.hideTyping': 'Nascondi typing indicator (pubblica)',
+        'return.invokeSend': 'API pubblica: invia messaggio'
+    }
+
     // =========================================================================
     // DOM_IDS MAPPING
     // =========================================================================

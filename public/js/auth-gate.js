@@ -10,6 +10,52 @@
  * Dipendenze: _utils.js, _consts.js
  */
 const AuthGate = (() => {
+    
+    const MODULE_SUMMARY = {
+        // COSTANTI E CONFIGURAZIONE
+        DOM_IDS: 'Mapping ID elementi DOM: auth gate, user input, project select/create',
+        CONSTANTS: 'Costanti modalità: MODE_SELECT="select", MODE_CREATE="create"',
+
+        // STATO INTERNO
+        domElements: 'Cache riferimenti DOM elements dalla mappa DOM_IDS',
+        currentUser: 'User ID corrente verificato',
+        mode: 'Modalità corrente: "select" (scelta progetto) o "create" (nuovo)',
+
+        // INIZIALIZZAZIONE
+        init: 'Entry point: cachea DOM, bind events, controlla sessione cache',
+        bindEvents: 'Bind: verify user (click + Enter), mode switch, proceed',
+        checkCachedSession: 'Se esiste sessione localStorage → loadUserProject, else → showGate',
+
+        // VERIFICA UTENTE
+        handleVerifyUser: 'Valida user_id, fetchia endpoint USER, popola projects UI',
+        setUserButtonLoading: 'Mostra/nasconde loading spinner su authSubmit button',
+
+        // UI PROGETTI
+        buildProjectsUI: 'Decide: 0 progetti → create only, N progetti → select + toggle',
+        populateProjectSelect: 'Popola <select> dropdown con lista progetti',
+        setMode: 'Toggle modalità select⟷create, abilita/disabilita sezioni, focus',
+
+        // AZIONE PRINCIPALE
+        handleProceed: 'Estrae projectId da select o input, chiama loadUserProject',
+
+        // CARICAMENTO PROGETTO
+        loadUserProject: 'POST NEWTHREAD endpoint, valida risposta, salva storage',
+        setProceedButtonLoading: 'Mostra/nasconde loading spinner su proceed button',
+
+        // FINALIZZAZIONE
+        finalizeAuth: 'Nasconde gate, dispatcha evento auth:ready',
+        dispatchAuthReady: 'Crea e dispatcha CustomEvent "auth:ready" con dettagli',
+
+        // UI HELPERS
+        showGate: 'Mostra authGate: add blurred, remove hidden',
+        hideGate: 'Nasconde authGate: remove blurred, add hidden',
+        focusUserInput: 'Focus con delay su input authUserId',
+
+        // EXPORTED API
+        'return.init': 'Inizializzazione modulo',
+        'return.loadUserProject': 'API pubblica: carica progetto specifico'
+    }
+
     // =========================================================================
     // DOM_IDS MAPPING
     // =========================================================================

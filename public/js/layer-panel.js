@@ -11,6 +11,63 @@
  * Dipendenze: _utils.js, _consts.js
  */
 const LayerPanel = (() => {
+
+    const MODULE_SUMMARY = {
+        // COSTANTI E CONFIGURAZIONE
+        LAYER_CONSTANTS: 'Costanti locali: messaggi, delay, errori',
+        DOM_IDS: 'Mapping ID elementi DOM: sidebar, layers, modal, buttons',
+
+        // STATO INTERNO
+        domElements: 'Cache riferimenti DOM elements dalla mappa DOM_IDS',
+        pendingReg: 'Payload layer in attesa di registrazione nel modal',
+        draggingFromHandle: 'Flag per tracciare drag da drag-handle',
+
+        // INIZIALIZZAZIONE
+        init: 'Entry point: cachea DOM, bind events principali',
+        bindMainEvents: 'Bind: toggle sidebar, add GeoJSON, add COG, reload',
+        bindModalEvents: 'Bind: cancel e confirm registrazione layer',
+        bindLayerLoadEvents: 'Bind: auth:ready e layer:reload-project-layers events',
+
+        // UI - SIDEBAR
+        sidebarOpen: 'Apre la sidebar rimuovendo classe closed',
+        sidebarClose: 'Chiude la sidebar aggiungendo classe closed',
+
+        // AGGIUNTA LAYERS
+        handleAddGeoJSON: 'Gestisce submit button GeoJSON: valida URL, apre modal o dispatcha',
+        handleAddCOG: 'Gestisce submit button COG: valida URL+colormap, apre modal o dispatcha',
+
+        // MODAL - REGISTRAZIONE LAYER
+        openRegModal: 'Popola e mostra modal registrazione layer, focus title input',
+        closeRegModal: 'Nasconde modal e pulisce pendingReg',
+        handleConfirmRegistration: 'Valida title, costruisce layer_data, dispatcha evento add',
+        showRegModalError: 'Mostra messaggio errore nel modal',
+        hideRegModalError: 'Nasconde messaggio errore del modal',
+
+        // CARICAMENTO LAYERS DAL BACKEND
+        reloadProjectLayers: 'Fetchia layers da backend, aggiorna badge, renderizza lista',
+
+        // RENDERING LISTA LAYERS
+        renderLayerList: 'Popola lista DOM con layer items, abilita drag-sort',
+        createLayerItemElement: 'Crea elemento layer item HTML con dettagli, actions, drag-handle',
+        bindLayerItemEvents: 'Bind: eye toggle, download action, drag tracking su item',
+
+        // DRAG AND DROP - REORDER
+        enableLayerDragSort: 'Setup drag-drop listeners per reordering layers in lista',
+        dispatchNewOrder: 'Estrae ordine layer da DOM e dispatcha evento layers:reordered',
+
+        // DOWNLOAD LAYER
+        downloadLayer: 'Gestisce download layer: usa URL metadata o richiede al backend',
+        performDownload: 'Esegue fetch blob e trigger browser download',
+
+        // EXPORTED API
+        'return.init': 'Inizializzazione modulo',
+        'return.reloadProjectLayers': 'API pubblica: ricarica lista layers',
+        'return.sidebarOpen': 'API pubblica: apre sidebar',
+        'return.sidebarClose': 'API pubblica: chiude sidebar',
+        'return.listWrap': 'Riferimento element lista layers (per accesso esterno)'
+    }
+
+
     // =========================================================================
     // COSTANTI LOCALI
     // =========================================================================
