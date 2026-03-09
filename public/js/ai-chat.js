@@ -1,286 +1,516 @@
-// Chat: invio messaggi, spinner "in calcolo", demo comandi
+/**
+ * AIChat - Modulo gestione chat multiagent
+ * 
+ * Responsabilità:
+ * - Interazione UI (input, invio messaggi, visualizzazione)
+ * - Comunicazione con backend agent
+ * - Rendering messaggi, tool calls e tool responses
+ * - Gestione del thread (creazione, switch)
+ */
 const AIChat = (() => {
-    let chatBox, chatBody, chatInput, sendBtn, minBtn, expandBtn, clearBtn;
+    // =========================================================================
+    // COSTANTI
+    // =========================================================================
+    const CONSTANTS = {
+        LS_USER_ID: 'user_id',
+        LS_PROJECT_ID: 'project_id',
+        LS_THREAD_ID: 'thread_id',
+        FOCUS_DELAY_MS: 150,
+        TYPING_LABEL: 'in calcolo…',
+        ERR_NO_THREAD: 'No active thread. Create a new chat first.',
+        ERR_AGENT_CONTACT: 'Error contacting the agent 😢. Try send again the message',
+        ERR_CREATE_CHAT: 'Error while creating new chat.',
+        MSG_CREATE_CHAT: 'Creating a new chat ...'
+    };
 
+    const DOM_IDS = {
+        chatBox: 'chatBox',
+        chatBody: 'chatBody',
+        chatInput: 'chatInput',
+        sendBtn: 'sendMsg',
+        minBtn: 'minChat',
+        expandBtn: 'chatExpandBtn',
+        clearBtn: 'clearChat',
+        settingsBtn: 'chatSettingsBtn'
+    };
+
+    const CSS_CLASSES = {
+        MIN: 'min',
+        BUBBLE: 'bubble',
+        USER: 'user',
+        AI: 'ai',
+        TOOL_ITEM: 'tool-item',
+        TOOL_HEAD: 'tool-head',
+        TOOL_ID: 'tool-id',
+        TOOL_ARGS: 'tool-args',
+        TYPING: 'typing'
+    };
+
+    // =========================================================================
+    // STATO INTERNO
+    // =========================================================================
+    let domElements = {};
+
+    // =========================================================================
+    // INIZIALIZZAZIONE
+    // =========================================================================
+
+    /**
+     * Inizializza il modulo AIChat
+     */
     function init() {
-        chatBox = document.getElementById('chatBox');
-        chatBody = document.getElementById('chatBody');
-        chatInput = document.getElementById('chatInput');
-        sendBtn = document.getElementById('sendMsg');
-        minBtn = document.getElementById('minChat');
-        expandBtn = document.getElementById('chatExpandBtn');
-        clearBtn = document.getElementById('clearChat');
-        settingsBtn = document.getElementById('chatSettingsBtn');
-
-        marked.setOptions({ breaks: true, mangle: false, headerIds: false });
-
-        minBtn.onclick = () => {
-            chatBox.classList.toggle('min');
-            if (!chatBox.classList.contains('min')) setTimeout(() => chatInput.focus(), 150);
-        };
-        // expandBtn.addEventListener('click', () => {
-        //     chatBox.classList.toggle('full-height');
-        //     const expanded = chatBox.classList.contains('full-height');
-        //     expandBtn.textContent = expanded ? '⬏' : '⬍'; // cambia icona
-        //     expandBtn.title = expanded ? 'Reduce height' : 'Expand at full height';
-        // });
-        clearBtn.onclick = () => { 
-            chatBody.innerHTML = '';
-            const LS_USER = 'user_id';
-            const LS_PROJ = 'project_id';
-            const LS_THREAD = 'thread_id';
-            const t = Toasts.show(`Creating a new chat ...`);
-            fetch(Routes.Agent.NEWTHREAD, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ user_id: localStorage.getItem(LS_USER), project_id: localStorage.getItem(LS_PROJ) })
-            })
-            .then(r => {
-                if (!r.ok) throw new Error('HTTP ' + r.status);
-                return r.json();
-            })
-            .then(data => {
-                localStorage.setItem(LS_THREAD, data.thread_id);
-                localStorage.setItem(LS_USER, data.user_id);
-                localStorage.setItem(LS_PROJ, data.project_id);
-
-                Toasts.ok(t, `New chat created [ <code>${data.thread_id}</code> ]`);
-
-                UserPanel.fillInfo();
-            })
-            .catch(err => {
-                console.error(err);
-                Toasts.error(t, 'Error while creating new chat.');
-            })
-        };
-        settingsBtn.onclick = () => {
-            ChatSettings.togglePanel();
-        }
-
-        sendBtn.onclick = send;
-        chatInput.addEventListener('keydown', e => {
-            if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); send(); }
-        });
-
+        cacheElements();
+        configureMarked();
+        bindEvents();
         ChatSettings.init();
     }
 
+    /**
+     * Cachea i riferimenti agli elementi DOM
+     */
+    function cacheElements() {
+        Object.entries(DOM_IDS).forEach(([key, id]) => {
+            domElements[key] = document.getElementById(id);
+            if (!domElements[key]) {
+                console.warn(`[AIChat] Elemento DOM non trovato: ${id}`);
+            }
+        });
+    }
+
+    /**
+     * Configura la libreria marked per il rendering markdown
+     */
+    function configureMarked() {
+        if (typeof marked === 'undefined') {
+            console.warn('[AIChat] Libreria marked non disponibile');
+            return;
+        }
+        marked.setOptions({
+            breaks: true,
+            mangle: false,
+            headerIds: false
+        });
+    }
+
+    /**
+     * Associa i listener agli eventi principali
+     */
+    function bindEvents() {
+        if (!domElements.minBtn) return;
+        
+        domElements.minBtn.onclick = handleToggleMinimize;
+        domElements.clearBtn?.addEventListener('click', onNewThread);
+        domElements.settingsBtn?.addEventListener('click', () => ChatSettings?.togglePanel?.());
+        domElements.sendBtn?.addEventListener('click', send);
+        domElements.chatInput?.addEventListener('keydown', handleChatInputKeydown);
+    }
+
+    /**
+     * Gestisce il toggle del minimizing della chat
+     */
+    function handleToggleMinimize() {
+        if (!domElements.chatBox) return;
+        
+        domElements.chatBox.classList.toggle(CSS_CLASSES.MIN);
+        if (!domElements.chatBox.classList.contains(CSS_CLASSES.MIN)) {
+            setTimeout(() => domElements.chatInput?.focus(), CONSTANTS.FOCUS_DELAY_MS);
+        }
+    }
+
+    /**
+     * Gestisce l'evento keydown dell'input chat
+     * Invia il messaggio con Enter (no Shift)
+     */
+    function handleChatInputKeydown(e) {
+        if (e.key === 'Enter' && !e.shiftKey) {
+            e.preventDefault();
+            send();
+        }
+    }
+
+    // =========================================================================
+    // PUBLIC API
+    // =========================================================================
+
+    /**
+     * API pubblica per inviare un messaggio programmaticamente
+     * @param {string} message - Il messaggio da inviare
+     */
     function invokeSend(message) {
-        if (!message || message.trim() === '') return;
-        chatInput.value = message;
+        if (!message || typeof message !== 'string' || message.trim() === '') {
+            return;
+        }
+        if (domElements.chatInput) {
+            domElements.chatInput.value = message;
+        }
         send();
     }
 
-    function send() {
+    // =========================================================================
+    // GESTIONE THREAD
+    // =========================================================================
 
-        function handle_command(cmd, typingNode) {
-            hideTyping(typingNode);
-            let reply = '';
+    /**
+     * Crea un nuovo thread di chat
+     * Pulisce la cronologia messaggi e comunica con il backend
+     */
+    function onNewThread() {
+        if (!domElements.chatBody) return;
+        
+        domElements.chatBody.innerHTML = '';
 
-            if (/^help$/i.test(cmd)) {
-                reply = "Avaliable commands:\n" +
-                    "/dark → dark style\n" +
-                    "/light → light style\n" +
-                    "/reset → Rome view\n" +
-                    "/clear → Clean the chat";
-            }
-            else if (/^dark/i.test(cmd)) {
-                dispatch('map:set-style', { styleUrl: 'https://basemaps.cartocdn.com/gl/dark-matter-gl-style/style.json' });
-                reply = '🌓 Dark Matter style activated.';
-            }
-            else if (/^light|positron/i.test(cmd)) {
-                dispatch('map:set-style', { styleUrl: 'https://basemaps.cartocdn.com/gl/positron-gl-style/style.json' });
-                reply = '☀️ Light Matter style activated.';
-            }
-            else if (/^reset/i.test(cmd)) {
-                dispatch('map:reset', {});
-                reply = '📍 map setted in Rome/Italy.';
-            }
-            else if (/^clear/i.test(cmd)) {
-                chatBody.innerHTML = '';
-                reply = '🧹 Chat is empty.';
-            }
-            else {
-                reply = `Command “/${cmd}” not recognized. Write /help to see command list.`;
-            }
+        const toastId = Toasts.show(CONSTANTS.MSG_CREATE_CHAT);
+        
+        const userId = localStorage.getItem(CONSTANTS.LS_USER_ID);
+        const projectId = localStorage.getItem(CONSTANTS.LS_PROJECT_ID);
 
-            appendBubble(reply, 'ai');
+        const payload = {
+            user_id: userId,
+            project_id: projectId
+        };
+
+        fetch(Routes?.Agent?.NEWTHREAD, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(payload)
+        })
+        .then(response => {
+            if (!response.ok) {
+                throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+            }
+            return response.json();
+        })
+        .then(data => {
+            localStorage.setItem(CONSTANTS.LS_THREAD_ID, data.thread_id);
+            localStorage.setItem(CONSTANTS.LS_USER_ID, data.user_id);
+            localStorage.setItem(CONSTANTS.LS_PROJECT_ID, data.project_id);
+
+            const message = `New chat created [ <code>${data.thread_id}</code> ]`;
+            Toasts.ok(toastId, message);
+            UserPanel?.fillInfo?.();
+        })
+        .catch(error => {
+            console.error('[AIChat] Error creating new thread:', error);
+            Toasts.error(toastId, CONSTANTS.ERR_CREATE_CHAT);
+        });
+    }
+
+    // =========================================================================
+    // INVIO MESSAGGI
+    // =========================================================================
+
+    /**
+     * Invia un messaggio all'agent remoto
+     * Gestisce visualizzazione UI, typing indicator, e processing della risposta
+     */
+    async function send() {
+        const messageText = domElements.chatInput?.value?.trim();
+        if (!messageText) return;
+
+        appendBubble(messageText, CSS_CLASSES.USER);
+        if (domElements.chatInput) {
+            domElements.chatInput.value = '';
         }
 
-        const t = chatInput.value.trim();
-        if (!t) return;
-        appendBubble(t, 'user');
-        chatInput.value = '';
+        const typingIndicator = showTyping();
 
-        // spinner mentre elabora
-        const typing = showTyping();
+        try {
+            const threadId = localStorage.getItem(CONSTANTS.LS_THREAD_ID);
+            if (!threadId) {
+                hideTyping(typingIndicator);
+                appendBubble(CONSTANTS.ERR_NO_THREAD, CSS_CLASSES.AI);
+                return;
+            }
 
-        // 1️⃣ se è un comando locale
-        if (t.startsWith('/')) {
-            handle_command(t.slice(1).trim(), typing);
+            if (!Routes?.Agent?.THREAD) {
+                hideTyping(typingIndicator);
+                appendBubble(CONSTANTS.ERR_AGENT_CONTACT, CSS_CLASSES.AI);
+                console.error('[AIChat] Routes.Agent.THREAD non configurato');
+                return;
+            }
+
+            const response = await fetch(Routes.Agent.THREAD(threadId), {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ prompt: messageText })
+            });
+
+            if (!response.ok) {
+                hideTyping(typingIndicator);
+                appendBubble(CONSTANTS.ERR_AGENT_CONTACT, CSS_CLASSES.AI);
+                console.error(`[AIChat] HTTP ${response.status}: ${response.statusText}`);
+                return;
+            }
+
+            const data = await response.json();
+            hideTyping(typingIndicator);
+
+            processAgentResponse(data);
+
+        } catch (error) {
+            hideTyping(typingIndicator);
+            appendBubble(CONSTANTS.ERR_AGENT_CONTACT, CSS_CLASSES.AI);
+            console.error('[AIChat] Error sending message:', error);
+        }
+    }
+
+    /**
+     * Processa la risposta dell'agent
+     * Normalizza a array e processa ogni elemento
+     * @param {Object|Array} data - Risposta dall'agent
+     */
+    function processAgentResponse(data) {
+        const items = Array.isArray(data) ? data.flat() : [data];
+        
+        items
+            .filter(item => item && item.role !== 'user')
+            .forEach(element => processAgentElement(element));
+    }
+
+    /**
+     * Processa un singolo elemento della risposta agent
+     * Gestisce tool calls, tool responses, messaggi AI e state updates
+     * @param {Object} element - Elemento della risposta
+     */
+    function processAgentElement(element) {
+        if (!element) return;
+
+        // Tool calls
+        if (element.tool_calls && Array.isArray(element.tool_calls) && element.tool_calls.length > 0) {
+            element.tool_calls.forEach(call => appendToolCall(call));
             return;
         }
 
-        // 2️⃣ altrimenti: chiama l'agente remoto
-        const LS_THREAD = 'thread_id';
-        let thread_id = localStorage.getItem(LS_THREAD);
-        fetch(Routes.Agent.THREAD(thread_id), {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ prompt: t })
-        })
-            .then(r => r.json())
-            .then(data => {
-                hideTyping(typing);
-                data
-                    .flat()
-                    .filter(d => d.role != 'user')
-                    .forEach(element => {
-                        if (element.tool_calls && element.tool_calls.length > 0) {
-                            element.tool_calls.forEach(call => appendToolCall(call));
-                        } else if (element.role === 'tool') {
-                            appendToolResponse(element);
-                            dispatch('layer:reload-project-layers', {});
-                        } else {
-                            appendBubble(element.content || '(no response)', element.role || 'ai');
-                        }
-
-                        if (element.role === 'interrupt' && element.state_updates != null) {
-                            if (Object.hasOwn(element.state_updates, 'user_drawn_shapes')) {
-                                dispatch('draw-tool:update-user-drawn-shapes', { user_drawn_shapes: element.state_updates.user_drawn_shapes });
-                            }
-                        }
-                    });
-            })
-            .catch(err => {
-                hideTyping(typing);
-                appendBubble('Error contacting the agent 😢. Try send again the message', 'ai');
-                console.error(err);
-            });
-    }
-
-    function appendToolCall(call) {
-        if (!call) return;
-
-        const bubble = document.createElement('div');
-        bubble.className = 'bubble ai';
-
-        const details = document.createElement('details');
-        details.className = 'tool-item';
-
-        const summary = document.createElement('summary');
-
-        // head: "tool call: <code>name</code>"
-        const head = document.createElement('div');
-        head.className = 'tool-head';
-
-        const label = document.createElement('span');
-        label.textContent = 'tool call:';
-
-        const codeEl = document.createElement('code');
-        codeEl.textContent = call?.name || 'tool';
-
-        head.appendChild(label);
-        head.appendChild(codeEl);
-
-        // id (piccolo, sotto al nome)
-        const idLine = document.createElement('div');
-        idLine.className = 'tool-id';
-        idLine.textContent = `ID: ${String(call?.id || '—')}`;
-
-        summary.appendChild(head);
-        summary.appendChild(idLine);
-
-        // args (json pretty)
-        const pre = document.createElement('pre');
-        pre.className = 'tool-args';
-        pre.textContent = JSON.stringify(call?.args ?? {}, null, 2);
-
-        details.appendChild(summary);
-        details.appendChild(pre);
-        bubble.appendChild(details);
-
-        chatBody.appendChild(bubble);
-        chatBody.scrollTop = chatBody.scrollHeight;
-    }
-
-    // Crea UNA bubble AI per una singola risposta di tipo "tool"
-    function appendToolResponse(msg) {
-        if (!msg) return;
-
-        const bubble = document.createElement('div');
-        bubble.className = 'bubble ai';
-
-        const details = document.createElement('details');
-        details.className = 'tool-item';
-
-        // header
-        const summary = document.createElement('summary');
-
-        const head = document.createElement('div');
-        head.className = 'tool-head';
-
-        const label = document.createElement('span');
-        label.textContent = 'tool response:';
-
-        const codeEl = document.createElement('code');
-        codeEl.textContent = msg?.name || 'tool';
-
-        head.appendChild(label);
-        head.appendChild(codeEl);
-
-        const idLine = document.createElement('div');
-        idLine.className = 'tool-id';
-        idLine.textContent = `Call ID: ${String(msg?.tool_call_id || '—')}`;
-
-        summary.appendChild(head);
-        summary.appendChild(idLine);
-
-        // corpo (raw, non parsare!)
-        const pre = document.createElement('pre');
-        pre.className = 'tool-args';
-        pre.textContent = String(msg?.content ?? ''); // XSS-safe: textContent
-
-        details.appendChild(summary);
-        details.appendChild(pre);
-        bubble.appendChild(details);
-
-        chatBody.appendChild(bubble);
-        chatBody.scrollTop = chatBody.scrollHeight;
-    }
-
-    function appendBubble(text, who = 'user') {
-        const div = document.createElement('div');
-        div.className = 'bubble ' + (who === 'user' ? 'user' : 'ai');
-
-
-        if (who === 'ai' || who === 'interrupt') {
-            const html = marked.parse(text);
-            div.innerHTML = html;
-        } else {
-            div.textContent = text;
+        // Tool response
+        if (element.role === 'tool') {
+            appendToolResponse(element);
+            dispatchEvent('layer:reload-project-layers', {});
+            return;
         }
 
-        chatBody.appendChild(div);
-        chatBody.scrollTop = chatBody.scrollHeight;
-        return div;
+        // Messaggi standard (AI, system, etc)
+        appendBubble(element.content || '(no response)', element.role || CSS_CLASSES.AI);
+
+        // State updates (interrupt)
+        if (element.role === 'interrupt' && element.state_updates) {
+            handleStateUpdate(element.state_updates);
+        }
     }
 
+    /**
+     * Gestisce gli state updates dalla risposta dell'agent
+     * @param {Object} stateUpdates - Oggetto con i state updates
+     */
+    function handleStateUpdate(stateUpdates) {
+        if (!stateUpdates) return;
 
-    function showTyping(label = 'in calcolo…') {
-        const wrap = document.createElement('div');
-        wrap.className = 'bubble typing';
-        wrap.innerHTML = `
-      <div class="spinner-border spinner-border-sm text-light" role="status" aria-hidden="true"></div>
-      <span class="small text-secondary">${label}</span>`;
-        chatBody.appendChild(wrap);
-        chatBody.scrollTop = chatBody.scrollHeight;
-        return wrap;
+        if (Object.prototype.hasOwnProperty.call(stateUpdates, 'user_drawn_shapes')) {
+            dispatchEvent('draw-tool:update-user-drawn-shapes', {
+                user_drawn_shapes: stateUpdates.user_drawn_shapes
+            });
+        }
     }
-    function hideTyping(node) { if (node && node.parentNode) node.parentNode.removeChild(node); }
 
-    function dispatch(name, detail) { document.dispatchEvent(new CustomEvent(name, { detail })); }
+    // =========================================================================
+    // RENDERING - MESSAGGI E BOLLE
+    // =========================================================================
 
-    // API opzionale
-    return { init, appendBubble, showTyping, hideTyping, invokeSend };
+    /**
+     * Aggiunge una bolla di messaggio al chat
+     * @param {string} text - Testo del messaggio
+     * @param {string} who - Mittente ('user', 'ai', etc)
+     * @returns {HTMLElement} L'elemento della bolla creato
+     */
+    function appendBubble(text, who = CSS_CLASSES.AI) {
+        if (!domElements.chatBody) return null;
+
+        const bubble = document.createElement('div');
+        bubble.className = `${CSS_CLASSES.BUBBLE} ${who}`;
+
+        if (who === CSS_CLASSES.AI || who === 'interrupt') {
+            try {
+                if (typeof marked !== 'undefined') {
+                    const html = marked.parse(text);
+                    bubble.innerHTML = html;
+                } else {
+                    bubble.textContent = text;
+                }
+            } catch (error) {
+                console.error('[AIChat] Error parsing markdown:', error);
+                bubble.textContent = text;
+            }
+        } else {
+            bubble.textContent = text;
+        }
+
+        domElements.chatBody.appendChild(bubble);
+        scrollChatToBottom();
+        return bubble;
+    }
+
+    /**
+     * Mostra l'indicatore di typing (in calcolo)
+     * @param {string} label - Etichetta da mostrare
+     * @returns {HTMLElement} L'elemento dell'indicatore
+     */
+    function showTyping(label = CONSTANTS.TYPING_LABEL) {
+        if (!domElements.chatBody) return null;
+
+        const wrapper = document.createElement('div');
+        wrapper.className = `${CSS_CLASSES.BUBBLE} ${CSS_CLASSES.TYPING}`;
+        wrapper.innerHTML = `
+            <div class="spinner-border spinner-border-sm text-light" role="status" aria-hidden="true"></div>
+            <span class="small text-secondary">${escapeHtml(label)}</span>`;
+
+        domElements.chatBody.appendChild(wrapper);
+        scrollChatToBottom();
+        return wrapper;
+    }
+
+    /**
+     * Nasconde l'indicatore di typing
+     * @param {HTMLElement} node - Elemento dell'indicatore
+     */
+    function hideTyping(node) {
+        if (node && node.parentNode) {
+            node.parentNode.removeChild(node);
+        }
+    }
+
+    /**
+     * Scrolla la chat al bottom
+     */
+    function scrollChatToBottom() {
+        if (domElements.chatBody) {
+            domElements.chatBody.scrollTop = domElements.chatBody.scrollHeight;
+        }
+    }
+
+    // =========================================================================
+    // RENDERING - TOOL CALLS E RESPONSES
+    // =========================================================================
+
+    /**
+     * Aggiunge una visualizzazione di tool call al chat
+     * @param {Object} call - Oggetto tool call
+     */
+    function appendToolCall(call) {
+        if (!call || !domElements.chatBody) return;
+
+        const bubble = document.createElement('div');
+        bubble.className = `${CSS_CLASSES.BUBBLE} ${CSS_CLASSES.AI}`;
+
+        const details = createToolDetailsElement(
+            'tool call:',
+            call.name || 'tool',
+            `ID: ${String(call.id || '—')}`,
+            JSON.stringify(call.args ?? {}, null, 2)
+        );
+
+        bubble.appendChild(details);
+        domElements.chatBody.appendChild(bubble);
+        scrollChatToBottom();
+    }
+
+    /**
+     * Aggiunge una visualizzazione di tool response al chat
+     * @param {Object} msg - Oggetto tool response
+     */
+    function appendToolResponse(msg) {
+        if (!msg || !domElements.chatBody) return;
+
+        const bubble = document.createElement('div');
+        bubble.className = `${CSS_CLASSES.BUBBLE} ${CSS_CLASSES.AI}`;
+
+        const details = createToolDetailsElement(
+            'tool response:',
+            msg.name || 'tool',
+            `Call ID: ${String(msg.tool_call_id || '—')}`,
+            String(msg.content ?? '')
+        );
+
+        bubble.appendChild(details);
+        domElements.chatBody.appendChild(bubble);
+        scrollChatToBottom();
+    }
+
+    /**
+     * Crea un elemento details collassibile per tool call/response
+     * @param {string} labelText - Etichetta (es: 'tool call:')
+     * @param {string} toolName - Nome dello strumento
+     * @param {string} idLine - Linea con ID
+     * @param {string} argsContent - Contenuto dell'elemento args
+     * @returns {HTMLElement} L'elemento details creato
+     */
+    function createToolDetailsElement(labelText, toolName, idLine, argsContent) {
+        const details = document.createElement('details');
+        details.className = CSS_CLASSES.TOOL_ITEM;
+
+        const summary = document.createElement('summary');
+
+        const head = document.createElement('div');
+        head.className = CSS_CLASSES.TOOL_HEAD;
+
+        const label = document.createElement('span');
+        label.textContent = labelText;
+
+        const code = document.createElement('code');
+        code.textContent = escapeHtml(toolName);
+
+        head.appendChild(label);
+        head.appendChild(code);
+
+        const id = document.createElement('div');
+        id.className = CSS_CLASSES.TOOL_ID;
+        id.textContent = idLine;
+
+        summary.appendChild(head);
+        summary.appendChild(id);
+
+        const pre = document.createElement('pre');
+        pre.className = CSS_CLASSES.TOOL_ARGS;
+        pre.textContent = argsContent;
+
+        details.appendChild(summary);
+        details.appendChild(pre);
+
+        return details;
+    }
+
+    // =========================================================================
+    // UTILITY
+    // =========================================================================
+
+    /**
+     * Dispatchea un CustomEvent
+     * @param {string} eventName - Nome dell'evento
+     * @param {Object} detail - Dettagli dell'evento
+     */
+    function dispatchEvent(eventName, detail) {
+        document.dispatchEvent(new CustomEvent(eventName, { detail }));
+    }
+
+    /**
+     * Escapa stringhe per evitare XSS in context di innerHTML
+     * @param {string} str - Stringa da escapare
+     * @returns {string} Stringa escapata
+     */
+    function escapeHtml(str) {
+        if (typeof str !== 'string') return '';
+        const div = document.createElement('div');
+        div.textContent = str;
+        return div.innerHTML;
+    }
+
+    // =========================================================================
+    // EXPORTED API
+    // =========================================================================
+
+    return {
+        init,
+        appendBubble,
+        showTyping,
+        hideTyping,
+        invokeSend
+    };
 })();
