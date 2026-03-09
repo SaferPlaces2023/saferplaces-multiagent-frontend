@@ -4,7 +4,6 @@
     // ========================================
     // 1) CARICAMENTO PARTIAL HTML RICORSIVO
     // ========================================
-    // DOC: [NEW way] include partials recursively
     async function loadIncludes(root = document) {
         const hosts = root.querySelectorAll('[data-include]');
         if (hosts.length === 0) return;

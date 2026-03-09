@@ -113,14 +113,23 @@ const GeoMap = (() => {
 
         // Sky configuration per style.load
         SKY_CONFIG: {
-            'sky-color': '#199EF3',
-            'sky-horizon-blend': 0.5,
-            'horizon-color': '#ffffff',
-            'horizon-fog-blend': 0.5,
-            'fog-color': '#c5c5d0',
-            'fog-ground-blend': 0.5,
-            'atmosphere-blend': ['interpolate', ['linear'], ['zoom'], 0, 1, 10, 1, 12, 0]
+            'sky-color': '#7fb3e6',
+            'sky-horizon-blend': 0.35,
+            'horizon-color': '#e8eef7',
+            'horizon-fog-blend': 0.6,
+            'fog-color': '#d6dde6',
+            'fog-ground-blend': 0.45,
+            'atmosphere-blend': [
+                'interpolate',
+                ['linear'],
+                ['zoom'],
+                0, 1,
+                8, 1,
+                11, 0.7,
+                13, 0
+            ]
         },
+
 
         // Configurazione tile sources esterne
         TILE_SOURCES: {
@@ -632,8 +641,8 @@ const GeoMap = (() => {
         try {
             // Parse time bounds
             const metadata = layerData.layer_data.metadata || {};
-            const tStart = metadata.time_start?.endsWith('Z') 
-                ? metadata.time_start 
+            const tStart = metadata.time_start?.endsWith('Z')
+                ? metadata.time_start
                 : `${metadata.time_start}Z`;
             const tEnd = metadata.time_end?.endsWith('Z')
                 ? metadata.time_end
@@ -816,7 +825,7 @@ const GeoMap = (() => {
      * @returns {boolean}
      */
     function isLayerVisible(layerId) {
-        return map.getStyle().layers.some(l => 
+        return map.getStyle().layers.some(l =>
             l.id.includes(layerId) && map.getLayoutProperty(l.id, 'visibility') === 'visible'
         );
     }
@@ -911,15 +920,15 @@ const GeoMap = (() => {
                 color[3] = 0;  // Transparent
             } else {
                 const [r, g, b] = colorscale(value * (metadata.scale || 1) + (metadata.offset || 0));
-                
+
                 color[0] = r;
                 color[1] = g;
                 color[2] = b;
 
                 // Alpha computato con curva esponenziale
                 const normalizedValue = Math.max(Math.min(value / maxValue, 1), 0);
-                color[3] = normalizedValue > 0 
-                    ? Math.min((Math.pow(Math.E, normalizedValue - 1)), 1) * 180 
+                color[3] = normalizedValue > 0
+                    ? Math.min((Math.pow(Math.E, normalizedValue - 1)), 1) * 180
                     : 10;
             }
         });
@@ -987,7 +996,7 @@ const GeoMap = (() => {
 
         try {
             map.setStyle(styleUrl);
-            
+
             // Ripulisci state dipendenti
             TimeSlider.clearIntervals();
             LayerPanel.reloadProjectLayers();
