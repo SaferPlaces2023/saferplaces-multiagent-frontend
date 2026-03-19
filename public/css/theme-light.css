@@ -1,0 +1,258 @@
+/* ============================================================================= */
+/* THEME LIGHT - Overrides hardcoded dark values in all loaded CSS files        */
+/* ============================================================================= */
+/*
+   Design-token overrides (backgrounds, text, borders, shadows, glass) live in
+   design-tokens.css under html.light-theme.  This file handles every remaining
+   hardcoded rgba/hex value in the loaded CSS files that does NOT use a token.
+
+   Files covered (same load order as index.html):
+     layout.css · components.css · branding.css · map-editor.css · sidebars.css
+     chat-interface.css · time-slider.css · modals.css · notifications.css
+*/
+
+/* ========================================================================= */
+/* LAYOUT.CSS — hardcoded structural values                                   */
+/* ========================================================================= */
+
+/* Scrollbar thumb */
+html.light-theme ::-webkit-scrollbar-thumb {
+    background-color: rgba(0, 0, 0, 0.18);
+}
+
+/* Spinner (hardcoded `color: whitesmoke` in layout.css) */
+html.light-theme .spinner-border {
+    color: var(--color-text-secondary);
+}
+
+/* Chat sidebar wrapper */
+html.light-theme .chat-sidebar-wrapper {
+    background: rgba(244, 246, 249, 0.97);
+    border-right: 1px solid rgba(0, 0, 0, 0.10);
+}
+
+@media (max-width: 480px) {
+    html.light-theme .chat-sidebar-wrapper {
+        border-top: 1px solid rgba(0, 0, 0, 0.10);
+    }
+}
+
+/* Right sidebar wrapper (user + layers) */
+html.light-theme .left-sidebar-wrapper {
+    background: rgba(244, 246, 249, 0.97);
+    border-left: 1px solid rgba(0, 0, 0, 0.10);
+}
+
+/* Bootstrap utility classes */
+html.light-theme .bg-dark {
+    background-color: var(--color-bg-primary) !important;
+}
+
+html.light-theme .text-light {
+    color: var(--color-text-primary) !important;
+}
+
+/* ========================================================================= */
+/* COMPONENTS.CSS — hardcoded values                                          */
+/* ========================================================================= */
+
+/* Collapsible summary hover */
+html.light-theme details summary:hover {
+    background-color: rgba(0, 0, 0, 0.04);
+}
+
+/* Tool call items (AI tools panel) */
+html.light-theme .tool-item {
+    background: rgba(0, 0, 0, 0.04);
+}
+
+html.light-theme .tool-head code {
+    background: rgba(0, 0, 0, 0.07);
+    border-color: rgba(0, 0, 0, 0.10);
+    color: var(--color-text-primary);
+}
+
+html.light-theme .tool-args {
+    background: rgba(0, 0, 0, 0.03);
+    border-top-color: rgba(0, 0, 0, 0.08);
+    color: var(--color-text-primary);
+}
+
+/* Generic panel (used by .panel, .dt-panel combined rule) */
+html.light-theme .panel {
+    background: rgba(0, 0, 0, 0.03);
+}
+
+/* layer-item dragging state */
+html.light-theme .layer-item.dragging {
+    background-color: rgba(0, 0, 0, 0.03);
+}
+
+/* Project item hover */
+html.light-theme .project-item:hover,
+html.light-theme #userProjects .project-item:hover {
+    background-color: rgba(0, 0, 0, 0.03);
+}
+
+/* ========================================================================= */
+/* MAP-EDITOR.CSS — hardcoded values                                          */
+/* ========================================================================= */
+
+/* Draw tool buttons */
+html.light-theme .dt-btn {
+    background: rgba(0, 0, 0, 0.04);
+}
+
+html.light-theme .dt-btn:hover {
+    background: rgba(0, 0, 0, 0.07);
+}
+
+/* Draw tools floating panel */
+html.light-theme .dt-panel {
+    background: rgba(244, 246, 249, 0.97);
+}
+
+/* Collection action buttons */
+html.light-theme .collection-btn {
+    background: rgba(0, 0, 0, 0.04);
+}
+
+html.light-theme .collection-btn:hover {
+    background: rgba(0, 0, 0, 0.07);
+}
+
+/* Details section inside draw panel */
+html.light-theme .dt-details {
+    background: rgba(0, 0, 0, 0.03);
+}
+
+/* ========================================================================= */
+/* SIDEBARS.CSS — hardcoded values                                            */
+/* ========================================================================= */
+
+/* Layer details block */
+html.light-theme .layer-details {
+    background: rgba(0, 0, 0, 0.03);
+}
+
+html.light-theme .layer-details code {
+    background: rgba(0, 0, 0, 0.07);
+}
+
+/* Thread ID code chip */
+html.light-theme #infoThreadId code {
+    background: rgba(0, 0, 0, 0.07);
+}
+
+/* ========================================================================= */
+/* CHAT-INTERFACE.CSS — hardcoded values                                      */
+/* ========================================================================= */
+
+/* Chat header gradient + border */
+html.light-theme .chat-header {
+    background: linear-gradient(180deg,
+                rgba(0, 0, 0, 0.04),
+                rgba(0, 0, 0, 0.01));
+    border-bottom: 1px solid rgba(0, 0, 0, 0.10);
+}
+
+/* AI message bubble */
+html.light-theme .bubble.ai {
+    background: rgba(0, 0, 0, 0.04);
+}
+
+/* Inline code inside AI bubble */
+html.light-theme .bubble.ai code {
+    background: rgba(0, 0, 0, 0.07);
+    color: var(--color-text-primary);
+}
+
+/* Code block inside AI bubble */
+html.light-theme .bubble.ai pre {
+    background: rgba(0, 0, 0, 0.05);
+}
+
+/* Typing indicator bubble */
+html.light-theme .bubble.typing {
+    background: rgba(0, 0, 0, 0.03);
+}
+
+/* Chat input bar */
+html.light-theme .chat-input {
+    background: rgba(0, 0, 0, 0.02);
+    border-top: 1px solid rgba(0, 0, 0, 0.10);
+}
+
+/* Chat settings panel */
+html.light-theme #chatSettings {
+    background: rgba(0, 0, 0, 0.02);
+    border-bottom: 1px solid rgba(0, 0, 0, 0.10);
+}
+
+/* Settings section button */
+html.light-theme .cs-section > .btn {
+    background: rgba(0, 0, 0, 0.03);
+}
+
+html.light-theme .cs-section > .btn:hover {
+    background: rgba(0, 0, 0, 0.06);
+}
+
+/* ========================================================================= */
+/* TIME-SLIDER.CSS — hardcoded values                                         */
+/* ========================================================================= */
+
+/* Disabled overlay text (hardcoded very-dark rgba) */
+html.light-theme .ts-container.disabled .disabled-text {
+    background-color: rgba(230, 234, 240, 0.80);
+}
+
+/* ========================================================================= */
+/* BUTTONS — Bootstrap overrides                                              */
+/* ========================================================================= */
+
+html.light-theme .btn-outline-light {
+    border-color: rgba(0, 0, 0, 0.18);
+    color: var(--color-text-primary);
+}
+
+html.light-theme .btn-outline-light:hover {
+    background-color: rgba(0, 0, 0, 0.05);
+    border-color: rgba(0, 0, 0, 0.24);
+    color: var(--color-text-primary);
+}
+
+html.light-theme .btn-secondary {
+    background-color: rgba(0, 0, 0, 0.06);
+    border-color: rgba(0, 0, 0, 0.12);
+    color: var(--color-text-primary);
+}
+
+html.light-theme .btn-secondary:hover {
+    background-color: rgba(0, 0, 0, 0.10);
+    color: var(--color-text-primary);
+}
+
+/* Map style select — Bootstrap classes applied directly */
+html.light-theme select.bg-dark {
+    background-color: #ffffff !important;
+    color: var(--color-text-primary) !important;
+}
+
+html.light-theme select.text-light {
+    color: var(--color-text-primary) !important;
+}
+
+html.light-theme select.border-secondary {
+    border-color: rgba(0, 0, 0, 0.15) !important;
+}
+
+/* ========================================================================= */
+/* THEME TOGGLE BUTTON                                                        */
+/* ========================================================================= */
+
+#themeToggleBtn {
+    font-size: 1rem;
+    line-height: 1;
+    padding: 0.25rem 0.4rem;
+}

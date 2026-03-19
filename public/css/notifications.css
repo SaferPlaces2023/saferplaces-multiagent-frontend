@@ -1,0 +1,252 @@
+/* ============================================================================= */
+/* NOTIFICATIONS - Toast notification stack styling */
+/* ============================================================================= */
+/* 
+   Purpose: Fixed bottom-center toast notification container with animated
+   toast items, icons, and state indicators (loading, success, error).
+*/
+
+/* ========================================================================= */
+/* TOAST STACK - Container for all notifications */
+/* ========================================================================= */
+
+#toastStack {
+    position: fixed;
+    left: 50%;
+    bottom: var(--space-5);
+    transform: translateX(-50%);
+    display: flex;
+    flex-direction: column;
+    justify-content: flex-end;
+    gap: var(--space-1);
+    z-index: var(--z-toast-stack);
+    pointer-events: none;
+}
+
+/* ========================================================================= */
+/* INDIVIDUAL TOAST ITEM */
+/* ========================================================================= */
+
+.toast-item {
+    pointer-events: auto;
+    min-width: 20vw;
+    max-width: 30vw;
+    background: var(--color-modal-bg);
+    border: var(--glass-border);
+    border-radius: var(--radius-xl);
+    padding: var(--space-2) var(--space-3);
+    color: var(--color-text-primary);
+    display: flex;
+    align-items: center;
+    gap: var(--space-2);
+    opacity: 0;
+    transform: translateY(6px) scale(0.98);
+    transition: opacity var(--transition-fast),
+                transform var(--transition-fast);
+    box-shadow: var(--shadow-toast);
+    animation: slideUp var(--transition-fast);
+}
+
+/* Show state - visible toast */
+.toast-item.show {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+}
+
+/* Hide state - exiting animation */
+.toast-item.hide {
+    opacity: 0;
+    transform: translateY(-6px) scale(0.98);
+    transition: opacity var(--transition-slow),
+                transform var(--transition-slow);
+    pointer-events: none;
+}
+
+/* ========================================================================= */
+/* TOAST ICON AREA */
+/* ========================================================================= */
+
+.toast-icon {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 18px;
+    height: 18px;
+    flex-shrink: 0;
+}
+
+/* Loading spinner */
+.toast-icon .spinner-border {
+    width: 16px;
+    height: 16px;
+    border-width: 2px;
+    animation: spin 1s linear infinite;
+    color: var(--color-accent-green);
+}
+
+/* Success checkmark - hidden by default */
+.toast-icon .ok {
+    font-size: 18px;
+    color: var(--color-accent-success);
+    display: none;
+}
+
+/* Error icon - hidden by default */
+.toast-icon .error {
+    font-size: 18px;
+    color: var(--color-accent-red);
+    display: none;
+}
+
+/* Info icon - hidden by default */
+.toast-icon .info {
+    font-size: 18px;
+    color: #60a5fa;
+    display: none;
+}
+
+/* ========================================================================= */
+/* TOAST STATES - Icon visibility based on state */
+/* ========================================================================= */
+
+/* Success state - show checkmark, hide spinner */
+.toast-item.ok .spinner-border {
+    display: none;
+}
+
+.toast-item.ok .ok {
+    display: inline-block;
+}
+
+/* Error state - show error icon */
+.toast-item.error .spinner-border {
+    display: none;
+}
+
+.toast-item.error .error {
+    display: inline-block;
+}
+
+.toast-item.error {
+    border-color: var(--color-accent-red-alpha-45);
+    background: rgba(248, 113, 113, 0.05);
+}
+
+/* Info state - show info icon */
+.toast-item.info .spinner-border {
+    display: none;
+}
+
+.toast-item.info .info {
+    display: inline-block;
+}
+
+/* ========================================================================= */
+/* TOAST MESSAGE TEXT */
+/* ========================================================================= */
+
+.toast-msg {
+    font-size: 0.92rem;
+    color: var(--color-text-primary);
+    flex: 1;
+    word-break: break-word;
+}
+
+/* ========================================================================= */
+/* TOAST CLOSE BUTTON - Optional */
+/* ========================================================================= */
+
+.toast-close {
+    margin-left: auto;
+    flex-shrink: 0;
+    cursor: pointer;
+    color: var(--color-text-secondary);
+    transition: color var(--transition-fast);
+    background: none;
+    border: none;
+    padding: 0;
+    font-size: 18px;
+}
+
+.toast-close:hover {
+    color: var(--color-text-primary);
+}
+
+/* ========================================================================= */
+/* TOAST PROGRESS BAR - Auto-dismiss indicator */
+/* ========================================================================= */
+
+.toast-progress {
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    height: 2px;
+    background: var(--color-accent-green);
+    border-radius: 0 0 var(--radius-xl) 0;
+    animation: shrink 4s linear 1s forwards;
+}
+
+@keyframes shrink {
+    from {
+        width: 100%;
+    }
+    to {
+        width: 0%;
+    }
+}
+
+/* ========================================================================= */
+/* RESPONSIVE ADJUSTMENTS */
+/* ========================================================================= */
+
+@media (max-width: 768px) {
+    .toast-item {
+        min-width: 30vw;
+        max-width: 50vw;
+    }
+}
+
+@media (max-width: 640px) {
+    #toastStack {
+        bottom: var(--space-3);
+        left: var(--space-2);
+        transform: none;
+    }
+    
+    .toast-item {
+        min-width: auto;
+        max-width: calc(100vw - var(--space-3) * 2);
+        width: auto;
+    }
+}
+
+@media (max-width: 480px) {
+    #toastStack {
+        bottom: var(--space-2);
+        left: var(--space-2);
+        gap: var(--space-sm);
+    }
+    
+    .toast-item {
+        max-width: calc(100vw - var(--space-2) * 2);
+        padding: var(--space-1) var(--space-2);
+        border-radius: var(--radius-lg);
+    }
+    
+    .toast-msg {
+        font-size: 0.85rem;
+    }
+    
+    .toast-icon {
+        width: 16px;
+        height: 16px;
+    }
+}
+
+/* ========================================================================= */
+/* UTILITY CLASSES */
+/* ========================================================================= */
+
+.toast-item.hidden {
+    display: none !important;
+}

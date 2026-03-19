@@ -1,5 +1,5 @@
 .sidebar {
-  position: fixed;
+  position: absolute;
   left: 64px;
   top: 16px;
   bottom: 16px;
@@ -21,7 +21,7 @@
 }
 
 .toggle-btn {
-  position: fixed;
+  position: absolute;
   left: 16px;
   top: 56px;
   z-index: 7;

@@ -1,0 +1,196 @@
+/* ============================================================================= */
+/* DESIGN TOKENS - Centralized design system variables */
+/* ============================================================================= */
+/* 
+   Purpose: Single source of truth for colors, spacing, shadows, typography,
+   and animations. All components reference these variables for consistency.
+*/
+
+:root {
+    /* ========================================================================= */
+    /* COLOR PALETTE - Dark theme */
+    /* ========================================================================= */
+    
+    /* Backgrounds */
+    --color-bg-primary: #0f1115;              /* Primary dark bg */
+    --color-bg-dark: #0c0f14;                 /* Darker variant (inputs, fields) */
+    --color-bg-glass: rgba(18, 18, 20, 0.9); /* Glass morphism base */
+    --color-bg-overlay: rgba(0, 0, 0, 0.8);  /* Full-screen overlay */
+    --color-bg-overlay-light: rgba(0, 0, 0, 0.35);
+    --color-bg-disabled: rgba(255, 255, 255, 0.03);
+    
+    /* Text colors */
+    --color-text-primary: #e8eaed;            /* Main text */
+    --color-text-secondary: #9aa0a6;          /* Secondary/muted text */
+    --color-text-tertiary: #cfd3d7;           /* Tertiary text */
+    --color-text-light: #e8ecf0;              /* Lighter variant */
+    
+    /* Accent colors */
+    --color-accent-green: #6ee7b7;            /* Primary accent (buttons, highlights) */
+    --color-accent-green-alpha-12: rgba(110, 231, 183, 0.12);
+    --color-accent-green-alpha-14: rgba(110, 231, 183, 0.14);
+    --color-accent-green-alpha-18: rgba(110, 231, 183, 0.18);
+    --color-accent-green-alpha-2: rgba(110, 231, 183, 0.2);
+    --color-accent-green-alpha-35: rgba(110, 231, 183, 0.35);
+    --color-accent-green-alpha-65: rgba(110, 231, 183, 0.65);
+    --color-accent-green-alpha-8: rgba(110, 231, 183, 0.08);
+    
+    --color-accent-red: #f87171;              /* Error/danger color */
+    --color-accent-red-alpha-1: rgba(248, 113, 113, 0.1);
+    --color-accent-red-alpha-25: rgba(248, 113, 113, 0.25);
+    --color-accent-red-alpha-45: rgba(248, 113, 113, 0.45);
+    
+    --color-accent-success: #4ade80;          /* Success state */
+    
+    /* Borders */
+    --color-border-base: rgba(255, 255, 255, 0.06);
+    --color-border-light: rgba(255, 255, 255, 0.08);
+    --color-border-lighter: rgba(255, 255, 255, 0.10);
+    --color-border-faint: rgba(255, 255, 255, 0.12);
+    --color-border-dashed: rgba(255, 255, 255, 0.08);
+    
+    /* Component backgrounds */
+    --color-card-bg: rgba(255, 255, 255, 0.05);
+    --color-input-bg: #0c0f14;
+    --color-input-border: none;
+    --color-modal-bg: rgba(18, 18, 20, 0.95);
+    
+    /* ========================================================================= */
+    /* GLASS MORPHISM EFFECTS */
+    /* ========================================================================= */
+    
+    --glass-blur: blur(8px);
+    --glass-background: rgba(18, 18, 20, 0.9);
+    --glass-border: 1px solid rgba(255, 255, 255, 0.06);
+    
+    /* ========================================================================= */
+    /* SHADOWS */
+    /* ========================================================================= */
+    
+    --shadow-sm: 0 2px 4px rgba(0, 0, 0, 0.15);
+    --shadow-md: 0 8px 25px rgba(0, 0, 0, 0.3);
+    --shadow-lg: 0 12px 40px rgba(0, 0, 0, 0.35);
+    --shadow-xl: 0 18px 48px rgba(0, 0, 0, 0.35);
+    
+    /* Toast-specific shadow */
+    --shadow-toast: rgba(14, 30, 37, 0.8) 0px 2px 4px 0px, 
+                    rgba(14, 30, 37, 0.8) 0px 2px 16px 0px;
+    
+    /* ========================================================================= */
+    /* BORDER RADIUS */
+    /* ========================================================================= */
+    
+    --radius-sm: 4px;
+    --radius-md: 6px;
+    --radius-lg: 10px;
+    --radius-xl: 12px;
+    --radius-2xl: 14px;
+    --radius-3xl: 16px;
+    --radius-full: 999px;
+    
+    /* ========================================================================= */
+    /* SPACING SYSTEM (based on 4px grid) */
+    /* ========================================================================= */
+    
+    --space-xs: 2px;
+    --space-sm: 4px;
+    --space-1: 8px;
+    --space-2: 12px;
+    --space-3: 16px;
+    --space-4: 20px;
+    --space-5: 24px;
+    --space-6: 28px;
+    --space-7: 32px;
+    --space-8: 40px;
+    
+    /* ========================================================================= */
+    /* TRANSITIONS & ANIMATIONS */
+    /* ========================================================================= */
+    
+    --transition-fast: 0.12s ease;
+    --transition-normal: 0.3s ease;
+    --transition-slow: 0.5s ease;
+    
+    --transition-transform: transform var(--transition-fast);
+    --transition-bg: background var(--transition-fast);
+    --transition-border: border-color var(--transition-fast);
+    --transition-all-fast: all var(--transition-fast);
+    
+    /* ========================================================================= */
+    /* TYPOGRAPHY */
+    /* ========================================================================= */
+    
+    --font-family-base: system-ui, Segoe UI, Roboto, Inter, Arial;
+    --font-weight-normal: 400;
+    --font-weight-medium: 500;
+    --font-weight-semibold: 600;
+    --font-weight-bold: 700;
+    
+    /* ========================================================================= */
+    /* Z-INDEX STACK */
+    /* ========================================================================= */
+    
+    --z-map: 1;
+    --z-map-controls: 5;
+    --z-sidebar-layer: 6;
+    --z-sidebar-user: 7;
+    --z-toggle-user-btn: 8;
+    --z-auth-overlay: 10;
+    --z-modal-register: 9999;
+    --z-toast-stack: 9999;
+    --z-disabled-overlay: 10000;
+    --z-auth-logo: 20;
+    
+    /* ========================================================================= */
+    /* BREAKPOINTS */
+    /* ========================================================================= */
+    
+    --bp-mobile: 480px;
+    --bp-tablet: 640px;
+    --bp-desktop: 1024px;
+}
+
+/* ============================================================================= */
+/* LIGHT THEME - Token overrides applied via html.light-theme class              */
+/* ============================================================================= */
+
+html.light-theme {
+    /* Backgrounds */
+    --color-bg-primary: #f0f2f5;
+    --color-bg-dark: #e4e8ef;
+    --color-bg-glass: rgba(248, 249, 252, 0.93);
+    --color-bg-overlay: rgba(0, 0, 0, 0.65);
+    --color-bg-overlay-light: rgba(0, 0, 0, 0.20);
+    --color-bg-disabled: rgba(0, 0, 0, 0.03);
+
+    /* Text */
+    --color-text-primary: #1a1c20;
+    --color-text-secondary: #5f6368;
+    --color-text-tertiary: #3c4043;
+    --color-text-light: #1a1c20;
+
+    /* Borders (white-alpha → black-alpha) */
+    --color-border-base: rgba(0, 0, 0, 0.08);
+    --color-border-light: rgba(0, 0, 0, 0.10);
+    --color-border-lighter: rgba(0, 0, 0, 0.13);
+    --color-border-faint: rgba(0, 0, 0, 0.16);
+    --color-border-dashed: rgba(0, 0, 0, 0.10);
+
+    /* Component backgrounds */
+    --color-card-bg: rgba(255, 255, 255, 0.72);
+    --color-input-bg: #ffffff;
+    --color-input-border: 1px solid rgba(0, 0, 0, 0.13);
+    --color-modal-bg: rgba(255, 255, 255, 0.97);
+
+    /* Glass morphism */
+    --glass-background: rgba(248, 249, 252, 0.93);
+    --glass-border: 1px solid rgba(0, 0, 0, 0.10);
+
+    /* Shadows (softer for light backgrounds) */
+    --shadow-sm: 0 2px 4px rgba(0, 0, 0, 0.07);
+    --shadow-md: 0 8px 25px rgba(0, 0, 0, 0.10);
+    --shadow-lg: 0 12px 40px rgba(0, 0, 0, 0.13);
+    --shadow-xl: 0 18px 48px rgba(0, 0, 0, 0.13);
+    --shadow-toast: rgba(14, 30, 37, 0.12) 0px 2px 4px 0px,
+                    rgba(14, 30, 37, 0.08) 0px 2px 16px 0px;
+}

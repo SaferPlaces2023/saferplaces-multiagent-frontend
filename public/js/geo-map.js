@@ -113,7 +113,7 @@ const GeoMap = (() => {
 
         // Sky configuration per style.load
         SKY_CONFIG: {
-            'sky-color': '#7fb3e6',
+            'sky-color': '#86a7c8',
             'sky-horizon-blend': 0.35,
             'horizon-color': '#e8eef7',
             'horizon-fog-blend': 0.6,
@@ -163,7 +163,7 @@ const GeoMap = (() => {
 
         // DEM/Terrain configuration
         TERRAIN: {
-            exaggeration: 1.5
+            exaggeration: 1
         },
 
         // Vector layer paint styles
@@ -190,7 +190,7 @@ const GeoMap = (() => {
 
         // Colormaps per tipo superficie
         COLORMAPS: {
-            TERRAIN_DEFAULT: 'BrewerBrBG10',
+            TERRAIN_DEFAULT: 'BrewerSpectral11',
             WATER: 'CartoTealGrn',
             RAIN: 'BrewerSpectral11'
         },

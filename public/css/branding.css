@@ -1,0 +1,237 @@
+/* ============================================================================= */
+/* BRANDING - Logo and branding elements styling */
+/* ============================================================================= */
+/* 
+   Purpose: SaferPlaces logo styling, branding elements, and morphing effects
+   used in auth gate and main application footer.
+*/
+
+/* ========================================================================= */
+/* AUTH GATE BRANDING - Bottom-left logo and title */
+/* ========================================================================= */
+
+#authGateLogo2 {
+    position: absolute;
+    z-index: var(--z-auth-logo);
+    bottom: 40px;
+    left: 32px;
+    transform: translateY(0);
+    width: 200px;
+    transition: transform var(--transition-normal);
+}
+
+.logo-container2 {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+}
+
+.logo-container2 p {
+    font-size: 21px;
+    letter-spacing: 0rem;
+    margin: 0;
+    font-weight: 500;
+    color: var(--color-text-light);
+    margin-top: var(--space-1);
+    padding-right: 0 !important;
+    padding-left: 0 !important;
+}
+
+/* ========================================================================= */
+/* MORPHING LOGO CONTAINER - 3D effect */
+/* ========================================================================= */
+
+.morph-pro2 {
+    position: relative;
+    width: 100%;
+    display: flex;
+    align-items: center;
+    overflow: hidden;
+    border-radius: 0;
+    padding-left: 0 !important;
+    padding-right: 0 !important;
+}
+
+.logo2 {
+    width: 200px;
+    height: auto;
+    position: relative;
+    z-index: 1;
+    display: block;
+    transition: transform var(--transition-normal);
+}
+
+.morph-pro2:hover .logo2 {
+    transform: scale(1.05);
+}
+
+/* ========================================================================= */
+/* LOGO ANIMATION - Glow effect (commented out but available) */
+/* ========================================================================= */
+
+/*
+.morph-pro::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(90deg, #0fffc1, #7e0fff);
+  background-size: 400% 400%;
+  animation: animateGlow 4s ease infinite;
+  filter: blur(0px);
+  z-index: 10;
+
+  -webkit-mask-image: url("../imgs/SaferPlacesLogoMask.png");
+  -webkit-mask-repeat: no-repeat;
+  -webkit-mask-size: cover;
+  -webkit-mask-position: center;
+
+  mask-image: url("../imgs/SaferPlacesLogoMask.png");
+  mask-repeat: no-repeat;
+  mask-size: cover;
+  mask-position: center;
+  mask-mode: alpha;
+}
+*/
+
+/* ========================================================================= */
+/* BRANDING VARIANTS */
+/* ========================================================================= */
+
+/* Logo centered variant */
+.logo-centered {
+    display: block;
+    margin: 0 auto;
+}
+
+/* Logo compact variant */
+.logo-compact {
+    width: 140px;
+    height: auto;
+}
+
+/* Logo inline variant with text */
+.logo-with-text {
+    display: flex;
+    align-items: center;
+    gap: var(--space-2);
+}
+
+.logo-with-text .text {
+    font-size: 18px;
+    font-weight: var(--font-weight-semibold);
+    color: var(--color-text-light);
+}
+
+/* ========================================================================= */
+/* BRANDING BADGE - SaferPlaces identifier */
+/* ========================================================================= */
+
+.branding-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: var(--space-1);
+    padding: var(--space-1) var(--space-2);
+    background: rgba(110, 231, 183, 0.1);
+    border: 1px solid var(--color-accent-green-alpha-35);
+    border-radius: var(--radius-full);
+    font-size: 0.85rem;
+    color: var(--color-accent-green);
+    font-weight: var(--font-weight-semibold);
+}
+
+.branding-badge .logo-icon {
+    width: 16px;
+    height: 16px;
+    display: inline-block;
+}
+
+/* ========================================================================= */
+/* APP TITLE - SaferPlaces Agent branding */
+/* ========================================================================= */
+
+.app-title {
+    font-size: 18px;
+    font-weight: var(--font-weight-semibold);
+    color: var(--color-text-primary);
+    letter-spacing: 0.5px;
+}
+
+.app-title-large {
+    font-size: 24px;
+    font-weight: 700;
+    color: var(--color-text-light);
+}
+
+.app-subtitle {
+    font-size: 12px;
+    color: var(--color-text-secondary);
+    font-weight: var(--font-weight-normal);
+    margin-top: var(--space-sm);
+}
+
+/* ========================================================================= */
+/* BRANDING COLORS - Primary accent */
+/* ========================================================================= */
+
+.branding-primary {
+    color: var(--color-accent-green);
+}
+
+.branding-accent {
+    color: var(--color-text-light);
+}
+
+.branding-secondary {
+    color: var(--color-text-secondary);
+}
+
+/* ========================================================================= */
+/* RESPONSIVE ADJUSTMENTS */
+/* ========================================================================= */
+
+@media (max-width: 768px) {
+    #authGateLogo2 {
+        bottom: 30px;
+        left: 24px;
+    }
+    
+    .logo-container2 p {
+        font-size: 18px;
+    }
+    
+    .logo2 {
+        width: 160px;
+    }
+    
+    .morph-pro2 {
+        width: 160px;
+    }
+}
+
+@media (max-width: 480px) {
+    #authGateLogo2 {
+        bottom: 20px;
+        left: 16px;
+    }
+    
+    .logo-container2 {
+        align-items: center;
+    }
+    
+    .logo-container2 p {
+        font-size: 16px;
+        text-align: center;
+    }
+    
+    .logo2 {
+        width: 120px;
+    }
+    
+    .morph-pro2 {
+        width: 120px;
+    }
+    
+    .app-title-large {
+        font-size: 20px;
+    }
+}

@@ -1,0 +1,350 @@
+/* ============================================================================= */
+/* MAP EDITOR - Map container, topbar, and drawing tools styling */
+/* ============================================================================= */
+/* 
+   Purpose: All styles for MapLibre container, map controls topbar,
+   and drawing tools interface (toolbar, buttons, panels, collections).
+*/
+
+/* ========================================================================= */
+/* MAP CONTAINER */
+/* ========================================================================= */
+
+#map {
+    position: absolute;
+    inset: 0;
+    z-index: var(--z-map);
+    width: 100%;
+    height: 100%;
+}
+
+/* ========================================================================= */
+/* TOPBAR - Central toolbar above map */
+/* ========================================================================= */
+
+.topbar {
+    position: absolute;
+    width: 80%;
+    left: 50%;
+    top: var(--space-3);
+    transform: translateX(-50%);
+    z-index: var(--z-map-controls);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: var(--space-2);
+}
+
+/* ========================================================================= */
+/* STYLE BAR - Map style selector section */
+/* ========================================================================= */
+
+.style-bar {
+    background: var(--glass-background);
+    backdrop-filter: var(--glass-blur);
+    border-radius: var(--radius-2xl);
+    box-shadow: var(--shadow-md);
+    
+    padding: var(--space-2) var(--space-3);
+    display: flex;
+    gap: var(--space-2);
+    align-items: center;
+    justify-content: space-between;
+}
+
+.style-bar select {
+    width: 50%;
+}
+
+/* ========================================================================= */
+/* DRAW TOOLBAR - Tool buttons and controls */
+/* ========================================================================= */
+
+.draw-toolbar {
+    display: inline-flex;
+    align-items: center;
+    gap: var(--space-1);
+    padding: var(--space-2);
+    background: var(--glass-background);
+    border: var(--glass-border);
+    border-radius: var(--radius-2xl);
+    backdrop-filter: var(--glass-blur);
+    box-shadow: var(--shadow-xl);
+}
+
+/* Toolbar separators */
+.dt-sep {
+    width: 1px;
+    height: 26px;
+    background: var(--color-border-faint);
+}
+
+/* ========================================================================= */
+/* DRAW TOOL BUTTONS */
+/* ========================================================================= */
+
+.dt-btn {
+    width: 28px;
+    height: 28px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    border: 1px solid var(--color-border-lighter);
+    background: rgba(255, 255, 255, 0.04);
+    color: var(--color-text-primary);
+    border-radius: var(--radius-lg);
+    cursor: pointer;
+    transition: var(--transition-all-fast);
+}
+
+.dt-btn:hover {
+    background: rgba(255, 255, 255, 0.07);
+    border-color: var(--color-border-faint);
+    transform: translateY(-1px);
+}
+
+.dt-btn:active {
+    transform: translateY(0);
+}
+
+.dt-btn:focus {
+    outline: none;
+    box-shadow: 0 0 0 3px var(--color-accent-green-alpha-18);
+}
+
+.dt-btn .material-symbols-outlined {
+    font-size: 16px;
+    line-height: 1;
+}
+
+/* Active state for draw tools */
+.dt-btn.active {
+    border-color: var(--color-accent-green-alpha-65);
+    box-shadow: 0 0 0 3px var(--color-accent-green-alpha-14);
+}
+
+/* Danger state for delete button */
+.dt-danger {
+    border-color: var(--color-accent-red-alpha-25);
+}
+
+.dt-danger:hover {
+    border-color: var(--color-accent-red-alpha-45);
+    background: var(--color-accent-red-alpha-1);
+}
+
+.dt-success {
+    border-color: var(--color-accent-green-alpha-65);
+}
+
+.dt-success:hover {
+    background: var(--color-accent-green-alpha-8);
+}
+
+/* ========================================================================= */
+/* DRAW CONFIRMATION BUTTONS */
+/* ========================================================================= */
+
+#draw-confirm {
+    display: inline-flex;
+}
+
+#draw-confirm.closed {
+    display: none;
+}
+
+/* ========================================================================= */
+/* DRAW TOOLS PANEL - Collections and details */
+/* ========================================================================= */
+
+.dt-panel {
+    position: absolute;
+    top: 100%;
+    left: 0;
+    margin-top: var(--space-1);
+    padding: var(--space-2);
+    background: rgba(18, 18, 20, 0.95);
+    border: var(--glass-border);
+    border-radius: var(--radius-2xl);
+    backdrop-filter: var(--glass-blur);
+    box-shadow: var(--shadow-xl);
+    color: var(--color-text-primary);
+    width: 100%;
+    z-index: 10;
+}
+
+.dt-panel.hidden {
+    display: none;
+}
+
+/* Panel header */
+.dt-panel-head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: var(--space-1);
+    font-weight: var(--font-weight-semibold);
+}
+
+/* Panel badge */
+.dt-badge {
+    font-size: 0.8rem;
+    color: var(--color-text-secondary);
+    border: 1px solid var(--color-border-lighter);
+    padding: var(--space-xs) var(--space-1);
+    border-radius: var(--radius-full);
+}
+
+/* Panel list container */
+.dt-panel-list {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-1);
+    role: list;
+}
+
+/* Panel items */
+.dt-panel-item {
+    padding: var(--space-2);
+    border-top: 1px dashed var(--color-border-dashed);
+    border-radius: var(--radius-lg);
+}
+
+.dt-panel-item:first-child {
+    border-top: none;
+}
+
+/* ========================================================================= */
+/* COLLECTION ITEMS IN PANEL */
+/* ========================================================================= */
+
+.dt-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: var(--space-2);
+}
+
+.collection-btn {
+    align-items: center;
+    justify-content: center;
+    display: inline-flex;
+    width: 28px;
+    height: 28px;
+    border: 1px solid var(--color-border-lighter);
+    background: rgba(255, 255, 255, 0.04);
+    border-radius: var(--radius-lg);
+    cursor: pointer;
+    transition: var(--transition-all-fast);
+}
+
+.collection-btn:hover {
+    background: rgba(255, 255, 255, 0.07);
+}
+
+.collection-btn .material-symbols-outlined {
+    font-size: 16px;
+    line-height: 1;
+}
+
+/* Metadata display */
+.dt-meta {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-xs);
+}
+
+.dt-name {
+    font-weight: var(--font-weight-semibold);
+}
+
+.dt-type {
+    font-size: 0.8rem;
+    color: var(--color-text-secondary);
+}
+
+/* Action buttons in collection item */
+.dt-actions {
+    display: flex;
+    align-items: center;
+    gap: var(--space-1);
+}
+
+/* Text links for actions */
+.dt-link {
+    border: none;
+    background: transparent;
+    padding: 0;
+    color: var(--color-text-secondary);
+    text-decoration: underline;
+    cursor: pointer;
+    font-size: 0.85rem;
+    transition: color var(--transition-fast);
+}
+
+.dt-link:hover {
+    color: var(--color-text-primary);
+}
+
+/* Details section in collections */
+.dt-details {
+    margin-top: var(--space-1);
+    padding: var(--space-2);
+    border: 1px solid var(--color-border-light);
+    background: rgba(255, 255, 255, 0.03);
+    border-radius: var(--radius-lg);
+    font-size: 0.85rem;
+    overflow: auto;
+}
+
+.dt-details.hidden {
+    display: none;
+}
+
+/* Hidden collection indicator */
+.dt-collection-hidden .material-symbols-outlined {
+    opacity: 0.55;
+}
+
+/* ========================================================================= */
+/* RESPONSIVE ADJUSTMENTS */
+/* ========================================================================= */
+
+@media (max-width: 768px) {
+    .topbar {
+        width: 95%;
+    }
+    
+    .draw-toolbar {
+        gap: var(--space-sm);
+        padding: var(--space-1);
+    }
+    
+    .dt-btn {
+        width: 24px;
+        height: 24px;
+    }
+}
+
+@media (max-width: 480px) {
+    .topbar {
+        flex-direction: column;
+        width: 96%;
+        top: var(--space-2);
+        gap: var(--space-1);
+    }
+    
+    .style-bar {
+        width: 100%;
+        flex-direction: column;
+    }
+    
+    .style-bar select {
+        width: 100%;
+    }
+    
+    .draw-toolbar {
+        width: 100%;
+        flex-wrap: wrap;
+    }
+}

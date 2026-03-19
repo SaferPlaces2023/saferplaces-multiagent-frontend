@@ -1,0 +1,379 @@
+/* ============================================================================= */
+/* MODALS - Full-screen overlays for authentication and layer registration */
+/* ============================================================================= */
+/* 
+   Purpose: Auth gate overlay, login/logout card, and layer registration
+   modal styling. Both are full-screen fixed overlays with centered cards.
+*/
+
+/* ========================================================================= */
+/* AUTH GATE - Full-screen overlay for authentication */
+/* ========================================================================= */
+
+.auth-gate,
+#authGate {
+    position: fixed;
+    inset: 0;
+    z-index: var(--z-auth-overlay);
+    display: grid;
+    place-items: center;
+    background: var(--color-bg-overlay);
+    backdrop-filter: blur(2px);
+    transform: height var(--transition-normal);
+}
+
+.auth-gate.hidden,
+#authGate.hidden {
+    display: none;
+}
+
+/* ========================================================================= */
+/* APP ROOT BLUR - When auth gate is active */
+/* ========================================================================= */
+
+#appRoot.blurred {
+    filter: blur(6px);
+    pointer-events: none;
+    user-select: none;
+}
+
+/* ========================================================================= */
+/* AUTH LOGO - Positioned above card */
+/* ========================================================================= */
+
+#authGateLogo,
+.auth-logo {
+    text-align: center;
+    position: absolute;
+    z-index: var(--z-auth-logo);
+    top: 25%;
+    transform: translateY(0);
+    transition: transform var(--transition-normal);
+}
+
+#authGateLogo.hidden,
+.auth-logo.hidden {
+    display: none;
+}
+
+.logo-container {
+    margin-bottom: var(--space-2);
+}
+
+.logo-container h1 {
+    font-size: 92px;
+    margin: 0;
+    font-weight: 550;
+    letter-spacing: 0.1rem;
+    color: var(--color-text-light);
+    animation: fadeIn var(--transition-normal);
+}
+
+.morph-pro {
+    position: relative;
+    width: 280px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    overflow: hidden;
+    border-radius: 0;
+    margin-right: 30px;
+}
+
+.logo {
+    width: 280px;
+    height: auto;
+    position: relative;
+    z-index: 1;
+    display: block;
+}
+
+/* ========================================================================= */
+/* AUTH CARD - Central login/logout card */
+/* ========================================================================= */
+
+.auth-card,
+#authCard {
+    width: min(92vw, 380px);
+    background: var(--color-modal-bg);
+    backdrop-filter: var(--glass-blur);
+    border: var(--glass-border);
+    border-radius: var(--radius-3xl);
+    padding: var(--space-3);
+    box-shadow: var(--shadow-xl);
+    animation: scaleUp var(--transition-normal);
+}
+
+.auth-card h2,
+#authCard h2 {
+    font-size: 1.5rem;
+    margin-bottom: var(--space-3);
+    color: var(--color-text-primary);
+    text-align: center;
+}
+
+.auth-card .form-group,
+#authCard .form-group {
+    margin-bottom: var(--space-2);
+}
+
+.auth-card .form-label,
+#authCard .form-label {
+    color: var(--color-text-secondary);
+    font-size: 0.9rem;
+    margin-bottom: var(--space-1);
+}
+
+.auth-card input,
+#authCard input {
+    width: 100%;
+    padding: var(--space-2);
+    background-color: var(--color-input-bg);
+    color: var(--color-text-primary);
+    border: var(--glass-border);
+    border-radius: var(--radius-lg);
+    font-size: 0.95rem;
+    transition: border-color var(--transition-fast);
+}
+
+.auth-card input:focus,
+#authCard input:focus {
+    outline: none;
+    border-color: var(--color-accent-green-alpha-35);
+    box-shadow: 0 0 0 3px var(--color-accent-green-alpha-18);
+}
+
+.auth-card button,
+#authCard button {
+    width: 100%;
+    pady: var(--space-2);
+    margin-top: var(--space-2);
+}
+
+/* ========================================================================= */
+/* LAYER REGISTRATION MODAL - Separate full-screen overlay */
+/* ========================================================================= */
+
+.layer-reg,
+#layerReg {
+    position: fixed;
+    inset: 0;
+    z-index: var(--z-modal-register);
+    display: grid;
+    place-items: center;
+    background: var(--color-bg-overlay-light);
+    backdrop-filter: blur(2px);
+    animation: fadeIn var(--transition-normal);
+}
+
+.layer-reg.hidden,
+#layerReg.hidden {
+    display: none;
+}
+
+/* ========================================================================= */
+/* LAYER REGISTRATION CARD */
+/* ========================================================================= */
+
+.layer-reg-card,
+#layerRegCard {
+    width: min(92vw, 460px);
+    background: var(--color-modal-bg);
+    backdrop-filter: var(--glass-blur);
+    border: var(--glass-border);
+    border-radius: var(--radius-3xl);
+    padding: var(--space-3);
+    box-shadow: var(--shadow-xl);
+    animation: slideUp var(--transition-normal);
+    max-height: 85vh;
+    overflow-y: auto;
+}
+
+.layer-reg-card h2,
+#layerRegCard h2 {
+    font-size: 1.25rem;
+    margin-bottom: var(--space-2);
+    color: var(--color-text-primary);
+}
+
+.layer-reg-card .form-group,
+#layerRegCard .form-group {
+    margin-bottom: var(--space-2);
+}
+
+.layer-reg-card .form-label,
+#layerRegCard .form-label {
+    color: var(--color-text-secondary);
+    font-size: 0.9rem;
+    margin-bottom: var(--space-1);
+    display: block;
+}
+
+/* Input fields for layer registration */
+#lrSrc,
+#lrTitle,
+#lrDesc,
+#lrSrc:focus,
+#lrTitle:focus,
+#lrDesc:focus {
+    background-color: rgba(255, 255, 255, 0.04);
+    color: var(--color-text-primary);
+    border: var(--glass-border);
+    padding: var(--space-2);
+    border-radius: var(--radius-lg);
+    font-size: 0.95rem;
+    transition: border-color var(--transition-fast),
+                background-color var(--transition-fast);
+    width: 100%;
+}
+
+#lrSrc:focus,
+#lrTitle:focus,
+#lrDesc:focus {
+    background-color: rgba(255, 255, 255, 0.08);
+    border-color: var(--color-accent-green-alpha-35);
+    outline: none;
+    box-shadow: 0 0 0 3px var(--color-accent-green-alpha-18);
+}
+
+#lrDesc {
+    resize: none;
+    max-height: 200px;
+    min-height: 100px;
+    font-family: inherit;
+}
+
+/* ========================================================================= */
+/* MODAL ERROR MESSAGES */
+/* ========================================================================= */
+
+.modal-error,
+.layer-reg-error,
+#lrError {
+    background: var(--color-accent-red-alpha-1);
+    border: 1px solid var(--color-accent-red-alpha-25);
+    border-radius: var(--radius-lg);
+    padding: var(--space-2);
+    margin-bottom: var(--space-2);
+    color: #ff6b6b;
+    font-size: 0.9rem;
+    display: none;
+    animation: slideDown var(--transition-normal);
+}
+
+.modal-error.show,
+.layer-reg-error.show,
+#lrError.show {
+    display: block;
+}
+
+/* ========================================================================= */
+/* MODAL ACTION BUTTONS */
+/* ========================================================================= */
+
+.modal-actions {
+    display: flex;
+    gap: var(--space-2);
+    margin-top: var(--space-3);
+    justify-content: flex-end;
+}
+
+.modal-actions button {
+    flex: 1;
+    padding: var(--space-2);
+    border-radius: var(--radius-lg);
+    font-weight: var(--font-weight-semibold);
+    transition: var(--transition-all-fast);
+}
+
+.modal-actions .btn-cancel {
+    background-color: rgba(255, 255, 255, 0.06);
+    border: var(--glass-border);
+    color: var(--color-text-primary);
+}
+
+.modal-actions .btn-cancel:hover {
+    background-color: rgba(255, 255, 255, 0.1);
+}
+
+.modal-actions .btn-confirm {
+    background-color: var(--color-accent-green);
+    border: none;
+    color: var(--color-bg-primary);
+}
+
+.modal-actions .btn-confirm:hover {
+    filter: brightness(1.1);
+}
+
+.modal-actions .btn-confirm:disabled {
+    opacity: 0.5;
+    pointer-events: none;
+}
+
+/* ========================================================================= */
+/* DISABLED STATE - Fieldsets in modals */
+/* ========================================================================= */
+
+fieldset[disabled] {
+    opacity: 0.5;
+    pointer-events: none;
+}
+
+/* ========================================================================= */
+/* RESPONSIVE ADJUSTMENTS */
+/* ========================================================================= */
+
+@media (max-width: 640px) {
+    .auth-card,
+    #authCard,
+    .layer-reg-card,
+    #layerRegCard {
+        width: 95vw;
+        padding: var(--space-2);
+    }
+    
+    .auth-card h2,
+    #authCard h2 {
+        font-size: 1.25rem;
+    }
+    
+    .logo-container h1 {
+        font-size: 64px;
+    }
+    
+    .morph-pro {
+        width: 200px;
+        margin-right: 20px;
+    }
+    
+    .logo {
+        width: 200px;
+    }
+}
+
+@media (max-width: 480px) {
+    .auth-card,
+    #authCard,
+    .layer-reg-card,
+    #layerRegCard {
+        width: 96vw;
+        max-height: 90vh;
+        border-radius: var(--radius-2xl);
+    }
+    
+    .auth-card h2,
+    #authCard h2,
+    .layer-reg-card h2,
+    #layerRegCard h2 {
+        font-size: 1.1rem;
+    }
+    
+    .logo-container h1 {
+        font-size: 48px;
+    }
+    
+    .modal-actions {
+        flex-direction: column;
+    }
+}

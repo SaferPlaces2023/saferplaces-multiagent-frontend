@@ -1,0 +1,312 @@
+/* ============================================================================= */
+/* LAYOUT - Base layout, positioning, and global resets */
+/* ============================================================================= */
+/* 
+   Purpose: Foundation layout styles, typography, form controls, and
+   global positioning patterns used throughout the application.
+*/
+
+/* ========================================================================= */
+/* GLOBAL RESETS & BASE STYLES */
+/* ========================================================================= */
+
+html,
+body {
+    height: 100%;
+    width: 100%;
+    margin: 0;
+    padding: 0;
+    font-family: var(--font-family-base);
+    background-color: var(--color-bg-primary);
+    color: var(--color-text-primary);
+    overflow: hidden;
+}
+
+/* ========================================================================= */
+/* TYPOGRAPHY */
+/* ========================================================================= */
+
+h1, h2, h3, h4, h5, h6 {
+    margin: 0;
+    font-weight: var(--font-weight-semibold);
+}
+
+p {
+    margin: 0;
+}
+
+/* ========================================================================= */
+/* FORM CONTROLS - Unified styling */
+/* ========================================================================= */
+
+.form-control,
+.form-select {
+    background-color: var(--color-input-bg);
+    color: var(--color-text-primary);
+    border: var(--color-input-border);
+}
+
+input[type="text"],
+input[type="email"],
+input[type="password"],
+input[type="url"],
+input[type="number"],
+textarea,
+select {
+    background-color: var(--color-input-bg);
+    color: var(--color-text-primary);
+    border: var(--color-input-border);
+}
+
+/* ========================================================================= */
+/* BOOTSTRAP OVERRIDE - Consistency layer */
+/* ========================================================================= */
+
+.card {
+    background: var(--color-card-bg);
+    border: none;
+}
+
+.bg-dark {
+    background-color: var(--color-bg-primary) !important;
+}
+
+.text-light {
+    color: var(--color-text-primary) !important;
+}
+
+.text-secondary {
+    color: var(--color-text-secondary) !important;
+}
+
+/* ========================================================================= */
+/* GLASS MORPHISM BASE UTILITY */
+/* ========================================================================= */
+
+.glass {
+    backdrop-filter: var(--glass-blur);
+    background: var(--glass-background);
+    border: var(--glass-border);
+}
+
+/* ========================================================================= */
+/* SCROLLBAR - Lightweight and discrete */
+/* ========================================================================= */
+
+::-webkit-scrollbar {
+    width: 6px;
+}
+
+::-webkit-scrollbar-thumb {
+    background-color: rgba(255, 255, 255, 0.15);
+    border-radius: var(--radius-sm);
+}
+
+::-webkit-scrollbar-track {
+    background: transparent;
+}
+
+/* ========================================================================= */
+/* VISIBILITY UTILITIES */
+/* ========================================================================= */
+
+.hidden {
+    display: none !important;
+}
+
+.d-none {
+    display: none !important;
+}
+
+.closed {
+    /* Applied via JS to toggle visibility with transitions */
+}
+
+/* ========================================================================= */
+/* DISABLE STATE - Shared across all fieldsets */
+/* ========================================================================= */
+
+fieldset[disabled] {
+    opacity: 0.5;
+    pointer-events: none;
+}
+
+/* ========================================================================= */
+/* SPINNER - Loader indicator */
+/* ========================================================================= */
+
+.spinner-border {
+    vertical-align: -2px;
+    color: whitesmoke;
+}
+
+/* ========================================================================= */
+/* RESPONSIVE UTILITIES */
+/* ========================================================================= */
+
+@media (max-width: 640px) {
+    html, body {
+        font-size: 14px;
+    }
+}
+
+@media (max-width: 480px) {
+    html, body {
+        font-size: 13px;
+    }
+}
+
+/* ========================================================================= */
+/* MAIN APP LAYOUT - Flex container with map and sidebar */
+/* ========================================================================= */
+
+#appRoot.app-container {
+    display: flex;
+    flex-direction: row;
+    height: 100%;
+    width: 100%;
+    overflow: hidden;
+}
+
+/* Map container - takes remaining flex space */
+.map-container {
+    flex: 1;
+    min-width: 0;
+    min-height: 0;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    position: relative;
+}
+
+#map {
+    flex: 1;
+    width: 100%;
+    height: 100%;
+}
+
+/* Chat sidebar wrapper - fixed width + resizable */
+.chat-sidebar-wrapper {
+    width: 450px;
+    min-width: 48px;
+    max-width: 90vw;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    background: rgba(18, 18, 20, 0.95);
+    border-right: 1px solid rgba(255, 255, 255, 0.1);
+    position: relative;
+    z-index: 100;
+}
+
+/* Responsive adjustments */
+@media (max-width: 1024px) {
+    .chat-sidebar-wrapper {
+        width: 400px;
+    }
+}
+
+@media (max-width: 768px) {
+    .chat-sidebar-wrapper {
+        width: 350px;
+    }
+}
+
+@media (max-width: 480px) {
+    #appRoot.app-container {
+        flex-direction: column;
+        height: auto;
+    }
+    
+    .chat-sidebar-wrapper {
+        width: 100%;
+        height: 300px;
+        max-width: 100%;
+        border-right: none;
+        border-top: 1px solid rgba(255, 255, 255, 0.1);
+    }
+}
+
+/* ========================================================================= */
+/* LEFT SIDEBAR WRAPPER - Structural left panel (user + layers) */
+/* ========================================================================= */
+
+.left-sidebar-wrapper {
+    width: 48px;
+    min-width: 48px;
+    max-width: 90vw;
+    display: flex;
+    flex-direction: row;
+    overflow: hidden;
+    background: rgba(18, 18, 20, 0.95);
+    border-left: 1px solid rgba(255, 255, 255, 0.1);
+    position: relative;
+    z-index: 100;
+    transition: width var(--transition-normal);
+    flex-shrink: 0;
+}
+
+/* Disable transition during active drag for responsiveness */
+.left-sidebar-wrapper.no-transition {
+    transition: none !important;
+}
+
+/* Button strip - always-visible 48px column */
+.left-sidebar-strip {
+    width: 48px;
+    min-width: 48px;
+    flex-shrink: 0;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding-top: var(--space-3);
+    gap: var(--space-2);
+    z-index: 1;
+}
+
+/* Normalization of strip buttons */
+.left-sidebar-strip .btn {
+    width: 36px;
+    height: 36px;
+    padding: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1rem;
+}
+
+/* Panel content area - fills remaining width when open */
+.left-sidebar-panel {
+    flex: 1;
+    min-width: 0;
+    overflow: hidden;
+    position: relative;
+}
+
+/* Resize handle - left edge of wrapper (facing the map) */
+.left-resize-handle {
+    position: absolute;
+    left: 0;
+    top: 0;
+    bottom: 0;
+    width: 4px;
+    cursor: col-resize;
+    background: linear-gradient(90deg,
+                rgba(110, 231, 183, 0) 0%,
+                rgba(110, 231, 183, 0.3) 50%,
+                rgba(110, 231, 183, 0) 100%);
+    opacity: 0;
+    transition: opacity var(--transition-fast);
+    z-index: 10;
+}
+
+.left-sidebar-wrapper:hover .left-resize-handle {
+    opacity: 1;
+}
+
+.left-resize-handle:active {
+    background: linear-gradient(90deg,
+                rgba(110, 231, 183, 0.5) 0%,
+                rgba(110, 231, 183, 0.8) 50%,
+                rgba(110, 231, 183, 0.5) 100%);
+}

@@ -59,6 +59,19 @@ const AIChat = (() => {
     }
 
     // =========================================================================
+    // CONFIGURATION - Resize constraints and storage
+    // =========================================================================
+    const CHAT_CONFIG = {
+        MIN_WIDTH: 48,
+        DEFAULT_WIDTH: 450,
+        MAX_WIDTH: 800,
+        COLLAPSE_THRESHOLD: 120,
+        STORAGE_WIDTH_KEY: 'chat_sidebar_width',
+        STORAGE_MIN_KEY: 'chat_sidebar_minimized',
+        STORAGE_PREV_WIDTH_KEY: 'chat_sidebar_prev_width'
+    };
+
+    // =========================================================================
     // DOM_IDS MAPPING
     // =========================================================================
     const DOM_IDS = {
@@ -68,13 +81,22 @@ const AIChat = (() => {
         sendBtn: 'sendMsg',
         minBtn: 'minChat',
         clearBtn: 'clearChat',
-        settingsBtn: 'chatSettingsBtn'
+        settingsBtn: 'chatSettingsBtn',
+        resizeHandle: 'chatResizeHandle'
     };
 
     // =========================================================================
     // STATO INTERNO
     // =========================================================================
     let domElements = {};
+    
+    // Resize state
+    let isResizing = false;
+    let resizeStartX = 0;
+    let resizeStartWidth = 0;
+    
+    // Minimize state
+    let previousWidth = CHAT_CONFIG.DEFAULT_WIDTH;
 
     // =========================================================================
     // INIZIALIZZAZIONE
@@ -86,6 +108,8 @@ const AIChat = (() => {
     function init() {
         domElements = cacheElements(DOM_IDS);
         configureMarked();
+        restoreChatState();
+        setupResizeHandle();
         bindEvents();
         ChatSettings.init();
     }
@@ -124,10 +148,24 @@ const AIChat = (() => {
     function handleToggleMinimize() {
         if (!domElements.chatBox) return;
         
-        domElements.chatBox.classList.toggle(CSS_CLASSES.MIN);
-        if (!domElements.chatBox.classList.contains(CSS_CLASSES.MIN)) {
+        const sidebarWrapper = document.querySelector('.chat-sidebar-wrapper');
+        if (!sidebarWrapper) return;
+        
+        const isMinimized = domElements.chatBox.classList.contains(CSS_CLASSES.MIN);
+        
+        if (isMinimized) {
+            // Minimizzato → Apri e ripristina larghezza precedente
+            domElements.chatBox.classList.remove(CSS_CLASSES.MIN);
+            sidebarWrapper.style.width = previousWidth + 'px';
             delayedFocus(domElements.chatInput, TIMING.FOCUS_DELAY_MS);
+        } else {
+            // Aperto → Salva larghezza e minimizza
+            previousWidth = sidebarWrapper.offsetWidth;
+            domElements.chatBox.classList.add(CSS_CLASSES.MIN);
+            sidebarWrapper.style.width = CHAT_CONFIG.MIN_WIDTH + 'px';
         }
+        
+        saveChatState();
     }
 
     /**
@@ -138,6 +176,162 @@ const AIChat = (() => {
         if (e.key === 'Enter' && !e.shiftKey) {
             e.preventDefault();
             send();
+        }
+    }
+
+    // =========================================================================
+    // RESIZE MANAGEMENT - Handle sidebar dragging and persistence
+    // =========================================================================
+
+    /**
+     * Configura il resize handle con event listeners
+     */
+    function setupResizeHandle() {
+        if (!domElements.resizeHandle) return;
+        
+        domElements.resizeHandle.addEventListener('mousedown', handleResizeStart);
+    }
+
+    /**
+     * Inizia il resize della sidebar
+     * @param {MouseEvent} e - Event del mouse
+     */
+    function handleResizeStart(e) {
+        // Disabilita il resize se la chat è collassata
+        if (domElements.chatBox && domElements.chatBox.classList.contains(CSS_CLASSES.MIN)) {
+            return;
+        }
+        
+        e.preventDefault();
+        isResizing = true;
+        resizeStartX = e.clientX;
+        
+        const sidebarWrapper = document.querySelector('.chat-sidebar-wrapper');
+        if (sidebarWrapper) {
+            resizeStartWidth = sidebarWrapper.offsetWidth;
+        }
+        
+        document.addEventListener('mousemove', handleResizeMove);
+        document.addEventListener('mouseup', handleResizeEnd);
+        
+        // Visual feedback
+        document.body.style.cursor = 'col-resize';
+        document.body.style.userSelect = 'none';
+    }
+
+    /**
+     * Gestisce il movimento del mouse durante il resize
+     * @param {MouseEvent} e - Event del mouse
+     */
+    function handleResizeMove(e) {
+        if (!isResizing) return;
+        
+        const sidebarWrapper = document.querySelector('.chat-sidebar-wrapper');
+        if (!sidebarWrapper) return;
+        
+        const deltaX = e.clientX - resizeStartX; // Positivo = verso destra (chat più larga), Negativo = verso sinistra (chat più stretta)
+        const newWidth = resizeStartWidth + deltaX; // Chat a sinistra: drag destra = più larga
+        
+        // Applica min/max constraints
+        const constrainedWidth = Math.max(
+            CHAT_CONFIG.MIN_WIDTH,
+            Math.min(newWidth, CHAT_CONFIG.MAX_WIDTH)
+        );
+        
+        sidebarWrapper.style.width = constrainedWidth + 'px';
+        
+        // Controlla se sotto la soglia e auto-collassa durante il drag
+        if (constrainedWidth < CHAT_CONFIG.COLLAPSE_THRESHOLD && domElements.chatBox) {
+            if (!domElements.chatBox.classList.contains(CSS_CLASSES.MIN)) {
+                domElements.chatBox.classList.add(CSS_CLASSES.MIN);
+                sidebarWrapper.style.width = CHAT_CONFIG.MIN_WIDTH + 'px';
+            }
+        }
+    }
+
+    /**
+     * Finalizza il resize della sidebar
+     */
+    function handleResizeEnd() {
+        if (!isResizing) return;
+        
+        isResizing = false;
+        
+        document.removeEventListener('mousemove', handleResizeMove);
+        document.removeEventListener('mouseup', handleResizeEnd);
+        
+        // Ripristina cursor
+        document.body.style.cursor = 'auto';
+        document.body.style.userSelect = 'auto';
+        
+        const sidebarWrapper = document.querySelector('.chat-sidebar-wrapper');
+        if (!sidebarWrapper) return;
+        
+        const currentWidth = sidebarWrapper.offsetWidth;
+        
+        // Controlla se la larghezza è sotto il threshold → auto-minimizza
+        if (currentWidth < CHAT_CONFIG.COLLAPSE_THRESHOLD) {
+            previousWidth = CHAT_CONFIG.DEFAULT_WIDTH;
+            if (domElements.chatBox) {
+                domElements.chatBox.classList.add(CSS_CLASSES.MIN);
+            }
+            sidebarWrapper.style.width = CHAT_CONFIG.MIN_WIDTH + 'px';
+        } else {
+            // Larghezza normale → salva
+            previousWidth = currentWidth;
+        }
+        
+        saveChatState();
+    }
+
+    /**
+     * Salva lo stato minimizzato della chat
+     */
+    function saveChatState() {
+        if (!domElements.chatBox) return;
+        
+        const isMinimized = domElements.chatBox.classList.contains(CSS_CLASSES.MIN);
+        localStorage.setItem(CHAT_CONFIG.STORAGE_MIN_KEY, String(isMinimized));
+        
+        const sidebarWrapper = document.querySelector('.chat-sidebar-wrapper');
+        if (sidebarWrapper) {
+            const currentWidth = sidebarWrapper.offsetWidth;
+            localStorage.setItem(CHAT_CONFIG.STORAGE_WIDTH_KEY, String(currentWidth));
+        }
+        
+        localStorage.setItem(CHAT_CONFIG.STORAGE_PREV_WIDTH_KEY, String(previousWidth));
+    }
+
+    /**
+     * Ripristina lo stato della chat da localStorage
+     */
+    function restoreChatState() {
+        // Ripristina previousWidth
+        const savedPrevWidth = localStorage.getItem(CHAT_CONFIG.STORAGE_PREV_WIDTH_KEY);
+        if (savedPrevWidth) {
+            previousWidth = Math.max(
+                CHAT_CONFIG.MIN_WIDTH,
+                Math.min(Number(savedPrevWidth), CHAT_CONFIG.MAX_WIDTH)
+            );
+        }
+        
+        // Ripristina larghezza
+        const savedWidth = localStorage.getItem(CHAT_CONFIG.STORAGE_WIDTH_KEY);
+        if (savedWidth) {
+            const sidebarWrapper = document.querySelector('.chat-sidebar-wrapper');
+            if (sidebarWrapper) {
+                const width = Math.max(
+                    CHAT_CONFIG.MIN_WIDTH,
+                    Math.min(Number(savedWidth), CHAT_CONFIG.MAX_WIDTH)
+                );
+                sidebarWrapper.style.width = width + 'px';
+            }
+        }
+        
+        // Ripristina stato minimizzato
+        const savedMinimized = localStorage.getItem(CHAT_CONFIG.STORAGE_MIN_KEY);
+        if (savedMinimized === 'true' && domElements.chatBox) {
+            domElements.chatBox.classList.add(CSS_CLASSES.MIN);
         }
     }
 

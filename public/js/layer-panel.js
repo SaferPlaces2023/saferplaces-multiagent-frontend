@@ -84,6 +84,18 @@ const LayerPanel = (() => {
     };
 
     // =========================================================================
+    // LEFT SIDEBAR RESIZE CONFIGURATION
+    // =========================================================================
+    const LEFT_SIDEBAR_CONFIG = {
+        MIN_WIDTH: 48,
+        DEFAULT_WIDTH: 360,
+        MAX_WIDTH: 800,
+        COLLAPSE_THRESHOLD: 100,
+        STORAGE_WIDTH_KEY: 'left_sidebar_width',
+        STORAGE_PREV_WIDTH_KEY: 'left_sidebar_prev_width'
+    };
+
+    // =========================================================================
     // DOM_IDS MAPPING
     // =========================================================================
     const DOM_IDS = {
@@ -119,6 +131,12 @@ const LayerPanel = (() => {
     let pendingReg = null;
     let draggingFromHandle = false;
 
+    // Resize state for left sidebar
+    let leftResizing = false;
+    let leftResizeStartX = 0;
+    let leftResizeStartWidth = 0;
+    let leftPreviousWidth = LEFT_SIDEBAR_CONFIG.DEFAULT_WIDTH;
+
     // =========================================================================
     // INIZIALIZZAZIONE
     // =========================================================================
@@ -128,6 +146,8 @@ const LayerPanel = (() => {
      */
     function init() {
         domElements = cacheElements(DOM_IDS);
+        restoreLeftSidebarState();
+        setupLeftResizeHandle();
         bindMainEvents();
         bindModalEvents();
         bindLayerLoadEvents();
@@ -141,7 +161,12 @@ const LayerPanel = (() => {
 
         domElements.toggleBtn.addEventListener('click', () => {
             if (domElements.sidebar) {
-                domElements.sidebar.classList.toggle(CSS_CLASSES.CLOSED);
+                const isClosed = domElements.sidebar.classList.contains(CSS_CLASSES.CLOSED);
+                if (isClosed) {
+                    sidebarOpen();
+                } else {
+                    sidebarClose();
+                }
             }
         });
 
@@ -176,20 +201,169 @@ const LayerPanel = (() => {
     // =========================================================================
 
     /**
-     * Apre la sidebar
+     * Apre la sidebar layer e espande il wrapper sinistro
      */
     function sidebarOpen() {
         if (domElements.sidebar && domElements.sidebar.classList.contains(CSS_CLASSES.CLOSED)) {
             domElements.sidebar.classList.remove(CSS_CLASSES.CLOSED);
         }
+        // Close user panel if open (mutually exclusive)
+        const userSidebar = document.getElementById('userSidebar');
+        if (userSidebar && !userSidebar.classList.contains(CSS_CLASSES.CLOSED)) {
+            userSidebar.classList.add(CSS_CLASSES.CLOSED);
+        }
+        expandLeftSidebar();
     }
 
     /**
-     * Chiude la sidebar
+     * Chiude la sidebar layer; se nessun panel è aperto, collassa il wrapper
      */
     function sidebarClose() {
         if (domElements.sidebar && !domElements.sidebar.classList.contains(CSS_CLASSES.CLOSED)) {
             domElements.sidebar.classList.add(CSS_CLASSES.CLOSED);
+        }
+        // Collapse wrapper only if user panel is also closed
+        const userSidebar = document.getElementById('userSidebar');
+        if (!userSidebar || userSidebar.classList.contains(CSS_CLASSES.CLOSED)) {
+            collapseLeftSidebar();
+        }
+    }
+
+    // =========================================================================
+    // LEFT SIDEBAR - Wrapper expand / collapse / resize
+    // =========================================================================
+
+    /**
+     * Espande il wrapper sinistro alla larghezza salvata (o default)
+     * @param {number} [width] - Larghezza target in px
+     */
+    function expandLeftSidebar(width) {
+        const wrapper = document.getElementById('leftSidebarWrapper');
+        if (!wrapper) return;
+        const targetWidth = width || leftPreviousWidth;
+        wrapper.style.width = targetWidth + 'px';
+        saveLeftSidebarState();
+    }
+
+    /**
+     * Collassa il wrapper sinistro a 48px (solo strip pulsanti)
+     */
+    function collapseLeftSidebar() {
+        const wrapper = document.getElementById('leftSidebarWrapper');
+        if (!wrapper) return;
+        const currentWidth = wrapper.offsetWidth;
+        if (currentWidth > LEFT_SIDEBAR_CONFIG.MIN_WIDTH) {
+            leftPreviousWidth = currentWidth;
+        }
+        wrapper.style.width = LEFT_SIDEBAR_CONFIG.MIN_WIDTH + 'px';
+        // Close all panels
+        if (domElements.sidebar && !domElements.sidebar.classList.contains(CSS_CLASSES.CLOSED)) {
+            domElements.sidebar.classList.add(CSS_CLASSES.CLOSED);
+        }
+        const userSidebar = document.getElementById('userSidebar');
+        if (userSidebar && !userSidebar.classList.contains(CSS_CLASSES.CLOSED)) {
+            userSidebar.classList.add(CSS_CLASSES.CLOSED);
+        }
+        saveLeftSidebarState();
+    }
+
+    /**
+     * Configura il resize handle del sidebar sinistro
+     */
+    function setupLeftResizeHandle() {
+        const handle = document.getElementById('leftResizeHandle');
+        if (!handle) return;
+        handle.addEventListener('mousedown', handleLeftResizeStart);
+    }
+
+    /**
+     * Inizia il resize del wrapper sinistro
+     * @param {MouseEvent} e
+     */
+    function handleLeftResizeStart(e) {
+        const wrapper = document.getElementById('leftSidebarWrapper');
+        if (!wrapper) return;
+        // Only allow resize if a panel is visible (width > 48px)
+        if (wrapper.offsetWidth <= LEFT_SIDEBAR_CONFIG.MIN_WIDTH) return;
+
+        e.preventDefault();
+        leftResizing = true;
+        leftResizeStartX = e.clientX;
+        leftResizeStartWidth = wrapper.offsetWidth;
+
+        wrapper.classList.add('no-transition');
+        document.addEventListener('mousemove', handleLeftResizeMove);
+        document.addEventListener('mouseup', handleLeftResizeEnd);
+        document.body.style.cursor = 'col-resize';
+        document.body.style.userSelect = 'none';
+    }
+
+    /**
+     * Gestisce il trascinamento del resize handle
+     * @param {MouseEvent} e
+     */
+    function handleLeftResizeMove(e) {
+        if (!leftResizing) return;
+        const wrapper = document.getElementById('leftSidebarWrapper');
+        if (!wrapper) return;
+
+        const deltaX = e.clientX - leftResizeStartX; // Neg = left = wider (sidebar on right side)
+        const newWidth = leftResizeStartWidth - deltaX;
+        const constrained = Math.max(
+            LEFT_SIDEBAR_CONFIG.MIN_WIDTH,
+            Math.min(newWidth, LEFT_SIDEBAR_CONFIG.MAX_WIDTH)
+        );
+        wrapper.style.width = constrained + 'px';
+
+        // Auto-collapse if dragged under threshold
+        if (constrained <= LEFT_SIDEBAR_CONFIG.COLLAPSE_THRESHOLD) {
+            collapseLeftSidebar();
+        }
+    }
+
+    /**
+     * Finalizza il resize
+     */
+    function handleLeftResizeEnd() {
+        if (!leftResizing) return;
+        leftResizing = false;
+
+        document.removeEventListener('mousemove', handleLeftResizeMove);
+        document.removeEventListener('mouseup', handleLeftResizeEnd);
+        document.body.style.cursor = 'auto';
+        document.body.style.userSelect = 'auto';
+
+        const wrapper = document.getElementById('leftSidebarWrapper');
+        if (!wrapper) return;
+
+        wrapper.classList.remove('no-transition');
+
+        const currentWidth = wrapper.offsetWidth;
+        if (currentWidth <= LEFT_SIDEBAR_CONFIG.COLLAPSE_THRESHOLD) {
+            collapseLeftSidebar();
+        } else {
+            leftPreviousWidth = currentWidth;
+            saveLeftSidebarState();
+        }
+    }
+
+    /**
+     * Salva la larghezza corrente del wrapper in localStorage
+     */
+    function saveLeftSidebarState() {
+        localStorage.setItem(LEFT_SIDEBAR_CONFIG.STORAGE_PREV_WIDTH_KEY, String(leftPreviousWidth));
+    }
+
+    /**
+     * Ripristina la larghezza salvata del wrapper da localStorage
+     */
+    function restoreLeftSidebarState() {
+        const saved = localStorage.getItem(LEFT_SIDEBAR_CONFIG.STORAGE_PREV_WIDTH_KEY);
+        if (saved) {
+            leftPreviousWidth = Math.max(
+                LEFT_SIDEBAR_CONFIG.MIN_WIDTH,
+                Math.min(Number(saved), LEFT_SIDEBAR_CONFIG.MAX_WIDTH)
+            );
         }
     }
 
@@ -677,6 +851,8 @@ const LayerPanel = (() => {
         reloadProjectLayers,
         sidebarOpen,
         sidebarClose,
+        expandLeftSidebar,
+        collapseLeftSidebar,
         listWrap: domElements.projectLayersList
     };
 })();

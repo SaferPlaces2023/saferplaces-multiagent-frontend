@@ -79,4 +79,24 @@
         }
     });
 
+    // ========================================
+    // 7) THEME TOGGLE
+    // ========================================
+    const themeBtn = document.getElementById('themeToggleBtn');
+    if (themeBtn) {
+        const html = document.documentElement;
+        // Sync button icon with current theme
+        const syncThemeBtn = () => {
+            const isLight = html.classList.contains('light-theme');
+            themeBtn.textContent = isLight ? '🌙' : '☀️';
+            themeBtn.title = isLight ? 'Switch to dark theme' : 'Switch to light theme';
+        };
+        syncThemeBtn();
+        themeBtn.addEventListener('click', () => {
+            const isLight = html.classList.toggle('light-theme');
+            localStorage.setItem('sp-theme', isLight ? 'light' : 'dark');
+            syncThemeBtn();
+        });
+    }
+
 })();

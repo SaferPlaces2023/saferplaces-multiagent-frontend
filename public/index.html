@@ -14,18 +14,27 @@
     <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined" rel="stylesheet" />
 
 
-    <!-- App CSS -->
-    <link href="public/css/base.css" rel="stylesheet">
-    <link href="public/css/index.css" rel="stylesheet">
-    <link href="public/css/auth-gate.css" rel="stylesheet">
-    <link href="public/css/geo-map.css" rel="stylesheet">
-    <link href="public/css/layer-panel.css" rel="stylesheet">
-    <link href="public/css/layer-register.css" rel="stylesheet">
-    <link href="public/css/user-panel.css" rel="stylesheet">
-    <link href="public/css/toasts.css" rel="stylesheet">
-    <link href="public/css/ai-chat.css" rel="stylesheet">
-    <link href="public/css/ai-chat-settings.css" rel="stylesheet">
+    <!-- Early theme: apply saved preference before first paint (prevents flash) -->
+    <script>if(localStorage.getItem('sp-theme')==='light')document.documentElement.classList.add('light-theme');</script>
+
+    <!-- App CSS - Reorganized system -->
+    <!-- Design tokens and base styles -->
+    <link href="public/css/design-tokens.css" rel="stylesheet">
+    <link href="public/css/layout.css" rel="stylesheet">
+    
+    <!-- Reusable components -->
+    <link href="public/css/components.css" rel="stylesheet">
+    
+    <!-- Feature-specific styles -->
+    <link href="public/css/branding.css" rel="stylesheet">
+    <link href="public/css/map-editor.css" rel="stylesheet">
+    <link href="public/css/sidebars.css" rel="stylesheet">
+    <link href="public/css/chat-interface.css" rel="stylesheet">
     <link href="public/css/time-slider.css" rel="stylesheet">
+    <link href="public/css/modals.css" rel="stylesheet">
+    <link href="public/css/notifications.css" rel="stylesheet">
+    <!-- Light theme overrides (loaded last so it wins) -->
+    <link href="public/css/theme-light.css" rel="stylesheet">
 </head>
 
 <body class="bg-dark text-light">
@@ -38,13 +47,36 @@
     </div>
 
     <!-- Placeholder dei parziali -->
-    <div id="appRoot">
-        <div data-include="public/partials/geo-map.html"></div>
-        <div data-include="public/partials/user-panel.html"></div>
-        <div data-include="public/partials/layer-panel.html"></div>
-        <div data-include="public/partials/layer-register.html"></div>
-        <div data-include="public/partials/ai-chat.html"></div>
-        <div data-include="public/partials/time-slider.html"></div>
+    <div id="appRoot" class="app-container">
+
+        <!-- Chat Sidebar (left side - fixed width + resizable) -->
+        <div class="chat-sidebar-wrapper">
+            <div style="height: 100%;" data-include="public/partials/ai-chat.html"></div>
+        </div>
+
+        <!-- Map Container (flex: 1) -->
+        <div class="map-container">
+            <div data-include="public/partials/geo-map.html"></div>
+            <div data-include="public/partials/layer-register.html"></div>
+            <div data-include="public/partials/time-slider.html"></div>
+        </div>
+
+        <!-- Right Sidebar (user + layers - fixed width + resizable) -->
+        <div class="left-sidebar-wrapper" id="leftSidebarWrapper">
+            <!-- Resize handle (left edge, facing the map) -->
+            <div class="left-resize-handle" id="leftResizeHandle" title="Drag to resize"></div>
+            <!-- Panel content area -->
+            <div class="left-sidebar-panel" id="leftSidebarPanel">
+                <div style="height:100%;" data-include="public/partials/user-panel.html"></div>
+                <div style="height:100%;" data-include="public/partials/layer-panel.html"></div>
+            </div>
+            <!-- Button strip (always visible, at outer-right edge) -->
+            <div class="left-sidebar-strip">
+                <button class="btn btn-primary btn-sm" id="toggleUserBtn" type="button" title="Open user panel" aria-label="Toggle user panel">👤</button>
+                <button class="btn btn-secondary btn-sm" id="toggleBtn" type="button" title="Toggle layer panel" aria-label="Toggle layer panel">☰</button>
+                <button class="btn btn-secondary btn-sm" id="themeToggleBtn" type="button" title="Switch to light theme" aria-label="Toggle light/dark theme">☀️</button>
+            </div>
+        </div>
     </div>
     <!-- Autenticazione -->
     <div data-include="public/partials/auth-gate.html"></div>

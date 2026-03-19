@@ -64,6 +64,10 @@ const UserPanel = (() => {
             if (domElements.userSidebar) {
                 domElements.userSidebar.classList.add(CSS_CLASSES.CLOSED);
             }
+            // Collapse wrapper only if layer panel is also closed
+            if (domElements.layerSidebar && domElements.layerSidebar.classList.contains(CSS_CLASSES.CLOSED)) {
+                window.LayerPanel?.collapseLeftSidebar?.();
+            }
         });
         domElements.userProjects?.addEventListener('click', handleProjectMenuAction);
     }
@@ -72,14 +76,23 @@ const UserPanel = (() => {
      * Gestisce il toggle del pannello utente
      */
     function handleToggleUserPanel() {
-        if (!domElements.userSidebar || !domElements.layerSidebar) return;
+        if (!domElements.userSidebar) return;
 
-        domElements.layerSidebar.classList.add(CSS_CLASSES.CLOSED);
+        // Close layer panel (mutually exclusive)
+        if (domElements.layerSidebar && !domElements.layerSidebar.classList.contains(CSS_CLASSES.CLOSED)) {
+            domElements.layerSidebar.classList.add(CSS_CLASSES.CLOSED);
+        }
+
         domElements.userSidebar.classList.toggle(CSS_CLASSES.CLOSED);
 
         if (!domElements.userSidebar.classList.contains(CSS_CLASSES.CLOSED)) {
+            // Opening: expand wrapper
+            window.LayerPanel?.expandLeftSidebar?.();
             fillInfo();
             loadProjects();
+        } else {
+            // Closing: collapse wrapper (layer panel is already closed)
+            window.LayerPanel?.collapseLeftSidebar?.();
         }
     }
 
@@ -373,6 +386,7 @@ const UserPanel = (() => {
         if (domElements.userSidebar) {
             domElements.userSidebar.classList.add(CSS_CLASSES.CLOSED);
         }
+        // Switch to layer panel (wrapper stays expanded)
         if (domElements.layerSidebar) {
             domElements.layerSidebar.classList.remove(CSS_CLASSES.CLOSED);
         }

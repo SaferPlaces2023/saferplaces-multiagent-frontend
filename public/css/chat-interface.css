@@ -1,0 +1,423 @@
+/* ============================================================================= */
+/* CHAT INTERFACE - Structural sidebar with chat, messages, and settings */
+/* ============================================================================= */
+/* 
+   Purpose: Chatbox sidebar container, message bubbles (user/AI), typing indicator,
+   input area, settings panel with collapsible sections. Replaces floating overlay
+   with fixed structural sidebar adjacent to map.
+*/
+
+/* ========================================================================= */
+/* CHAT BOX - Sidebar container (structural, not floating) */
+/* ========================================================================= */
+
+.chatbox,
+#chatBox {
+    position: relative;
+    width: 100%;
+    height: 100%;
+    background: transparent;
+    backdrop-filter: none;
+    border-radius: 0;
+    z-index: auto;
+    box-shadow: none;
+    display: flex;
+    flex-direction: column;
+    overflow: visible;
+    border: none;
+    transition: all var(--transition-normal);
+}
+
+/* Minimized state - collapse to thin strip */
+.chatbox.min,
+#chatBox.min {
+    width: 100%;
+}
+
+.chatbox.min .chat-header {
+    writing-mode: vertical-rl;
+    text-orientation: mixed;
+}
+
+.chatbox.min .chat-body,
+.chatbox.min #chatBody,
+.chatbox.min .chat-input {
+    display: none;
+}
+
+/* ========================================================================= */
+/* RESIZE HANDLE - Left border for dragging sidebar */
+/* ========================================================================= */
+
+.chat-resize-handle {
+    position: absolute;
+    right: 0;
+    top: 0;
+    bottom: 0;
+    width: 4px;
+    cursor: col-resize;
+    background: linear-gradient(90deg, 
+                rgba(110, 231, 183, 0) 0%,
+                rgba(110, 231, 183, 0.3) 50%,
+                rgba(110, 231, 183, 0) 100%);
+    opacity: 0;
+    transition: opacity var(--transition-fast);
+    z-index: 10;
+    order: 0;
+}
+
+.chat-sidebar-wrapper:hover .chat-resize-handle {
+    opacity: 1;
+}
+
+.chat-resize-handle:active {
+    background: linear-gradient(90deg, 
+                rgba(110, 231, 183, 0.5) 0%,
+                rgba(110, 231, 183, 0.8) 50%,
+                rgba(110, 231, 183, 0.5) 100%);
+}
+
+
+/* ========================================================================= */
+/* CHAT HEADER - Title and action buttons */
+/* ========================================================================= */
+
+.chat-header {
+    padding: 0.6rem 0.9rem;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    background: linear-gradient(180deg,
+                                rgba(255, 255, 255, 0.06),
+                                rgba(255, 255, 255, 0.02));
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+    flex-shrink: 0;
+    min-height: 0;
+    order: 1;
+}
+
+.chat-title {
+    font-weight: var(--font-weight-semibold);
+    color: var(--color-text-primary);
+    flex: 1;
+    display: flex;
+    align-items: center;
+    gap: var(--space-1);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+/* ========================================================================= */
+/* CHAT BODY - Message container */
+/* ========================================================================= */
+
+.chat-body,
+#chatBody {
+    padding: 0.75rem;
+    overflow-y: auto;
+    overflow-x: hidden;
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+    transition: all var(--transition-normal);
+    flex: 1;
+    min-height: 0;
+    order: 3;
+}
+
+/* ========================================================================= */
+/* MESSAGE BUBBLES */
+/* ========================================================================= */
+
+.bubble {
+    padding: 0.55rem 0.7rem;
+    border-radius: var(--radius-lg);
+    max-width: 85%;
+    font-size: 0.92rem;
+    border: var(--glass-border);
+    word-wrap: break-word;
+    word-break: break-word;
+}
+
+/* User messages - right aligned, green tint */
+.bubble.user {
+    align-self: flex-end;
+    background: var(--color-accent-green-alpha-12);
+    border-color: var(--color-accent-green-alpha-35);
+}
+
+/* AI messages - left aligned, subtle background */
+.bubble.ai {
+    align-self: flex-start;
+    background: rgba(255, 255, 255, 0.05);
+    border-color: var(--color-border-base);
+}
+
+/* AI message typography */
+.bubble.ai h1,
+.bubble.ai h2,
+.bubble.ai h3 {
+    font-weight: var(--font-weight-semibold);
+    margin-top: 0.4em;
+    color: var(--color-text-primary);
+}
+
+.bubble.ai h1 {
+    font-size: 1.2em;
+}
+
+.bubble.ai h2 {
+    font-size: 1.1em;
+}
+
+.bubble.ai h3 {
+    font-size: 1em;
+}
+
+.bubble.ai p {
+    margin-bottom: 0.4em;
+    color: var(--color-text-primary);
+}
+
+.bubble.ai code {
+    background: rgba(255, 255, 255, 0.1);
+    padding: 2px 4px;
+    border-radius: var(--radius-sm);
+    font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas;
+    font-size: 0.9em;
+    color: #d7dadf;
+}
+
+.bubble.ai pre {
+    background: rgba(255, 255, 255, 0.07);
+    padding: 6px 8px;
+    border-radius: var(--radius-lg);
+    overflow: auto;
+    border-left: 2px solid var(--color-accent-green-alpha-35);
+    font-size: 0.85em;
+    line-height: 1.4;
+}
+
+.bubble.ai ul {
+    padding-left: 1.2em;
+    margin: 0.2em 0;
+    color: var(--color-text-primary);
+}
+
+.bubble.ai ol {
+    padding-left: 1.2em;
+    margin: 0.2em 0;
+    color: var(--color-text-primary);
+}
+
+.bubble.ai li {
+    margin-bottom: 0.2em;
+}
+
+.bubble.ai a {
+    color: var(--color-accent-green);
+    text-decoration: none;
+    transition: text-decoration var(--transition-fast);
+}
+
+.bubble.ai a:hover {
+    text-decoration: underline;
+}
+
+/* Typing indicator */
+.bubble.typing {
+    align-self: flex-start;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    background: rgba(255, 255, 255, 0.04);
+    padding: 0.55rem 0.7rem;
+}
+
+/* ========================================================================= */
+/* CHAT INPUT AREA */
+/* ========================================================================= */
+
+.chat-input {
+    padding: 0.6rem;
+    background: rgba(255, 255, 255, 0.03);
+    display: flex;
+    gap: 0.4rem;
+    align-items: center;
+    border-top: 1px solid rgba(255, 255, 255, 0.1);
+    flex-shrink: 0;
+    order: 4;
+}
+
+.chat-input input {
+    flex: 1;
+    font-size: 0.92rem;
+}
+
+.chat-input button {
+    flex-shrink: 0;
+}
+
+/* ========================================================================= */
+/* CHAT SETTINGS PANEL */
+/* ========================================================================= */
+
+#chatSettings {
+    height: fit-content;
+    max-height: 30vh;
+    overflow-y: auto;
+    transition: max-height var(--transition-normal);
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+    background: rgba(255, 255, 255, 0.02);
+    flex-shrink: 0;
+    min-height: 0;
+    order: 2;
+}
+
+#chatSettings.closed {
+    max-height: 0px;
+    overflow: hidden;
+}
+
+/* Settings cards and sections */
+#chatSettings .card,
+#chatSettings .cs-card,
+#chatSettings .cs-section,
+#chatSettings .cs-section > button,
+#chatSettings .collapse {
+    border-radius: 0 !important;
+    border: none;
+    background: transparent;
+}
+
+.cs-card {
+    background: var(--glass-background);
+    border: var(--glass-border);
+    border-radius: 0 !important;
+    color: var(--color-text-primary);
+    padding: var(--space-2);
+    margin-bottom: var(--space-1);
+}
+
+.cs-section {
+    background: transparent;
+    border: var(--glass-border);
+    border-radius: 0 !important;
+    overflow: hidden;
+    color: var(--color-text-primary);
+}
+
+.cs-section > .btn {
+    background: rgba(255, 255, 255, 0.04);
+    border: none;
+    border-bottom: var(--glass-border);
+    color: var(--color-text-primary);
+    text-align: left;
+    padding: var(--space-2) var(--space-3);
+    transition: background-color var(--transition-fast);
+}
+
+.cs-section > .btn:hover {
+    background: rgba(255, 255, 255, 0.08);
+}
+
+/* Form controls in settings */
+.cs-group .form-check-input {
+    cursor: pointer;
+    background-color: var(--color-input-bg);
+    border-color: var(--color-border-light);
+}
+
+.cs-group .form-check-input:checked {
+    background-color: var(--color-accent-green);
+    border-color: var(--color-accent-green);
+}
+
+.cs-group .form-check-label {
+    cursor: pointer;
+    color: var(--color-text-primary);
+}
+
+/* Help and info icons */
+.open-details {
+    cursor: pointer;
+    color: var(--color-text-secondary);
+    transition: color var(--transition-fast);
+}
+
+.open-details:hover {
+    text-decoration: underline;
+    color: var(--color-text-primary);
+}
+
+.material-symbols-outlined.settings-info {
+    color: var(--color-text-secondary);
+    cursor: pointer;
+    transition: color var(--transition-fast);
+}
+
+.material-symbols-outlined.settings-info:hover {
+    color: var(--color-text-primary);
+}
+
+.icon-fix {
+    vertical-align: bottom;
+}
+
+/* Tooltip wrapper (initially hidden) */
+.tooltip-icon-wrapper {
+    position: relative;
+    display: none;
+}
+
+.tooltip-icon-wrapper:hover .ai-chat-settings-tooltip {
+    opacity: 1;
+    pointer-events: auto;
+}
+
+.ai-chat-settings-tooltip {
+    position: absolute;
+    background: var(--glass-background);
+    border: var(--glass-border);
+    padding: var(--space-2);
+    border-radius: var(--radius-lg);
+    color: var(--color-text-primary);
+    font-size: 0.85rem;
+    max-width: 200px;
+    opacity: 0;
+    transition: opacity var(--transition-normal);
+    pointer-events: none;
+    z-index: 100;
+}
+
+
+/* ========================================================================= */
+/* RESPONSIVE ADJUSTMENTS FOR SMALLER SCREENS */
+/* ========================================================================= */
+
+@media (max-width: 768px) {
+    .chat-header {
+        padding: 0.5rem 0.7rem;
+    }
+    
+    .chat-body,
+    #chatBody {
+        padding: 0.6rem;
+    }
+}
+
+@media (max-width: 480px) {
+    .chat-header {
+        padding: 0.5rem;
+    }
+    
+    .chat-title {
+        font-size: 0.9rem;
+    }
+    
+    .bubble {
+        font-size: 0.85rem;
+        max-width: 90%;
+    }
+}

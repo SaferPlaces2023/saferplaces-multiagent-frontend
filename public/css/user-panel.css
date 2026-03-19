@@ -1,6 +1,6 @@
 /* pannello utente: stile per il pulsante di attivazione */
 .toggle-user-btn {
-  position: fixed;
+  position: absolute;
   left: 16px;
   top: 16px;
   /* sopra */
@@ -9,7 +9,7 @@
 
 /* pannello utente: stessa pelle della sidebar layer */
 .user-sidebar {
-  position: fixed;
+  position: absolute;
   left: 64px;
   top: 16px;
   bottom: 16px;

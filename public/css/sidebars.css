@@ -1,0 +1,355 @@
+/* ============================================================================= */
+/* SIDEBARS - Structural left split-view panels (user + layers) */
+/* ============================================================================= */
+/* 
+   Purpose: Left split-view panels for layer management and user info.
+   Panels live inside .left-sidebar-panel (structural, not floating).
+   Toggle buttons live in .left-sidebar-strip (see layout.css).
+*/
+
+/* ========================================================================= */
+/* SIDEBAR TOGGLE BUTTONS - static inside .left-sidebar-strip */
+/* ========================================================================= */
+
+/* Buttons are laid out by the flex strip; no fixed positioning needed */
+.toggle-btn,
+.toggle-user-btn,
+#toggleBtn,
+#toggleUserBtn {
+    position: static;
+    transition: opacity var(--transition-fast);
+}
+
+/* ========================================================================= */
+/* SIDEBAR BASE STYLING - Layer Panel */
+/* ========================================================================= */
+
+.sidebar,
+#sidebar {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: transparent;
+    padding: var(--space-3);
+    overflow-y: auto;
+    border: none;
+    border-radius: 0;
+    box-shadow: none;
+    backdrop-filter: none;
+}
+
+.sidebar.closed,
+#sidebar.closed {
+    display: none;
+}
+
+/* ========================================================================= */
+/* SIDEBAR BASE STYLING - User Panel */
+/* ========================================================================= */
+
+.user-sidebar,
+#userSidebar {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: transparent;
+    padding: var(--space-3);
+    overflow-y: auto;
+    border: none;
+    border-radius: 0;
+    box-shadow: none;
+    backdrop-filter: none;
+}
+
+.user-sidebar.closed,
+#userSidebar.closed {
+    display: none;
+}
+
+/* ========================================================================= */
+/* SIDEBAR FORM CONTROLS */
+/* ========================================================================= */
+
+.sidebar .card,
+.user-sidebar .card,
+#sidebar .card,
+#userSidebar .card {
+    background: var(--color-card-bg);
+    border: none;
+    max-height: 60vh;
+    overflow-y: auto;
+    border-radius: var(--radius-xl);
+}
+
+.sidebar .form-control,
+.sidebar .form-select,
+.user-sidebar .form-control,
+.user-sidebar .form-select,
+#sidebar .form-control,
+#sidebar .form-select,
+#userSidebar .form-control,
+#userSidebar .form-select {
+    background-color: var(--color-input-bg);
+    color: var(--color-text-primary);
+    border: var(--color-input-border);
+    border-radius: var(--radius-md);
+}
+
+/* ========================================================================= */
+/* LAYER PANEL - Layers list and management */
+/* ========================================================================= */
+
+.layer-list,
+#projectLayersList {
+    display: flex;
+    flex-direction: column;
+    gap: 0;
+    role: list;
+}
+
+.layer-item {
+    padding: 0.55rem 0;
+    border-bottom: 1px dashed var(--color-border-dashed);
+    user-select: text;
+    transition: background-color var(--transition-fast);
+}
+
+.layer-item:hover {
+    background-color: rgba(255, 255, 255, 0.02);
+    border-radius: var(--radius-md);
+    padding: 0.55rem var(--space-sm);
+}
+
+.layer-item:last-child {
+    border-bottom: none;
+}
+
+.layer-item * {
+    user-select: text;
+}
+
+/* ========================================================================= */
+/* LAYER ITEM CONTENT */
+/* ========================================================================= */
+
+.layer-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: var(--space-1);
+}
+
+.layer-title {
+    font-weight: var(--font-weight-semibold);
+    font-size: 0.95rem;
+    color: var(--color-text-primary);
+    flex: 1;
+}
+
+/* Layer actions (eye, download, etc.) */
+.layer-actions {
+    display: flex;
+    align-items: center;
+    gap: 0.35rem;
+}
+
+.layer-actions .layer-eye span,
+.layer-eye .material-symbols-outlined {
+    font-size: 12px;
+    cursor: pointer;
+    color: var(--color-text-secondary);
+    transition: color var(--transition-fast);
+}
+
+.layer-actions .layer-eye span:hover,
+.layer-eye .material-symbols-outlined:hover {
+    color: var(--color-text-primary);
+}
+
+/* Layer drag handle */
+.layer-drag-handle {
+    flex: 0 0 18px;
+    margin-right: 0.35rem;
+    cursor: grab;
+    user-select: none;
+    color: var(--color-text-secondary);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: color var(--transition-fast);
+}
+
+.layer-item[draggable="true"]:active .layer-row .layer-drag-handle {
+    cursor: grabbing;
+}
+
+.layer-drag-handle:hover {
+    color: var(--color-text-primary);
+}
+
+/* ========================================================================= */
+/* LAYER DETAILS - Metadata section */
+/* ========================================================================= */
+
+.layer-details {
+    margin-top: var(--space-2);
+    padding: 0.5rem 0.6rem;
+    background: rgba(255, 255, 255, 0.04);
+    border: 1px solid var(--color-border-light);
+    border-radius: 0.6rem;
+    font-size: 0.85rem;
+}
+
+.layer-detail.detail-description {
+    color: var(--color-text-primary);
+    margin-bottom: var(--space-sm);
+}
+
+.layer-details code {
+    background: rgba(255, 255, 255, 0.08);
+    padding: 0 0.25rem;
+    border-radius: 0.25rem;
+    font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas;
+}
+
+.layer-toggle {
+    cursor: pointer;
+    color: var(--color-text-secondary);
+    text-decoration: underline;
+    transition: color var(--transition-fast);
+}
+
+.layer-toggle:hover {
+    color: var(--color-text-primary);
+}
+
+/* ========================================================================= */
+/* LAYER DRAG AND DROP INDICATORS */
+/* ========================================================================= */
+
+.layer-item.dragging {
+    opacity: 0.6;
+    background-color: rgba(255, 255, 255, 0.03);
+}
+
+.layer-item.drop-above::before,
+.layer-item.drop-below::after {
+    content: "";
+    display: block;
+    height: 0;
+    border-top: 2px dashed var(--color-accent-green-alpha-35);
+    margin: 2px 0;
+}
+
+.layer-item.drop-below::after {
+    margin-top: 6px;
+}
+
+/* ========================================================================= */
+/* USER PANEL - User info and projects */
+/* ========================================================================= */
+
+#infoUserId,
+#infoProjectId,
+#infoThreadId {
+    color: var(--color-text-primary);
+    font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas;
+    font-size: 0.9rem;
+    word-break: break-all;
+}
+
+#infoThreadId code {
+    background: rgba(255, 255, 255, 0.1);
+    padding: 2px 4px;
+    border-radius: var(--radius-sm);
+    font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas;
+}
+
+/* Projects list container */
+#userProjects {
+    max-height: 45vh;
+    overflow-y: auto;
+    display: flex;
+    flex-direction: column;
+    gap: 0;
+}
+
+/* Individual project item */
+.project-item,
+#userProjects .project-item {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: var(--space-1);
+    padding: 0.35rem 0.6rem;
+    border-bottom: 1px dashed var(--color-border-light);
+    transition: background-color var(--transition-fast);
+}
+
+.project-item:hover,
+#userProjects .project-item:hover {
+    background-color: rgba(255, 255, 255, 0.02);
+    border-radius: var(--radius-md);
+}
+
+.project-item:last-child,
+#userProjects .project-item:last-child {
+    border-bottom: none;
+}
+
+.project-name {
+    font-size: 0.92rem;
+    color: var(--color-text-primary);
+    flex: 1;
+}
+
+/* New project form */
+#newProjForm .form-control {
+    background-color: var(--color-input-bg);
+    color: var(--color-text-primary);
+    border: var(--color-input-border);
+}
+
+/* ========================================================================= */
+/* COLLAPSIBLE SECTIONS - Vector and Raster layer sections */
+/* ========================================================================= */
+
+#addVectorWrap,
+#addRasterWrap {
+    color: var(--color-text-primary);
+    background: transparent;
+}
+
+.collapse .form-label {
+    color: var(--color-text-secondary);
+    margin-bottom: var(--space-1);
+    font-size: 0.9rem;
+}
+
+.collapse .form-check-label {
+    color: var(--color-text-primary);
+}
+
+/* ========================================================================= */
+/* RESPONSIVE ADJUSTMENTS */
+/* ========================================================================= */
+
+@media (max-width: 640px) {
+    .sidebar,
+    .user-sidebar,
+    #sidebar,
+    #userSidebar {
+        padding: var(--space-2);
+    }
+}
+
+@media (max-width: 480px) {
+    .layer-item,
+    .project-item {
+        font-size: 0.85rem;
+    }
+}
