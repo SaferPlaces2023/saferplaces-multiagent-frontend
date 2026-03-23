@@ -182,8 +182,9 @@ const GeoMap = (() => {
         // Surface type identifiers
         SURFACE_TYPES: {
             DEM: 'dem',
-            DEM_BUILDING: 'dem-building---',
+            DEM_BUILDING: 'dem-building',
             RAIN_TIMESERIES: 'rain-timeseries',
+            TEMPERATURE_TIMESERIES: 'temperature-timeseries',
             WATER_DEPTH: 'water-depth',
             RASTER: 'raster'
         },
@@ -192,14 +193,16 @@ const GeoMap = (() => {
         COLORMAPS: {
             TERRAIN_DEFAULT: 'BrewerSpectral11',
             WATER: 'CartoTealGrn',
-            RAIN: 'BrewerSpectral11'
+            RAIN: 'BrewerSpectral11',
+            TEMPERATURE: 'CartoTemps'
         },
 
         // Colormap range defaults
         COLORMAP_RANGES: {
             water: { min: 0, max: 2 },
             terrain: { min: 0, max: 1000 },
-            rain: { min: 0, max: 50 }  // mm/h assumed max
+            rain: { min: 0, max: 50 },  // mm/h assumed max
+            temperature: { min: -10, max: 50 }  // °C assumed range
         },
 
         // COG tile size
@@ -229,10 +232,17 @@ const GeoMap = (() => {
     let surfaceColorscalesMap = {
         [GEO_MAP_CONSTANTS.SURFACE_TYPES.RAIN_TIMESERIES]: MaplibreCOGProtocol.colorScale({
             colorScheme: GEO_MAP_CONSTANTS.COLORMAPS.RAIN,
-            min: 0,
-            max: 200,
+            min: GEO_MAP_CONSTANTS.COLORMAP_RANGES.rain.min,
+            max: GEO_MAP_CONSTANTS.COLORMAP_RANGES.rain.max,
             isContinuous: true,
             isReverse: true
+        }),
+        [GEO_MAP_CONSTANTS.SURFACE_TYPES.TEMPERATURE_TIMESERIES]: MaplibreCOGProtocol.colorScale({
+            colorScheme: GEO_MAP_CONSTANTS.COLORMAPS.TEMPERATURE,
+            min: GEO_MAP_CONSTANTS.COLORMAP_RANGES.temperature.min,
+            max: GEO_MAP_CONSTANTS.COLORMAP_RANGES.temperature.max,
+            isContinuous: true,
+            isReverse: false
         })
     };
 
@@ -313,6 +323,56 @@ const GeoMap = (() => {
         if (domElements.btnCesiumLaunch) {
             domElements.btnCesiumLaunch.addEventListener('click', handleCesiumLaunch);
         }
+
+        // Bind toolbar header toggles for click-to-expand
+        setupToolbarToggles();
+    }
+
+    /**
+     * Setup toolbar header click handlers per toggle body visibility
+     */
+    function setupToolbarToggles() {
+        const toolbarHeads = document.querySelectorAll('.toolbar-head[data-toggle]');
+        
+        toolbarHeads.forEach(head => {
+            head.addEventListener('click', (e) => {
+                e.stopPropagation();
+                toggleToolbar(head);
+            });
+        });
+    }
+
+    /**
+     * Toggle visibility di una toolbar body e chiude le altre
+     */
+    function toggleToolbar(headElement) {
+        const targetBodyId = headElement.getAttribute('data-toggle');
+        const targetBody = document.getElementById(targetBodyId);
+        
+        if (!targetBody) return;
+
+        // Se il body è già attivo, chiudilo
+        const isActive = targetBody.classList.contains('active');
+        if (isActive) {
+            targetBody.classList.remove('active');
+            headElement.setAttribute('aria-expanded', 'false');
+            return;
+        }
+
+        // Chiudi tutti gli altri toolbars
+        const allBodies = document.querySelectorAll('[id$="Body"].active');
+        allBodies.forEach(body => {
+            body.classList.remove('active');
+            const headId = body.id.replace('Body', 'Head');
+            const head = document.getElementById(headId);
+            if (head) {
+                head.setAttribute('aria-expanded', 'false');
+            }
+        });
+
+        // Apri il toolbar cliccato
+        targetBody.classList.add('active');
+        headElement.setAttribute('aria-expanded', 'true');
     }
 
     /**
@@ -499,6 +559,7 @@ const GeoMap = (() => {
                     break;
 
                 case GEO_MAP_CONSTANTS.SURFACE_TYPES.RAIN_TIMESERIES:
+                case GEO_MAP_CONSTANTS.SURFACE_TYPES.TEMPERATURE_TIMESERIES:
                     await processTimeSeriesLayer(layerId, renderUrl, renderInfo, layerData);
                     break;
 
@@ -668,7 +729,7 @@ const GeoMap = (() => {
                     layer_id: layerId,
                     render_url: renderUrl,
                     band: tsIdx + 1,
-                    surface_type: GEO_MAP_CONSTANTS.SURFACE_TYPES.RAIN_TIMESERIES,
+                    surface_type: metadata.surface_type || 'unknown',
                     cog_layer: { id: layerId, type: 'raster', source: layerId }
                 });
             });
@@ -911,7 +972,7 @@ const GeoMap = (() => {
         }
 
         const colorscale = surfaceColorscalesMap[surfaceType];
-        const maxValue = GEO_MAP_CONSTANTS.COLORMAP_RANGES.rain.max;  // Assunto per rain
+        const maxValue = colorscale.domain().at(-1);
 
         MaplibreCOGProtocol.setColorFunction(renderUrl, (pixel, color, metadata) => {
             const value = pixel[band];  // 1-based band
@@ -928,7 +989,7 @@ const GeoMap = (() => {
                 // Alpha computato con curva esponenziale
                 const normalizedValue = Math.max(Math.min(value / maxValue, 1), 0);
                 color[3] = normalizedValue > 0
-                    ? Math.min((Math.pow(Math.E, normalizedValue - 1)), 1) * 180
+                    ? Math.min((Math.pow(Math.E, normalizedValue - 1)), 1) * 200
                     : 10;
             }
         });

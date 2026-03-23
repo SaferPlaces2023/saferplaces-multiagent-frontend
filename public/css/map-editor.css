@@ -32,7 +32,7 @@
     display: flex;
     align-items: center;
     justify-content: center;
-    gap: var(--space-2);
+    /* gap: var(--space-2); */
 }
 
 /* ========================================================================= */
@@ -42,18 +42,61 @@
 .style-bar {
     background: var(--glass-background);
     backdrop-filter: var(--glass-blur);
+    border: var(--glass-border);
     border-radius: var(--radius-2xl);
     box-shadow: var(--shadow-md);
     
     padding: var(--space-2) var(--space-3);
     display: flex;
-    gap: var(--space-2);
+    /* gap: var(--space-2); */
     align-items: center;
     justify-content: space-between;
 }
 
-.style-bar select {
+/* .style-bar select {
     width: 50%;
+} */
+
+
+.mapStyleSelector {
+    display: flex;
+    align-items: center;
+    /* gap: var(--space-2); */
+}
+
+#mapStyleSelectorHead {
+    cursor: pointer;
+    user-select: none;
+}
+
+#mapStyleSelectorBody {
+    display: flex;
+    align-items: center;
+    gap: var(--space-2);
+    
+    max-width: 0;
+    overflow: hidden;
+    white-space: nowrap;
+    
+    opacity: 0;
+    transform: translateX(-10px);
+    filter: blur(4px);
+    
+    transition: 
+        max-width 0.5s ease,
+        opacity 0.3s ease,
+        transform 0.3s ease,
+        filter 0.3s ease;
+
+    pointer-events: none;
+}
+
+#mapStyleSelectorBody.active {
+    max-width: 500px;
+    opacity: 1;
+    transform: translateX(0);
+    filter: blur(0);
+    pointer-events: auto;
 }
 
 /* ========================================================================= */
@@ -63,7 +106,7 @@
 .draw-toolbar {
     display: inline-flex;
     align-items: center;
-    gap: var(--space-1);
+    /* gap: var(--space-1); */
     padding: var(--space-2);
     background: var(--glass-background);
     border: var(--glass-border);
@@ -77,6 +120,47 @@
     width: 1px;
     height: 26px;
     background: var(--color-border-faint);
+}
+
+.drawToolbar {
+    display: flex;
+    align-items: center;
+    /* gap: var(--space-2); */
+}
+
+#drawToolbarHead {
+    cursor: pointer;
+    user-select: none;
+}
+
+#drawToolbarBody {
+    display: flex;
+    align-items: center;
+    gap: var(--space-2);
+    
+    max-width: 0;
+    overflow: hidden;
+    white-space: nowrap;
+    
+    opacity: 0;
+    transform: translateX(-10px);
+    filter: blur(4px);
+    
+    transition: 
+        max-width 0.5s ease,
+        opacity 0.3s ease,
+        transform 0.3s ease,
+        filter 0.3s ease;
+
+    pointer-events: none;
+}
+
+#drawToolbarBody.active {
+    max-width: 500px;
+    opacity: 1;
+    transform: translateX(0);
+    filter: blur(0);
+    pointer-events: auto;
 }
 
 /* ========================================================================= */
@@ -100,7 +184,7 @@
 .dt-btn:hover {
     background: rgba(255, 255, 255, 0.07);
     border-color: var(--color-border-faint);
-    transform: translateY(-1px);
+    /* transform: translateY(-1px); */
 }
 
 .dt-btn:active {
@@ -304,6 +388,51 @@
 /* Hidden collection indicator */
 .dt-collection-hidden .material-symbols-outlined {
     opacity: 0.55;
+}
+
+/* ========================================================================= */
+/* IMMERSIVE VIEWS TOOLBAR */
+/* ========================================================================= */
+
+.immersiveViewsToolbar {
+    display: flex;
+    align-items: center;
+    /* gap: var(--space-2); */
+}
+
+#immersiveViewsToolbarHead {
+    cursor: pointer;
+    user-select: none;
+}
+
+#immersiveViewsToolbarBody {
+    display: flex;
+    align-items: center;
+    /* gap: var(--space-2); */
+    
+    max-width: 0;
+    overflow: hidden;
+    white-space: nowrap;
+    
+    opacity: 0;
+    transform: translateX(-10px);
+    filter: blur(4px);
+    
+    transition: 
+        max-width 0.5s ease,
+        opacity 0.3s ease,
+        transform 0.3s ease,
+        filter 0.3s ease;
+
+    pointer-events: none;
+}
+
+#immersiveViewsToolbarBody.active {
+    max-width: 500px;
+    opacity: 1;
+    transform: translateX(0);
+    filter: blur(0);
+    pointer-events: auto;
 }
 
 /* ========================================================================= */

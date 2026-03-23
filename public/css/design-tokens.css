@@ -20,6 +20,7 @@
     --color-bg-disabled: rgba(255, 255, 255, 0.03);
     
     /* Text colors */
+    --color-logo-title: #f0f2f5;
     --color-text-primary: #e8eaed;            /* Main text */
     --color-text-secondary: #9aa0a6;          /* Secondary/muted text */
     --color-text-tertiary: #cfd3d7;           /* Tertiary text */
@@ -164,6 +165,7 @@ html.light-theme {
     --color-bg-disabled: rgba(0, 0, 0, 0.03);
 
     /* Text */
+    --color-logo-title: #f0f2f5;
     --color-text-primary: #1a1c20;
     --color-text-secondary: #5f6368;
     --color-text-tertiary: #3c4043;

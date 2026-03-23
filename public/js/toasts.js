@@ -271,7 +271,25 @@ const Toasts = (() => {
             '"': '&quot;',
             "'": '&#39;'
         };
-        return String(s).replace(/[&<>"']/g, m => charMap[m]);
+
+        // Escape completo
+        let escaped = String(s).replace(/[&<>"']/g, m => charMap[m]);
+
+        // Riabilita solo i tag consentiti
+        allowedTags = [
+            'i', 'b', 'strong',
+            'pre', 'code'
+        ]
+        allowedTags.forEach(tag => {
+            const openTag = new RegExp(`&lt;${tag}&gt;`, 'gi');
+            const closeTag = new RegExp(`&lt;\\/${tag}&gt;`, 'gi');
+
+            escaped = escaped
+                .replace(openTag, `<${tag}>`)
+                .replace(closeTag, `</${tag}>`);
+        });
+
+        return escaped;
     }
 
     // =========================================================================

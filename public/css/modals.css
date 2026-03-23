@@ -65,7 +65,7 @@
     margin: 0;
     font-weight: 550;
     letter-spacing: 0.1rem;
-    color: var(--color-text-light);
+    color: var(--color-logo-title);
     animation: fadeIn var(--transition-normal);
 }
 

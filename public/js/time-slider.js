@@ -178,7 +178,7 @@ const TimeSlider = (() => {
         }
 
         if (intervals.length === 0 && domElements.timeSlider) {
-            domElements.timeSlider.classList.add('disabled', 'closed');
+            domElements.timeSlider.classList.add('closed');
         }
     }
 

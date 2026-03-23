@@ -1,0 +1,178 @@
+<!-- ============================================================================= -->
+<!-- GEO MAP TOPBAR - Controls and Drawing Tools -->
+<!-- ============================================================================= -->
+
+<!-- ============= TOP BAR: Controls and Tools ============= -->
+<section class="topbar d-flex col align-items-center justify-content-center gap-3" aria-label="Map controls and drawing tools">
+
+    <!-- ============= STYLE SELECTOR SECTION ============= -->
+    <div id="mapStyleSelector" class="mapStyleSelector style-bar px-3 py-2 shadow justify-content-between">
+
+        <div id="mapStyleSelectorHead" class="toolbar-head d-flex align-items-center" data-toggle="mapStyleSelectorBody" role="button" tabindex="0" aria-expanded="false">
+            <span class="small text-secondary d-inline-flex align-items-center gap-1">
+                <span class="material-symbols-outlined">map</span>
+                Map style
+            </span>
+        </div>
+
+        <div id="mapStyleSelectorBody" class="d-flex">
+            <!-- Style Select Dropdown -->
+            <select id="styleSelect" class="form-select form-select-sm bg-dark text-light border-secondary ms-2" aria-label="Select map style">
+
+                <!-- MapLibre Styles -->
+                <option value="https://demotiles.maplibre.org/style.json">MapLibre Basic</option>
+
+                <!-- CARTO Styles -->
+                <option value="https://basemaps.cartocdn.com/gl/positron-gl-style/style.json">Carto Positron (light)</option>
+                <option value="https://basemaps.cartocdn.com/gl/dark-matter-gl-style/style.json">Carto Dark Matter (dark)</option>
+                <option value="https://basemaps.cartocdn.com/gl/voyager-gl-style/style.json">Carto Voyager</option>
+
+                <!-- MapTiler Styles (requires API-Key) -->
+                <!-- <option value="https://api.maptiler.com/maps/basic-v2/style.json?key=get_your_own_OpIi9ZULNHzrESv6T2vL">MapTiler Basic</option>
+                <option value="https://api.maptiler.com/maps/bright-v2/style.json?key=get_your_own_OpIi9ZULNHzrESv6T2vL">MapTiler Bright</option>
+                <option value="https://api.maptiler.com/maps/darkmatter/style.json?key=get_your_own_OpIi9ZULNHzrESv6T2vL">MapTiler Dark Matter</option>
+                <option value="https://api.maptiler.com/maps/streets-v2/style.json?key=get_your_own_OpIi9ZULNHzrESv6T2vL">MapTiler Streets</option>
+                <option value="https://api.maptiler.com/maps/terrain/style.json?key=get_your_own_OpIi9ZULNHzrESv6T2vL">MapTiler Terrain</option>
+                <option value="https://api.maptiler.com/maps/satellite/style.json?key=get_your_own_OpIi9ZULNHzrESv6T2vL">MapTiler Satellite</option> -->
+                <option value="https://api.maptiler.com/maps/hybrid/style.json?key=eKTWCeR7phLWdM7M4myh" selected>MapTiler Satellite</option>
+
+                <!-- Stadia Maps Styles -->
+                <option value="https://tiles.stadiamaps.com/styles/alidade_smooth/style.json?api_key=961bdf77-3689-48c2-b079-80c0d4169115">Stadia Alidade Smooth</option>
+                <option value="https://tiles.stadiamaps.com/styles/alidade_smooth_dark/style.json?api_key=961bdf77-3689-48c2-b079-80c0d4169115">Stadia Alidade Smooth Dark</option>
+                <option value="https://tiles.stadiamaps.com/styles/outdoors/style.json?api_key=961bdf77-3689-48c2-b079-80c0d4169115">Stadia Outdoors</option>
+                <option value="https://tiles.stadiamaps.com/styles/osm_bright/style.json?api_key=961bdf77-3689-48c2-b079-80c0d4169115">Stadia OSM Bright</option>
+                <option value="https://tiles.stadiamaps.com/styles/alidade_satellite.json?api_key=961bdf77-3689-48c2-b079-80c0d4169115">Stadia Satellite</option>
+
+                <!-- OpenMapTiles Styles (requires API-Key) -->
+                <!-- <option value="https://api.maptiler.com/maps/topo/style.json?key=get_your_own_OpIi9ZULNHzrESv6T2vL">OpenMapTiles Topo</option>
+                <option value="https://api.maptiler.com/maps/dataviz/style.json?key=get_your_own_OpIi9ZULNHzrESv6T2vL">OpenMapTiles Dataviz</option>
+                <option value="https://api.maptiler.com/maps/toner/style.json?key=get_your_own_OpIi9ZULNHzrESv6T2vL">OpenMapTiles Toner</option> -->
+
+                <!-- MapLibre Demo Styles -->
+                <option value="https://demotiles.maplibre.org/style.json">MapLibre Demo Basic</option>
+                <option value="https://raw.githubusercontent.com/maplibre/demotiles/main/style.json">MapLibre Demo (raw GitHub)</option>
+            </select>
+
+            <!-- Reset View Button -->
+            <button id="resetView" class="btn btn-success btn-sm fw-semibold" type="button" title="Reset map to default view">
+                Reset view
+            </button>
+        </div>
+    </div>
+
+    <!-- ============= DRAW TOOLS TOOLBAR ============= -->
+    <div id="drawToolbar" class="drawToolbar draw-toolbar px-3 py-2" role="toolbar" aria-label="Draw tools">
+
+        <div id="drawToolbarHead" class="toolbar-head d-flex align-items-center" data-toggle="drawToolbarBody" role="button" tabindex="0" aria-expanded="false">
+            <span class="small text-secondary d-inline-flex align-items-center gap-1">
+                <span class="material-symbols-outlined">draw</span>
+                Draw tools
+            </span>
+        </div>
+
+        <div id="drawToolbarBody">
+            <!-- Separator -->
+            <div class="dt-sep ms-3 me-2" aria-hidden="true"></div>
+
+            <!-- Collections Button -->
+            <button id="dtCollections" class="dt-btn" type="button" title="View drawn collections" aria-label="Collections" aria-controls="dtCollectionsPanel">
+                <span class="material-symbols-outlined">inventory_2</span>
+            </button>
+
+            <!-- Collections Panel (Initially Hidden) -->
+            <div id="dtCollectionsPanel" class="dt-panel hidden" aria-label="Draw collections panel" role="region">
+
+                <!-- Panel Header -->
+                <div class="dt-panel-head">
+                    <strong>Drawn Collections</strong>
+                    <span class="dt-badge" id="dtCollectionsCount" aria-label="Number of collections">
+                        0
+                    </span>
+                </div>
+
+                <!-- Collections List -->
+                <div id="dtCollectionsList" class="dt-panel-list" role="list">
+                </div>
+            </div>
+
+            <!-- Separator -->
+            <div class="dt-sep mx-2" aria-hidden="true"></div>
+
+            <!-- Point Button -->
+            <button id="dtPoint" class="dt-btn" type="button" title="Draw point" aria-label="Point">
+                <span class="material-symbols-outlined">location_on</span>
+            </button>
+
+            <!-- Line Button -->
+            <button id="dtLine" class="dt-btn" type="button" title="Draw line" aria-label="Line" disabled>
+                <span class="material-symbols-outlined">polyline</span>
+            </button>
+
+            <!-- Bounding Box Button -->
+            <button id="dtBbox" class="dt-btn" type="button" title="Draw bounding box" aria-label="BBox">
+                <span class="material-symbols-outlined">crop_free</span>
+            </button>
+
+            <!-- Polygon Button -->
+            <button id="dtPoly" class="dt-btn" type="button" title="Draw polygon" aria-label="Polygon">
+                <span class="material-symbols-outlined">pentagon</span>
+            </button>
+
+            <!-- Separator -->
+            <div class="dt-sep mx-2" aria-hidden="true"></div>
+
+            <!-- Edit Button -->
+            <button id="dtEdit" class="dt-btn" type="button" title="Edit shapes" aria-label="Edit">
+                <span class="material-symbols-outlined">edit</span>
+            </button>
+
+            <!-- Delete Button -->
+            <button id="dtDel" class="dt-btn dt-danger" type="button" title="Delete shapes" aria-label="Delete" disabled>
+                <span class="material-symbols-outlined">delete</span>
+            </button>
+
+            <!-- Confirmation Buttons (Initially Hidden) -->
+            <div id="draw-confirm" class="gap-1 closed">
+
+                <!-- Separator -->
+                <div class="dt-sep mx-2" aria-hidden="true"></div>
+
+                <!-- Save Button -->
+                <button id="dtSave" class="dt-btn dt-success" type="button" title="Save drawn shapes" aria-label="Save">
+                    <span class="material-symbols-outlined">check</span>
+                </button>
+
+                <!-- Cancel Button -->
+                <button id="dtCancel" class="dt-btn dt-danger" type="button" title="Cancel drawing" aria-label="Cancel">
+                    <span class="material-symbols-outlined">close</span>
+                </button>
+            </div>
+        </div>
+
+
+    </div>
+
+    <!-- ============= IMMERSIVE VIEWS TOOLBAR ============= -->
+    <div id="immersiveViewsToolbar" class="immersiveViewsToolbar draw-toolbar px-3 py-2" role="toolbar" aria-label="Immersive view options">
+
+        <div id="immersiveViewsToolbarHead" class="toolbar-head d-flex align-items-center" data-toggle="immersiveViewsToolbarBody" role="button" tabindex="0" aria-expanded="false">
+            <span class="small text-secondary d-inline-flex align-items-center gap-1">
+                <span class="material-symbols-outlined">simulation</span>
+                Immersive views
+            </span>
+        </div>
+
+        <div id="immersiveViewsToolbarBody">
+            <!-- 3D Mode Button -->
+            <button id="btnCesiumLaunch" class="btn btn-success btn-sm fw-semibold text-nowrap mx-2" type="button" title="Launch 3D mode">
+                3D 🌍
+            </button>
+
+            <!-- Virtual Reality Button -->
+            <button id="btnVRLaunch" class="btn btn-success btn-sm fw-semibold text-nowrap" type="button" title="Launch virtual reality mode">
+                VR 🥽
+            </button>
+        </div>
+    </div>
+
+</section>

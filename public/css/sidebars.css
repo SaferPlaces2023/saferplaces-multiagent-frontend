@@ -121,7 +121,7 @@
 .layer-item:hover {
     background-color: rgba(255, 255, 255, 0.02);
     border-radius: var(--radius-md);
-    padding: 0.55rem var(--space-sm);
+    /* padding: 0.55rem var(--space-sm); */
 }
 
 .layer-item:last-child {
