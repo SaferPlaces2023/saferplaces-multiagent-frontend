@@ -1,0 +1,583 @@
+<style>
+  * {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0
+  }
+
+  body {
+    font-family: var(--font-sans, system-ui);
+    font-size: 13px;
+    color: var(--color-text-primary)
+  }
+
+  .modal-bg {
+    min-height: 600px;
+    background: rgba(0, 0, 0, 0.45);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 16px
+  }
+
+  .modal {
+    background: var(--color-background-primary);
+    border-radius: var(--border-radius-lg);
+    border: 0.5px solid var(--color-border-tertiary);
+    width: 100%;
+    max-width: 480px;
+    overflow: hidden
+  }
+
+  .modal-header {
+    padding: 14px 16px;
+    border-bottom: 0.5px solid var(--color-border-tertiary);
+    display: flex;
+    align-items: center;
+    justify-content: space-between
+  }
+
+  .modal-header h2 {
+    font-size: 14px;
+    font-weight: 500
+  }
+
+  .layer-badge {
+    font-size: 11px;
+    padding: 2px 8px;
+    border-radius: 4px;
+    font-weight: 500
+  }
+
+  .badge-vector {
+    background: #e1f5ee;
+    color: #0f6e56
+  }
+
+  .badge-raster {
+    background: #faeeda;
+    color: #854f0b
+  }
+
+  .modal-body {
+    padding: 16px;
+    display: flex;
+    flex-direction: column;
+    gap: 14px
+  }
+
+  .field-row {
+    display: flex;
+    flex-direction: column;
+    gap: 4px
+  }
+
+  .field-row label {
+    font-size: 12px;
+    color: var(--color-text-secondary);
+    font-weight: 500
+  }
+
+  select,
+  input[type=range],
+  input[type=number] {
+    width: 100%
+  }
+
+  select {
+    padding: 6px 8px;
+    border: 0.5px solid var(--color-border-secondary);
+    border-radius: var(--border-radius-md);
+    background: var(--color-background-primary);
+    color: var(--color-text-primary);
+    font-size: 13px;
+    outline: none
+  }
+
+  select:focus {
+    border-color: var(--color-border-primary)
+  }
+
+  .row2 {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 10px
+  }
+
+  .colormap-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 6px;
+    margin-top: 2px
+  }
+
+  .cm-option {
+    border: 1.5px solid transparent;
+    border-radius: 6px;
+    overflow: hidden;
+    cursor: pointer;
+    height: 22px
+  }
+
+  .cm-option.selected {
+    border-color: var(--color-border-primary)
+  }
+
+  .cm-option canvas {
+    display: block;
+    width: 100%;
+    height: 100%
+  }
+
+  .classes-row {
+    display: flex;
+    align-items: center;
+    gap: 8px
+  }
+
+  .classes-row input[type=range] {
+    flex: 1
+  }
+
+  .classes-row span {
+    font-size: 13px;
+    font-weight: 500;
+    min-width: 20px;
+    text-align: right
+  }
+
+  .opacity-row {
+    display: flex;
+    align-items: center;
+    gap: 8px
+  }
+
+  .opacity-row input[type=range] {
+    flex: 1
+  }
+
+  .opacity-row span {
+    font-size: 13px;
+    font-weight: 500;
+    min-width: 32px;
+    text-align: right
+  }
+
+  .preview-bar {
+    height: 20px;
+    border-radius: 4px;
+    margin-top: 4px
+  }
+
+  .modal-footer {
+    padding: 12px 16px;
+    border-top: 0.5px solid var(--color-border-tertiary);
+    display: flex;
+    justify-content: flex-end;
+    gap: 8px
+  }
+
+  button {
+    padding: 6px 16px;
+    border-radius: var(--border-radius-md);
+    border: 0.5px solid var(--color-border-secondary);
+    background: transparent;
+    color: var(--color-text-primary);
+    font-size: 13px;
+    cursor: pointer
+  }
+
+  button:hover {
+    background: var(--color-background-secondary)
+  }
+
+  button.primary {
+    background: var(--color-text-primary);
+    color: var(--color-background-primary);
+    border-color: transparent
+  }
+
+  button.primary:hover {
+    opacity: 0.85
+  }
+
+  .disabled-msg {
+    font-size: 12px;
+    color: var(--color-text-tertiary);
+    font-style: italic;
+    padding: 4px 0
+  }
+
+  .section-divider {
+    border: none;
+    border-top: 0.5px solid var(--color-border-tertiary)
+  }
+</style>
+
+<div class="modal-bg">
+  <div class="modal">
+    <div class="modal-header">
+      <div style="display:flex;align-items:center;gap:8px">
+        <h2 id="modal-title">Buildings</h2>
+        <span class="layer-badge badge-vector" id="type-badge">vector</span>
+      </div>
+      <div style="display:flex;gap:6px">
+        <button onclick="switchLayer('vector')">vector</button>
+        <button onclick="switchLayer('raster')">raster</button>
+      </div>
+    </div>
+
+    <div class="modal-body" id="modal-body"></div>
+
+    <div class="modal-footer">
+      <button>reset</button>
+      <button class="primary">apply</button>
+    </div>
+  </div>
+</div>
+
+<script>
+
+  // OLD: VERSION
+  // const LAYERS = {
+  //   vector: {
+  //     name: "Buildings",
+  //     attributes: { id:"str", height:"float64", subtype:"str", class:"str", is_underground:"bool" }
+  //   },
+  //   raster: {
+  //     name: "DEM",
+  //     min: 204.3, max: 402.7, surface_type: "dem"
+  //   }
+  // };
+
+  // NEW VERSION
+  const LAYERS = [
+    [
+      {
+        "title": "Digital Twin Buildings Layer",
+        "type": "vector",
+        "src": "s3://saferplaces.co/SaferPlaces-Agent/dev/user=tommaso/project=ma-012/dt-c114dm7w/dt-c114dm7w_buildings.gpkg",
+        "description": "Digital Twin generated buildings layer from bbox: {\"west\": 11.3, \"south\": 43.3, \"east\": 11.35, \"north\": 43.35}.",
+        "metadata": {
+          "crs": "EPSG:4326",
+          "bounding-box-wgs84": {
+            "minx": 11.2993569,
+            "miny": 43.2996057,
+            "maxx": 11.3511529,
+            "maxy": 43.3502788
+          },
+          "n_features": 5692,
+          "geometry_type": [
+            "MultiPolygon"
+          ],
+          "attributes": {
+            "id": "str",
+            "height": "float64",
+            "subtype": "str",
+            "class": "str",
+            "is_underground": "bool",
+            "geometry": "geometry"
+          },
+          "download_url": "https://s3.us-east-1.amazonaws.com/saferplaces.co/SaferPlaces-Agent/dev/user%3Dtommaso/project%3Dma-012/dt-c114dm7w/dt-c114dm7w_buildings.gpkg"
+        },
+        "style": {
+          "paint": {
+            "fill-color": [
+              "interpolate-hcl",
+              [
+                "get",
+                "height"
+              ],
+              0,
+              "#f7fbff",
+              50,
+              "#6baed6",
+              100,
+              "#08306b"
+            ],
+            "fill-opacity": 0.8
+          }
+        }
+      },
+
+      {
+        "title": "Digital Twin Roads - dt-HbesngPY",
+        "type": "vector",
+        "src": "s3://saferplaces.co/SaferPlaces-Agent/dev/user=tommaso/project=ma-012/dt-hbesngpy/dt-hbesngpy_roads.gpkg",
+        "description": "Digital Twin generated roads layer for the region dt-HbesngPY.",
+        "metadata": {
+          "crs": "EPSG:4326",
+          "bounding-box-wgs84": {
+            "minx": 11.3,
+            "miny": 43.3,
+            "maxx": 11.35,
+            "maxy": 43.35
+          },
+          "n_features": 6838,
+          "geometry_type": [
+            "LineString"
+          ],
+          "attributes": {
+            "id": "str",
+            "subtype": "str",
+            "class": "str",
+            "geometry": "geometry"
+          },
+          "download_url": "https://s3.us-east-1.amazonaws.com/saferplaces.co/SaferPlaces-Agent/dev/user%3Dtommaso/project%3Dma-012/dt-hbesngpy/dt-hbesngpy_roads.gpkg"
+        },
+        "style": null
+      }
+    ]
+  ]
+
+  const STYLE_TYPES = {
+    vector: [
+      { value: "single", label: "Single color", dtypes: ["str", "float64", "int64", "bool"] },
+      { value: "graduated", label: "Graduated", dtypes: ["float64", "int64"] },
+      { value: "categorized", label: "Categorized", dtypes: ["str", "bool"] },
+      { value: "heatmap", label: "Heatmap", dtypes: ["float64", "int64"] },
+    ],
+    raster: [
+      { value: "colormap", label: "Colormap" },
+      { value: "singleband", label: "Single band gray" },
+    ]
+  };
+
+  const COLORMAPS = [
+    { name: "Blues", stops: ["#eff3ff", "#6baed6", "#084594"] },
+    { name: "Reds", stops: ["#fee5d9", "#fb6a4a", "#a50f15"] },
+    { name: "Greens", stops: ["#f7fcf5", "#74c476", "#00441b"] },
+    { name: "Terrain", stops: ["#0d0221", "#81b29a", "#f2cc8f", "#e07a5f"] },
+    { name: "Viridis", stops: ["#440154", "#31688e", "#35b779", "#fde725"] },
+    { name: "Plasma", stops: ["#0d0887", "#9c179e", "#ed7953", "#f0f921"] },
+    { name: "RdYlBu", stops: ["#d73027", "#ffffbf", "#4575b4"] },
+    { name: "Spectral", stops: ["#d53e4f", "#ffffbf", "#3288bd"] },
+    { name: "Gray", stops: ["#ffffff", "#969696", "#252525"] },
+  ];
+
+  const CAT_PALETTES = [
+    { name: "Pastel", colors: ["#a6cee3", "#b2df8a", "#fb9a99", "#fdbf6f", "#cab2d6"] },
+    { name: "Bold", colors: ["#1f78b4", "#33a02c", "#e31a1c", "#ff7f00", "#6a3d9a"] },
+    { name: "Muted", colors: ["#8dd3c7", "#ffffb3", "#bebada", "#fb8072", "#80b1d3"] },
+  ];
+
+  let currentLayerType = "vector";
+  let state = { styleType: "graduated", field: "height", colormap: 0, classes: 5, opacity: 0.8, catPalette: 0, min: null, max: null };
+
+  function switchLayer(type) {
+    currentLayerType = type;
+    const layer = LAYERS[type];
+    document.getElementById("modal-title").textContent = layer.name;
+    document.getElementById("type-badge").textContent = type;
+    document.getElementById("type-badge").className = "layer-badge badge-" + type;
+    if (type === "vector") {
+      state.styleType = "graduated";
+      state.field = "height";
+    } else {
+      state.styleType = "colormap";
+    }
+    render();
+  }
+
+  function getCompatibleFields(styleType) {
+    const attrs = LAYERS.vector.attributes;
+    return Object.entries(attrs)
+      .filter(([name, dtype]) => {
+        if (name === "geometry") return false;
+        if (styleType === "graduated" || styleType === "heatmap") return dtype === "float64" || dtype === "int64";
+        if (styleType === "categorized") return dtype === "str" || dtype === "bool";
+        return true;
+      })
+      .map(([name, dtype]) => ({ name, dtype }));
+  }
+
+  function drawColormap(canvas, stops) {
+    const ctx = canvas.getContext("2d");
+    const w = canvas.width, h = canvas.height;
+    const grad = ctx.createLinearGradient(0, 0, w, 0);
+    stops.forEach((c, i) => grad.addColorStop(i / (stops.length - 1), c));
+    ctx.fillStyle = grad;
+    ctx.fillRect(0, 0, w, h);
+  }
+
+  function drawPreview(canvasId, stops) {
+    const c = document.getElementById(canvasId);
+    if (!c) return;
+    drawColormap(c, stops);
+  }
+
+  function renderVector() {
+    const styleTypes = STYLE_TYPES.vector;
+    const compatFields = getCompatibleFields(state.styleType);
+    const layer = LAYERS.vector;
+
+    let html = "";
+
+    html += `<div class="field-row">
+    <label>style type</label>
+    <select id="sel-style-type" onchange="onStyleTypeChange(this.value)">
+      ${styleTypes.map(s => `<option value="${s.value}" ${s.value === state.styleType ? "selected" : ""}>${s.label}</option>`).join("")}
+    </select>
+  </div>`;
+
+    if (state.styleType === "single") {
+      html += `<div class="field-row">
+      <label>color</label>
+      <div style="display:flex;gap:8px;align-items:center">
+        <input type="color" value="#4a90d9" id="single-color" style="width:48px;height:32px;border:0.5px solid var(--color-border-secondary);border-radius:6px;cursor:pointer;padding:2px">
+        <span style="font-size:12px;color:var(--color-text-secondary)">fill color</span>
+      </div>
+    </div>`;
+    } else if (state.styleType === "graduated" || state.styleType === "heatmap") {
+      html += `<div class="field-row">
+      <label>field</label>
+      <select id="sel-field" onchange="onFieldChange(this.value)">
+        ${compatFields.map(f => `<option value="${f.name}" ${f.name === state.field ? "selected" : ""}>${f.name} <span style="color:var(--color-text-tertiary)">(${f.dtype})</span></option>`).join("")}
+      </select>
+    </div>`;
+
+      html += `<div class="field-row"><label>color ramp</label><div class="colormap-grid" id="cm-grid"></div></div>`;
+
+      if (state.styleType === "graduated") {
+        html += `<div class="field-row">
+        <label>classes</label>
+        <div class="classes-row">
+          <input type="range" min="2" max="10" value="${state.classes}" step="1"
+            oninput="state.classes=+this.value;document.getElementById('cls-val').textContent=this.value">
+          <span id="cls-val">${state.classes}</span>
+        </div>
+      </div>`;
+        html += `<div class="row2">
+        <div class="field-row"><label>min override</label><input type="number" placeholder="auto" id="min-val" value="${state.min ?? ""}" style="padding:6px 8px;border:0.5px solid var(--color-border-secondary);border-radius:var(--border-radius-md);background:var(--color-background-primary);color:var(--color-text-primary)"></div>
+        <div class="field-row"><label>max override</label><input type="number" placeholder="auto" id="max-val" value="${state.max ?? ""}" style="padding:6px 8px;border:0.5px solid var(--color-border-secondary);border-radius:var(--border-radius-md);background:var(--color-background-primary);color:var(--color-text-primary)"></div>
+      </div>`;
+      }
+
+      html += `<div class="field-row"><label>preview</label><canvas id="preview-canvas" height="20" style="width:100%;border-radius:4px"></canvas></div>`;
+
+    } else if (state.styleType === "categorized") {
+      html += `<div class="field-row">
+      <label>field</label>
+      <select id="sel-field" onchange="onFieldChange(this.value)">
+        ${compatFields.map(f => `<option value="${f.name}" ${f.name === state.field ? "selected" : ""}>${f.name} (${f.dtype})</option>`).join("")}
+      </select>
+    </div>`;
+      html += `<div class="field-row"><label>palette</label><div style="display:flex;gap:8px;flex-direction:column" id="cat-palettes"></div></div>`;
+    }
+
+    html += `<hr class="section-divider">`;
+    html += `<div class="field-row">
+    <label>opacity</label>
+    <div class="opacity-row">
+      <input type="range" min="0" max="1" step="0.01" value="${state.opacity}"
+        oninput="state.opacity=+this.value;document.getElementById('op-val').textContent=Math.round(this.value*100)+'%'">
+      <span id="op-val">${Math.round(state.opacity * 100)}%</span>
+    </div>
+  </div>`;
+
+    return html;
+  }
+
+  function renderRaster() {
+    const layer = LAYERS.raster;
+    let html = "";
+
+    html += `<div class="field-row">
+    <label>style type</label>
+    <select id="sel-style-type" onchange="onStyleTypeChange(this.value)">
+      ${STYLE_TYPES.raster.map(s => `<option value="${s.value}" ${s.value === state.styleType ? "selected" : ""}>${s.label}</option>`).join("")}
+    </select>
+  </div>`;
+
+    html += `<div class="row2">
+    <div class="field-row"><label>data min</label><input type="number" value="${layer.min.toFixed(1)}" style="padding:6px 8px;border:0.5px solid var(--color-border-secondary);border-radius:var(--border-radius-md);background:var(--color-background-secondary);color:var(--color-text-secondary)" readonly></div>
+    <div class="field-row"><label>data max</label><input type="number" value="${layer.max.toFixed(1)}" style="padding:6px 8px;border:0.5px solid var(--color-border-secondary);border-radius:var(--border-radius-md);background:var(--color-background-secondary);color:var(--color-text-secondary)" readonly></div>
+  </div>`;
+
+    html += `<div class="row2">
+    <div class="field-row"><label>range min</label><input type="number" id="r-min" value="${layer.min.toFixed(1)}" style="padding:6px 8px;border:0.5px solid var(--color-border-secondary);border-radius:var(--border-radius-md);background:var(--color-background-primary);color:var(--color-text-primary)"></div>
+    <div class="field-row"><label>range max</label><input type="number" id="r-max" value="${layer.max.toFixed(1)}" style="padding:6px 8px;border:0.5px solid var(--color-border-secondary);border-radius:var(--border-radius-md);background:var(--color-background-primary);color:var(--color-text-primary)"></div>
+  </div>`;
+
+    if (state.styleType === "colormap") {
+      html += `<div class="field-row"><label>color ramp</label><div class="colormap-grid" id="cm-grid"></div></div>`;
+      html += `<div class="field-row"><label>preview</label><canvas id="preview-canvas" height="20" style="width:100%;border-radius:4px"></canvas></div>`;
+      html += `<div class="field-row">
+      <label>no-data transparent</label>
+      <label style="display:flex;align-items:center;gap:6px;cursor:pointer">
+        <input type="checkbox" checked> hide nodata pixels (${layer.nodata ?? -9999})
+      </label>
+    </div>`;
+    }
+
+    html += `<hr class="section-divider">`;
+    html += `<div class="field-row">
+    <label>opacity</label>
+    <div class="opacity-row">
+      <input type="range" min="0" max="1" step="0.01" value="${state.opacity}"
+        oninput="state.opacity=+this.value;document.getElementById('op-val').textContent=Math.round(this.value*100)+'%'">
+      <span id="op-val">${Math.round(state.opacity * 100)}%</span>
+    </div>
+  </div>`;
+
+    return html;
+  }
+
+  function render() {
+    const body = document.getElementById("modal-body");
+    body.innerHTML = currentLayerType === "vector" ? renderVector() : renderRaster();
+
+    const grid = document.getElementById("cm-grid");
+    if (grid) {
+      COLORMAPS.forEach((cm, i) => {
+        const wrap = document.createElement("div");
+        wrap.className = "cm-option" + (i === state.colormap ? " selected" : "");
+        wrap.title = cm.name;
+        wrap.onclick = () => { state.colormap = i; render(); };
+        const c = document.createElement("canvas");
+        c.width = 120; c.height = 20;
+        wrap.appendChild(c);
+        grid.appendChild(wrap);
+        drawColormap(c, cm.stops);
+      });
+      const pc = document.getElementById("preview-canvas");
+      if (pc) { pc.width = 400; drawColormap(pc, COLORMAPS[state.colormap].stops); }
+    }
+
+    const catDiv = document.getElementById("cat-palettes");
+    if (catDiv) {
+      CAT_PALETTES.forEach((p, i) => {
+        const row = document.createElement("div");
+        row.style.cssText = "display:flex;align-items:center;gap:8px;cursor:pointer;padding:4px 6px;border-radius:6px;border:1.5px solid " + (i === state.catPalette ? "var(--color-border-primary)" : "transparent");
+        row.onclick = () => { state.catPalette = i; render(); };
+        const swatches = document.createElement("div");
+        swatches.style.cssText = "display:flex;gap:3px";
+        p.colors.forEach(c => {
+          const s = document.createElement("div");
+          s.style.cssText = `width:18px;height:18px;border-radius:3px;background:${c}`;
+          swatches.appendChild(s);
+        });
+        const lbl = document.createElement("span");
+        lbl.style.cssText = "font-size:12px;color:var(--color-text-secondary)";
+        lbl.textContent = p.name;
+        row.append(swatches, lbl);
+        catDiv.appendChild(row);
+      });
+    }
+  }
+
+  function onStyleTypeChange(val) {
+    state.styleType = val;
+    if (currentLayerType === "vector") {
+      const fields = getCompatibleFields(val);
+      if (fields.length > 0) state.field = fields[0].name;
+    }
+    render();
+  }
+
+  function onFieldChange(val) {
+    state.field = val;
+  }
+
+  render();
+</script>

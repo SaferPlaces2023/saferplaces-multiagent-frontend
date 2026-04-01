@@ -247,16 +247,25 @@
     align-items: center;
     border-top: 1px solid rgba(255, 255, 255, 0.1);
     flex-shrink: 0;
-    order: 4;
+    order: 4;   
 }
 
-.chat-input input {
+.chat-input textarea {
     flex: 1;
     font-size: 0.92rem;
+    border-radius: 6px;
+}
+
+.chat-input textarea:focus {
+    outline: none;
+    box-shadow: none; /* Rimuove eventuali effetti glow */
+    border: 1px solid #ccc; /* Opzionale: imposta un bordo personalizzato */
 }
 
 .chat-input button {
     flex-shrink: 0;
+    border-radius: 6px;
+    padding: .5rem .6rem .2rem .6rem;
 }
 
 /* ========================================================================= */

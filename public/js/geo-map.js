@@ -23,7 +23,7 @@ const GeoMap = (() => {
         'GEO_MAP_CONSTANTS.TERRAIN': 'Exaggeration 1.5 per DEM terrain effect',
         'GEO_MAP_CONSTANTS.VECTOR_PAINT': 'Colori default fill (#6ee7b7), line, point layers',
         'GEO_MAP_CONSTANTS.RASTER_PAINT': 'Opacity 0.6 default raster, transparent fallback',
-        'GEO_MAP_CONSTANTS.SURFACE_TYPES': 'Enum: DEM, DEM_BUILDING, RAIN_TIMESERIES, WATER_DEPTH, RASTER',
+        'GEO_MAP_CONSTANTS.RASTER_SURFACE_TYPES': 'Enum: DEM, DEM_BUILDING, RAIN_TIMESERIES, WATER_DEPTH, RASTER',
         'GEO_MAP_CONSTANTS.COLORMAPS': 'TERRAIN_DEFAULT=BrewerBrBG10, WATER=CartoTealGrn, RAIN=BrewerSpectral11',
         'GEO_MAP_CONSTANTS.COLORMAP_RANGES': 'Min/max per water (0-2), terrain (0-1000), rain (0-50 mm/h)',
         'GEO_MAP_CONSTANTS.COG_TILE_SIZE': 'Tile size 256 per raster sources',
@@ -59,8 +59,10 @@ const GeoMap = (() => {
         getColorMapString: 'Costruisce "#color:COLORMAP,min,max,c-" da surface_type + renderInfo.metadata',
 
         // 3D TERRAIN E BUILDINGS
-        add3DBuildings: 'Trova labelLayerId → addSource("openfreemap") → addLayer("3d-buildings") con fill-extrusion paint config',
+        add3DBuildings: 'Trova labelLayerId → addSource("openfreemap") se assente → addLayer("3d-buildings") con fill-extrusion paint config',
         findLabelLayerId: 'Loop layers, trova primo con type="symbol" && layout["text-field"]',
+        getBuildingsSources: 'Restituisce [{id,label}]: default + registry entries con surface_type="buildings"',
+        switchBuildingsSource: 'Rimuove layer "3d-buildings" e lo ricrea da sourceId: default→add3DBuildings, custom→fill-extrusion GeoJSON',
 
         // VISIBILITY E RENDERING DINAMICO
         isLayerVisible: 'Controlla map.getStyle().layers.some(l => l.id.includes(layerId) && visibility==="visible")',
@@ -173,6 +175,11 @@ const GeoMap = (() => {
             point: { 'circle-color': '#6ee7b7', 'circle-radius': 4 }
         },
 
+        VECTOR_FEATURE_TYPES: {
+            BUILDINGS: 'buildings',
+            ROADS: 'roads'
+        },
+
         // Raster layer paint styles
         RASTER_PAINT: {
             default: { 'raster-opacity': 0.6 },
@@ -180,7 +187,7 @@ const GeoMap = (() => {
         },
 
         // Surface type identifiers
-        SURFACE_TYPES: {
+        RASTER_SURFACE_TYPES: {
             DEM: 'dem',
             DEM_BUILDING: 'dem-building',
             RAIN_TIMESERIES: 'rain-timeseries',
@@ -229,15 +236,16 @@ const GeoMap = (() => {
     let map = null;
     let registry = {};  // id → {type, url, data, metadata?}
     let customLayerIds = new Set();
+    let currentBuildingsSource = 'default';  // 'default' | layerId from registry with surface_type='buildings'
     let surfaceColorscalesMap = {
-        [GEO_MAP_CONSTANTS.SURFACE_TYPES.RAIN_TIMESERIES]: MaplibreCOGProtocol.colorScale({
+        [GEO_MAP_CONSTANTS.RASTER_SURFACE_TYPES.RAIN_TIMESERIES]: MaplibreCOGProtocol.colorScale({
             colorScheme: GEO_MAP_CONSTANTS.COLORMAPS.RAIN,
             min: GEO_MAP_CONSTANTS.COLORMAP_RANGES.rain.min,
             max: GEO_MAP_CONSTANTS.COLORMAP_RANGES.rain.max,
             isContinuous: true,
             isReverse: true
         }),
-        [GEO_MAP_CONSTANTS.SURFACE_TYPES.TEMPERATURE_TIMESERIES]: MaplibreCOGProtocol.colorScale({
+        [GEO_MAP_CONSTANTS.RASTER_SURFACE_TYPES.TEMPERATURE_TIMESERIES]: MaplibreCOGProtocol.colorScale({
             colorScheme: GEO_MAP_CONSTANTS.COLORMAPS.TEMPERATURE,
             min: GEO_MAP_CONSTANTS.COLORMAP_RANGES.temperature.min,
             max: GEO_MAP_CONSTANTS.COLORMAP_RANGES.temperature.max,
@@ -281,6 +289,127 @@ const GeoMap = (() => {
     }
 
     /**
+     * Custom IControl: doppio pulsante per selezione sorgente edifici 3D e toggle visibilità
+     * - Btn sinistra: apre dropdown per scegliere sorgente (default OpenFreemap o layer con surface_type='buildings')
+     * - Btn destra: toggle visibilità layer 3d-buildings
+     */
+    class Buildings3DControl {
+        onAdd(map) {
+            this._map = map;
+            this._active = true;
+
+            // Container principale
+            this._container = document.createElement('div');
+            this._container.className = 'maplibregl-ctrl maplibregl-ctrl-group';
+
+            // Wrapper flex-row per i due pulsanti + dropdown
+            this._wrapper = document.createElement('div');
+            this._wrapper.style.cssText = 'position:relative;';
+
+            // --- Pulsante sorgente ---
+            this._btnSource = document.createElement('button');
+            this._btnSource.type = 'button';
+            this._btnSource.title = 'Select buildings source';
+            this._btnSource.setAttribute('aria-label', 'Select buildings source');
+            this._btnSource.className = 'buildings-3d-source-btn';
+            this._iconSource = document.createElement('span');
+            this._iconSource.className = 'material-symbols-outlined';
+            this._iconSource.style.cssText = 'font-size:18px;line-height:29px;color:#e07a5f;';
+            this._iconSource.textContent = 'layers';
+            this._btnSource.appendChild(this._iconSource);
+
+            // Dropdown sorgenti
+            this._dropdown = document.createElement('div');
+            this._dropdown.className = 'buildings-3d-source-dropdown';
+            this._dropdown.style.cssText = [
+                'display:none',
+                'position:absolute',
+                'top:100%',
+                'right:0',
+                'background:white',
+                'border:1px solid #ccc',
+                'border-radius:4px',
+                'padding:4px 0',
+                'min-width:180px',
+                'z-index:9999',
+                'box-shadow:0 2px 8px rgba(0,0,0,0.2)'
+            ].join(';');
+
+            this._btnSource.addEventListener('click', (e) => {
+                e.stopPropagation();
+                this._refreshDropdown();
+                const isOpen = this._dropdown.style.display !== 'none';
+                this._dropdown.style.display = isOpen ? 'none' : 'block';
+            });
+
+            this._outsideClickHandler = (e) => {
+                if (!this._container.contains(e.target)) {
+                    this._dropdown.style.display = 'none';
+                }
+            };
+            document.addEventListener('click', this._outsideClickHandler);
+
+            // --- Pulsante toggle visibilità ---
+            this._btnToggle = document.createElement('button');
+            this._btnToggle.type = 'button';
+            this._btnToggle.title = 'Toggle 3D buildings';
+            this._btnToggle.setAttribute('aria-label', 'Toggle 3D buildings');
+            this._btnToggle.className = 'buildings-3d-ctrl-btn';
+            this._iconToggle = document.createElement('span');
+            this._iconToggle.className = 'material-symbols-outlined';
+            this._iconToggle.style.cssText = 'font-size:18px;line-height:29px;color:#e07a5f;';
+            this._iconToggle.textContent = 'location_city';
+            this._btnToggle.appendChild(this._iconToggle);
+
+            this._btnToggle.addEventListener('click', () => {
+                const layerId = GEO_MAP_CONSTANTS.BUILDINGS_3D.id;
+                if (!this._map.getLayer(layerId)) return;
+                this._active = !this._active;
+                const viz = this._active ? 'visible' : 'none';
+                this._map.setLayoutProperty(layerId, 'visibility', viz);
+                this._iconToggle.style.color = this._active ? '#e07a5f' : 'var(--bs-secondary-color, #6c757d)';
+            });
+
+            this._wrapper.appendChild(this._btnToggle);
+            this._wrapper.appendChild(this._btnSource);
+            this._wrapper.appendChild(this._dropdown);
+            this._container.appendChild(this._wrapper);
+            return this._container;
+        }
+
+        _refreshDropdown() {
+            this._dropdown.innerHTML = '';
+            const sources = getBuildingsSources();
+            sources.forEach(({ id, label }) => {
+                const item = document.createElement('div');
+                item.style.cssText = 'padding:6px 12px;cursor:pointer;white-space:nowrap;font-size:13px;';
+                item.textContent = label;
+                if (id === currentBuildingsSource) {
+                    item.style.fontWeight = 'bold';
+                    item.style.color = '#e07a5f';
+                }
+                item.addEventListener('mouseenter', () => { item.style.background = '#f0f0f0'; });
+                item.addEventListener('mouseleave', () => { item.style.background = ''; });
+                item.addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    this._dropdown.style.display = 'none';
+                    switchBuildingsSource(id);
+                    // Ripristina stato toggle ad attivo dopo cambio sorgente
+                    this._active = true;
+                    this._iconToggle.style.color = '#e07a5f';
+                });
+                this._dropdown.appendChild(item);
+            });
+        }
+
+        onRemove() {
+            document.removeEventListener('click', this._outsideClickHandler);
+            this._container.parentNode?.removeChild(this._container);
+            this._map = undefined;
+        }
+    }
+
+    /**
      * Configura i controlli della mappa
      */
     function configureControls() {
@@ -289,6 +418,7 @@ const GeoMap = (() => {
         map.addControl(new maplibregl.NavigationControl());
         map.addControl(new maplibregl.ScaleControl({ unit: 'metric' }));
         map.addControl(new maplibregl.GlobeControl(), 'top-right');
+        map.addControl(new Buildings3DControl(), 'top-right');
     }
 
     /**
@@ -490,12 +620,22 @@ const GeoMap = (() => {
                 type: 'geojson',
                 url: renderUrl,
                 data: geoJsonData,
-                metadata: renderInfo.metadata || {}
+                name: layerData.layer_data.title,
+                metadata: { 
+                    ...(renderInfo.metadata || {}),
+                    ...(layerData.layer_data.metadata || {})
+                }
             });
 
             customLayerIds.add(layerId);
 
             Toasts.ok(toastId, `Layer <i>"${escapeHtml(layerData.layer_data.title)}"</i> added`);
+
+            // Applica stile AI se presente nel layer descriptor (PLN-015 T-015-10)
+            const layerStyle = layerData.layer_data.style || layerData.layer_data.metadata?.style;
+            if (layerStyle) {
+                setLayerStyle(layerId, layerStyle);
+            }
 
             // Zoom to bounds se disponibile
             const bbox = renderInfo.metadata?.['bounding-box-wgs84'];
@@ -550,16 +690,16 @@ const GeoMap = (() => {
             }
 
             // Determina tipo superficie e processa di conseguenza
-            const surfaceType = layerData.layer_data.metadata?.surface_type || GEO_MAP_CONSTANTS.SURFACE_TYPES.RASTER;
+            const surfaceType = layerData.layer_data.metadata?.surface_type || GEO_MAP_CONSTANTS.RASTER_SURFACE_TYPES.RASTER;
 
             switch (surfaceType) {
-                case GEO_MAP_CONSTANTS.SURFACE_TYPES.DEM:
-                case GEO_MAP_CONSTANTS.SURFACE_TYPES.DEM_BUILDING:
+                case GEO_MAP_CONSTANTS.RASTER_SURFACE_TYPES.DEM:
+                case GEO_MAP_CONSTANTS.RASTER_SURFACE_TYPES.DEM_BUILDING:
                     await processDEMLayer(layerId, renderUrl, renderInfo, layerData);
                     break;
 
-                case GEO_MAP_CONSTANTS.SURFACE_TYPES.RAIN_TIMESERIES:
-                case GEO_MAP_CONSTANTS.SURFACE_TYPES.TEMPERATURE_TIMESERIES:
+                case GEO_MAP_CONSTANTS.RASTER_SURFACE_TYPES.RAIN_TIMESERIES:
+                case GEO_MAP_CONSTANTS.RASTER_SURFACE_TYPES.TEMPERATURE_TIMESERIES:
                     await processTimeSeriesLayer(layerId, renderUrl, renderInfo, layerData);
                     break;
 
@@ -567,13 +707,22 @@ const GeoMap = (() => {
                     await processSimpleRasterLayer(layerId, renderUrl, renderInfo, layerData);
             }
 
+            
             // Registra layer
             registerLayer(layerId, {
                 type: 'raster',
                 url: renderUrl,
-                metadata: renderInfo.metadata || {}
+                name: layerData.layer_data.title,
+                metadata: { 
+                    ...(renderInfo.metadata || {}),
+                    ...(layerData.layer_data.metadata || {})
+                }
             });
-
+            
+            if (layerData.layer_data?.style) {
+                setRasterStyle(layerId, layerData.layer_data.style);
+            }
+            
             customLayerIds.add(layerId);
 
             Toasts.ok(toastId, `Layer <i>"${escapeHtml(layerData.layer_data.title)}"</i> added`);
@@ -808,7 +957,7 @@ const GeoMap = (() => {
         let minVal = 0;
         let maxVal = 1000;
 
-        if (surfaceType === GEO_MAP_CONSTANTS.SURFACE_TYPES.WATER_DEPTH) {
+        if (surfaceType === GEO_MAP_CONSTANTS.RASTER_SURFACE_TYPES.WATER_DEPTH) {
             colormap = GEO_MAP_CONSTANTS.COLORMAPS.WATER;
             maxVal = GEO_MAP_CONSTANTS.COLORMAP_RANGES.water.max;
         } else if (renderInfo?.metadata?.max) {
@@ -832,10 +981,13 @@ const GeoMap = (() => {
             const layers = map.getStyle().layers || [];
             const labelLayerId = findLabelLayerId(layers);
 
-            map.addSource(GEO_MAP_CONSTANTS.TILE_SOURCES.openfreemapId, {
-                url: GEO_MAP_CONSTANTS.TILE_SOURCES.openfreemapUrl,
-                type: 'vector'
-            });
+            // Aggiungi source solo se non già presente (es: dopo switchBuildingsSource)
+            if (!map.getSource(GEO_MAP_CONSTANTS.TILE_SOURCES.openfreemapId)) {
+                map.addSource(GEO_MAP_CONSTANTS.TILE_SOURCES.openfreemapId, {
+                    url: GEO_MAP_CONSTANTS.TILE_SOURCES.openfreemapUrl,
+                    type: 'vector'
+                });
+            }
 
             map.addLayer(
                 {
@@ -874,6 +1026,81 @@ const GeoMap = (() => {
             }
         }
         return undefined;
+    }
+
+    /**
+     * Restituisce la lista delle sorgenti disponibili per gli edifici 3D:
+     * la sorgente default (OpenFreemap) + tutti i layer nel registry con surface_type='buildings'
+     * @returns {Array<{id: string, label: string}>}
+     */
+    function getBuildingsSources() {
+        const sources = [{ id: 'default', label: 'Default (OpenFreemap)' }];
+        Object.entries(registry).forEach(([id, meta]) => {
+            if (meta.metadata?.surface_type === GEO_MAP_CONSTANTS.VECTOR_FEATURE_TYPES.BUILDINGS) {
+                const label = meta?.name || id;
+                sources.push({ id, label });
+            }
+        });
+        return sources;
+    }
+
+    /**
+     * Cambia la sorgente usata per il layer 3D buildings.
+     * Rimuove il layer corrente e ne aggiunge uno nuovo dalla sorgente indicata.
+     * @param {string} sourceId - 'default' oppure layerId dal registry con surface_type='buildings'
+     */
+    function switchBuildingsSource(sourceId) {
+        currentBuildingsSource = sourceId;
+        const layerId = GEO_MAP_CONSTANTS.BUILDINGS_3D.id;
+
+        // Rimuovi layer esistente (la source rimane in mappa per riuso)
+        if (map.getLayer(layerId)) {
+            map.removeLayer(layerId);
+        }
+
+        if (sourceId === 'default') {
+            add3DBuildings();
+            return;
+        }
+
+        // Layer personalizzato da registry (GeoJSON con polygon features)
+        const layers = map.getStyle().layers || [];
+        const labelLayerId = findLabelLayerId(layers);
+
+        // Leggi il fill-color applicato al layer GeoJSON (se esiste uno stile custom)
+        const fillLayerId = `${sourceId}-fill`;
+        const existingFillColor = map.getLayer(fillLayerId)
+            ? map.getPaintProperty(fillLayerId, 'fill-color')
+            : null;
+
+        const extrusionColor = existingFillColor || [
+            'interpolate', ['linear'],
+            ['coalesce', ['get', 'height'], 5],
+            0, 'lightgray',
+            200, 'royalblue',
+            400, 'lightblue'
+        ];
+
+        try {
+            map.addLayer(
+                {
+                    id: layerId,
+                    source: sourceId,
+                    type: 'fill-extrusion',
+                    minzoom: GEO_MAP_CONSTANTS.BUILDINGS_3D.minzoom,
+                    paint: {
+                        'fill-extrusion-color': extrusionColor,
+                        'fill-extrusion-height': ['coalesce', ['get', 'height'], ['get', 'render_height'], 5],
+                        'fill-extrusion-base': ['coalesce', ['get', 'min_height'], ['get', 'render_min_height'], 0],
+                        'fill-extrusion-opacity': 0.85
+                    }
+                },
+                labelLayerId
+            );
+            console.log('[GeoMap] Switched 3D buildings source to:', sourceId);
+        } catch (err) {
+            console.error('[GeoMap] Error switching buildings source:', err);
+        }
     }
 
     // =========================================================================
@@ -1049,6 +1276,141 @@ const GeoMap = (() => {
     }
 
     /**
+     * Sposta la mappa su un luogo o bounding box (PLN-015 T-015-07)
+     * @param {Object} params
+     * @param {Array} [params.center] - [lon, lat]
+     * @param {number} [params.zoom] - Zoom level
+     * @param {Object} [params.bbox] - { west, south, east, north } o [W, S, E, N]
+     */
+    function moveView({ center, zoom, bbox } = {}) {
+        if (!map) return;
+        try {
+            if (bbox) {
+                const w = bbox.west  ?? bbox[0];
+                const s = bbox.south ?? bbox[1];
+                const e = bbox.east  ?? bbox[2];
+                const n = bbox.north ?? bbox[3];
+                map.fitBounds([[w, s], [e, n]], { padding: 40 });
+            } else if (center) {
+                map.flyTo({ center, zoom: zoom ?? map.getZoom() });
+            } else {
+                console.warn('[GeoMap] moveView: nessun parametro valido (center o bbox richiesto)');
+            }
+        } catch (err) {
+            console.error('[GeoMap] moveView error:', err);
+        }
+    }
+
+    /**
+     * Applica uno stile MapLibre a un layer già presente sulla mappa (PLN-015 T-015-08)
+     * @param {string} layerId - ID base del layer (btoa(src))
+     * @param {Object} style - { paint, layout, filter }
+     */
+    function setLayerStyle(layerId, style) {
+        console.log(layerId)
+        if (!map || !layerId || !style) return;
+        const { paint = {}, layout = {}, filter } = style;
+        const sublayerSuffixes = ['-fill', '-line', '-pt', ''];
+        sublayerSuffixes.forEach(suffix => {
+            const id = suffix ? `${layerId}${suffix}` : layerId;
+            if (!map.getLayer(id)) return;
+            Object.entries(paint).forEach(([prop, value]) => {
+                try { map.setPaintProperty(id, prop, value); }
+                catch (e) { /* property incompatible with sublayer type — skip */ }
+            });
+            Object.entries(layout).forEach(([prop, value]) => {
+                try { map.setLayoutProperty(id, prop, value); }
+                catch (e) { /* skip incompatible layout property */ }
+            });
+            if (filter !== undefined) {
+                try { map.setFilter(id, filter); }
+                catch (e) { /* skip invalid filter */ }
+            }
+        });
+        console.log('[GeoMap] setLayerStyle applied to:', layerId);
+    }
+
+    /**
+     * Applica uno stile raster (colormap, min/max, opacity) a un layer COG già presente sulla mappa.
+     * Se cambia solo l'opacity, aggiorna direttamente il paint property.
+     * Se cambia la colormap o il range, rimuove e riagggiunge source + layer con il nuovo URL.
+     * @param {string} layerId - ID base del layer (btoa(src))
+     * @param {Object} style - { colormap, min, max, opacity, reverse, colormapString? }
+     */
+    function setRasterStyle(layerId, style) {
+        if (!map || !layerId || !style) return;
+
+        const reg = registry[layerId];
+        if (!reg || !reg.url) {
+            console.warn('[GeoMap] setRasterStyle: layer not found in registry:', layerId);
+            return;
+        }
+
+        const renderUrl = reg.url;
+        const colormapChanged = style.colormap !== undefined || style.min !== undefined || style.max !== undefined || style.reverse !== undefined;
+
+        // Quick path: only opacity changed
+        if (!colormapChanged && style.opacity !== undefined) {
+            map.getStyle().layers
+                .filter(l => l.id.includes(layerId) && l.type === 'raster')
+                .forEach(l => {
+                    try { map.setPaintProperty(l.id, 'raster-opacity', style.opacity); } catch (e) { /* skip */ }
+                });
+            if (reg.metadata) reg.metadata.opacity = style.opacity;
+            return;
+        }
+
+        const wasVisible = isLayerVisible(layerId);
+
+        // Remove existing sub-layers and sources
+        const currentStyle = map.getStyle();
+        if (currentStyle) {
+            currentStyle.layers
+                .filter(l => l.id.includes(layerId) && l.type === 'raster')
+                .map(l => l.id)
+                .forEach(lid => { try { map.removeLayer(lid); } catch (e) { /* already removed */ } });
+
+            Object.keys(currentStyle.sources || {})
+                .filter(sid => sid === layerId)
+                .forEach(sid => { try { map.removeSource(sid); } catch (e) { /* already removed */ } });
+        }
+
+        // Build colormap string
+        const colormap = style.colormap || 'BrewerSpectral11';
+        const min = style.min ?? 0;
+        const max = style.max ?? 1000;
+        const reverse = style.reverse || false;
+        const flags = reverse ? 'c-' : 'c';
+        const colorMapStr = style.colormapString || `#color:${colormap},${min},${max},${flags}`;
+
+        // Re-add source and layer
+        try {
+            map.addSource(layerId, {
+                type: 'raster',
+                url: `cog://${renderUrl}${colorMapStr}`,
+                tileSize: GEO_MAP_CONSTANTS.COG_TILE_SIZE
+            });
+
+            map.addLayer({
+                id: layerId,
+                type: 'raster',
+                source: layerId,
+                layout: { visibility: wasVisible ? 'visible' : 'none' },
+                paint: { 'raster-opacity': style.opacity ?? 0.6 }
+            });
+
+            // Update registry metadata
+            if (reg.metadata) {
+                Object.assign(reg.metadata, { colormap, min, max, reverse, opacity: style.opacity ?? 0.6 });
+            }
+
+            console.log('[GeoMap] setRasterStyle applied to:', layerId);
+        } catch (err) {
+            console.error('[GeoMap] setRasterStyle failed:', err);
+        }
+    }
+
+    /**
      * Cambia lo stile della mappa e ripulisce state correlati
      * @param {string} styleUrl - URL nuovo stile
      */
@@ -1110,6 +1472,126 @@ const GeoMap = (() => {
     }
 
     // =========================================================================
+    // LAYER REORDER
+    // =========================================================================
+
+    /**
+     * Riordina i layer sulla mappa secondo l'ordine della sidebar
+     * Il primo elemento dell'array corrisponde al layer visivamente in cima (z-order più alto)
+     * @param {string[]} order - Array di base layer ID (btoa(src)) in ordine top→bottom del panel
+     */
+    function reorderLayers(order) {
+        if (!map || !Array.isArray(order) || order.length === 0) return;
+
+        const styleLayers = map.getStyle().layers;
+
+        // Processa dal basso verso l'alto: l'ultimo processato finisce in cima
+        [...order].reverse().forEach(baseId => {
+            const subLayerIds = styleLayers
+                .filter(l => l.id.includes(baseId))
+                .map(l => l.id);
+
+            subLayerIds.forEach(subLayerId => {
+                try {
+                    map.moveLayer(subLayerId);
+                } catch (err) {
+                    console.warn('[GeoMap] reorderLayers: impossibile spostare layer', subLayerId, err);
+                }
+            });
+        });
+
+        console.log('[GeoMap] Layers reordered:', order);
+    }
+
+    // =========================================================================
+    // LAYER RELOAD
+    // =========================================================================
+
+    /**
+     * Rimuove dalla mappa tutti i sub-layer e le sorgenti associati a un layerId.
+     * Pulisce anche registry e customLayerIds.
+     * @param {string} layerId - ID base del layer
+     */
+    function removeLayerFromMap(layerId) {
+        if (!map) return;
+        const style = map.getStyle();
+        if (!style) return;
+
+        // Rimuovi tutti i sub-layer che contengono questo layerId
+        style.layers
+            .filter(l => l.id.includes(layerId))
+            .map(l => l.id)
+            .forEach(lid => {
+                try { map.removeLayer(lid); } catch (e) { /* già rimosso */ }
+            });
+
+        // Rimuovi tutte le sorgenti che contengono questo layerId (DEM ha prefissi)
+        Object.keys(style.sources || {})
+            .filter(sid => sid.includes(layerId))
+            .forEach(sid => {
+                try { map.removeSource(sid); } catch (e) { /* già rimosso */ }
+            });
+
+        // Disabilita terrain se era associato a questo layer
+        try {
+            const terrain = map.getTerrain();
+            if (terrain?.source?.includes(layerId)) {
+                map.setTerrain(null);
+            }
+        } catch (e) { /* ignora */ }
+
+        delete registry[layerId];
+        customLayerIds.delete(layerId);
+    }
+
+    /**
+     * Ricarica un layer sulla mappa con la configurazione aggiornata.
+     * Se il layer era visibile, lo rende nuovamente visibile dopo il reload.
+     * @param {Object} layer - Oggetto layer { src, type, title, description, metadata }
+     */
+    async function reloadLayer(layer) {
+        if (!layer?.src) return;
+
+        const layerId = createLayerIdFromSource(layer.src);
+        const existsOnMap = isLayerExists(layerId);
+
+        if (!existsOnMap) return;  // layer non ancora aggiunto → niente da ricaricare
+
+        const wasVisible = isLayerVisible(layerId);
+
+        removeLayerFromMap(layerId);
+
+        // Ricostruisce il formato atteso da addVectorLayer / addCOG
+        const layerData = {
+            layer_data: {
+                src: layer.src,
+                title: layer.title || '',
+                description: layer.description || '',
+                type: layer.type,
+                metadata: layer.metadata || {}
+            }
+        };
+
+        try {
+            if (layer.type === 'vector') {
+                await addVectorLayer(layerData);
+            } else {
+                await addCOG(layerData);
+            }
+
+            // Ripristina visibilità se era visibile
+            if (wasVisible) {
+                const reloadedLayerId = createLayerIdFromSource(layer.src);
+                map.getStyle().layers
+                    .filter(l => l.id.includes(reloadedLayerId))
+                    .forEach(l => map.setLayoutProperty(l.id, 'visibility', 'visible'));
+            }
+        } catch (err) {
+            console.error('[GeoMap] reloadLayer failed:', err);
+        }
+    }
+
+    // =========================================================================
     // EXPORTED API
     // =========================================================================
 
@@ -1117,10 +1599,15 @@ const GeoMap = (() => {
         init,
         addVectorLayer,
         addCOG,
+        reloadLayer,
         setStyle,
         resetView,
+        moveView,
+        setLayerStyle,
+        setRasterStyle,
         toggleLayerMapVisibility,
         renderTimestampRasters,
-        zoomToBounds
+        zoomToBounds,
+        reorderLayers
     };
 })();

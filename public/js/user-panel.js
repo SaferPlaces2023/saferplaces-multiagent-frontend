@@ -146,6 +146,7 @@ const UserPanel = (() => {
      * @param {string} projectId - ID del progetto
      */
     function handleOpenProject(projectId) {
+
         if (!Routes?.Agent?.NEWTHREAD) {
             console.error('[UserPanel] Routes.Agent.NEWTHREAD non configurato');
             return;
@@ -155,29 +156,12 @@ const UserPanel = (() => {
         if (!currentUser) return;
 
         // Prova AuthGate se disponibile
-        if (window.AuthGate?.loadUserProject) {
-            AuthGate.loadUserProject(currentUser, projectId);
-            return;
-        }
-
-        // Fallback: POST diretto
-        fetch(Routes.Agent.NEWTHREAD, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ user_id: currentUser, project_id: projectId })
-        })
-            .then(response => {
-                if (!response.ok) throw new Error(`HTTP ${response.status}`);
-                return response.json();
-            })
-            .then(data => {
-                validateThreadResponse(data);
-                saveSessionToStorage(data);
-                fillInfo();
-            })
-            .catch(err => {
-                console.error('[UserPanel] Error opening project:', err);
-            });
+        clearSession();
+        setStorageValue(STORAGE_KEYS.USER_ID, currentUser);
+        setStorageValue(STORAGE_KEYS.PROJECT_ID, projectId);
+        setStorageValue(STORAGE_KEYS.AUTH_GATE_AUTO_OPEN_PROJECT, 'true');
+        location.reload();
+        return;
     }
 
     /**
@@ -218,30 +202,7 @@ const UserPanel = (() => {
 
         lockProjectButton(true);
 
-        fetch(Routes.Agent.NEWTHREAD, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ user_id: currentUser, project_id: projectName })
-        })
-            .then(response => {
-                if (!response.ok) throw new Error(`HTTP ${response.status}`);
-                return response.json();
-            })
-            .then(data => {
-                validateThreadResponse(data);
-                saveSessionToStorage(data);
-                resetProjectForm();
-                fillInfo();
-                loadProjects();
-                closeUserSidebar();
-            })
-            .catch(err => {
-                console.error('[UserPanel] Error creating project:', err);
-                showProjectError(ERRORS.CREATION_FAILED);
-            })
-            .finally(() => {
-                lockProjectButton(false);
-            });
+        handleOpenProject(projectName);
     }
 
     /**

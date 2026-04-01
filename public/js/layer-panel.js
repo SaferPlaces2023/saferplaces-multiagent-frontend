@@ -71,6 +71,23 @@ const LayerPanel = (() => {
     // =========================================================================
     // COSTANTI LOCALI
     // =========================================================================
+
+    // Surface type options per tipo layer
+    const SURFACE_TYPE_OPTIONS = {
+        vector: [
+            { value: 'buildings', label: 'Buildings' },
+            { value: 'roads',     label: 'Roads' }
+        ],
+        raster: [
+            { value: 'dem',                    label: 'DEM (terrain elevation)' },
+            { value: 'dem-building',            label: 'DEM Building' },
+            { value: 'rain-timeseries',         label: 'Rain (time series)' },
+            { value: 'temperature-timeseries',  label: 'Temperature (time series)' },
+            { value: 'water-depth',             label: 'Water Depth' },
+            { value: 'raster',                  label: 'Generic Raster' }
+        ]
+    };
+
     const LAYER_CONSTANTS = {
         DRAG_DELAY_MS: 30,
         NO_PROJECT_MSG: 'No selected project.',
@@ -121,7 +138,14 @@ const LayerPanel = (() => {
         lrType: 'lrType',
         lrCancel: 'lrCancel',
         lrConfirm: 'lrConfirm',
-        lrError: 'lrError'
+        lrError: 'lrError',
+        // Modal configurazione layer
+        layerConfigModal: 'layerConfigModal',
+        lcLayerTitle: 'lcLayerTitle',
+        lcSurfaceType: 'lcSurfaceType',
+        lcCancel: 'lcCancel',
+        lcSave: 'lcSave',
+        lcError: 'lcError'
     };
 
     // =========================================================================
@@ -130,6 +154,7 @@ const LayerPanel = (() => {
     let domElements = {};
     let pendingReg = null;
     let draggingFromHandle = false;
+    let layerConfigCurrent = null;
 
     // Resize state for left sidebar
     let leftResizing = false;
@@ -186,6 +211,9 @@ const LayerPanel = (() => {
     function bindModalEvents() {
         domElements.lrCancel?.addEventListener('click', closeRegModal);
         domElements.lrConfirm?.addEventListener('click', handleConfirmRegistration);
+
+        domElements.lcCancel?.addEventListener('click', closeLayerConfigModal);
+        domElements.lcSave?.addEventListener('click', handleConfirmLayerConfig);
     }
 
     /**
@@ -194,6 +222,55 @@ const LayerPanel = (() => {
     function bindLayerLoadEvents() {
         document.addEventListener('auth:ready', reloadProjectLayers);
         document.addEventListener('layer:reload-project-layers', reloadProjectLayers);
+        document.addEventListener('layer:style-applied', (e) => {
+            const layer = e.detail?.layer;
+            if (!layer) return;
+            const key = btoa(layer.src || '');
+            const item = domElements.projectLayersList?.querySelector(`[data-layer-key="${CSS.escape(key)}"]`);
+            if (!item) return;
+            // remove old legend if present
+            const oldLegend = item.querySelector('.layer-legend-wrap');
+            if (oldLegend) oldLegend.remove();
+            // update stored layer data
+            try {
+                const stored = JSON.parse(item.dataset.layerData);
+                stored.style = layer.style;
+                item.dataset.layerData = JSON.stringify(stored);
+            } catch (_) {}
+            // inject new legend
+            if (layer.style && layer.style.paint) {
+                const legendEl = buildStyleLegendElement(layer.style);
+                if (legendEl) {
+                    const details = item.querySelector('.layer-details');
+                    if (details) details.appendChild(legendEl);
+                }
+            }
+        });
+
+        document.addEventListener('layer:raster-style-applied', (e) => {
+            const layer = e.detail?.layer;
+            if (!layer) return;
+            const key = btoa(layer.src || '');
+            const item = domElements.projectLayersList?.querySelector(`[data-layer-key="${CSS.escape(key)}"]`);
+            if (!item) return;
+            // remove old legend if present
+            const oldLegend = item.querySelector('.layer-legend-wrap');
+            if (oldLegend) oldLegend.remove();
+            // update stored layer data
+            try {
+                const stored = JSON.parse(item.dataset.layerData);
+                stored.style = layer.style;
+                item.dataset.layerData = JSON.stringify(stored);
+            } catch (_) {}
+            // inject new raster legend
+            if (layer.style && layer.style.colormap) {
+                const legendEl = buildRasterLegendElement(layer.style);
+                if (legendEl) {
+                    const details = item.querySelector('.layer-details');
+                    if (details) details.appendChild(legendEl);
+                }
+            }
+        });
     }
 
     // =========================================================================
@@ -511,13 +588,99 @@ const LayerPanel = (() => {
     }
 
     // =========================================================================
+    // MODAL - CONFIGURAZIONE LAYER
+    // =========================================================================
+
+    /**
+     * Apre il modal di configurazione layer
+     * @param {Object} layer - Oggetto layer da configurare
+     */
+    function openLayerConfigModal(layer) {
+        layerConfigCurrent = layer;
+
+        // Popola header
+        if (domElements.lcLayerTitle) {
+            domElements.lcLayerTitle.textContent = layer.title || layer.src || '';
+        }
+
+        // Popola il select surface_type con le opzioni per il tipo di layer
+        if (domElements.lcSurfaceType) {
+            const options = SURFACE_TYPE_OPTIONS[layer.type] || [];
+            const currentSurfaceType = layer.metadata?.surface_type || '';
+
+            domElements.lcSurfaceType.innerHTML =
+                '<option value="">— none —</option>' +
+                options.map(opt =>
+                    `<option value="${escapeHtml(opt.value)}"${opt.value === currentSurfaceType ? ' selected' : ''}>${escapeHtml(opt.label)}</option>`
+                ).join('');
+        }
+
+        // Nascondi errori precedenti
+        if (domElements.lcError) {
+            domElements.lcError.classList.add(CSS_CLASSES.D_NONE);
+            domElements.lcError.textContent = '';
+        }
+
+        if (domElements.layerConfigModal) {
+            domElements.layerConfigModal.classList.remove(CSS_CLASSES.HIDDEN);
+        }
+    }
+
+    /**
+     * Chiude il modal di configurazione layer
+     */
+    function closeLayerConfigModal() {
+        if (domElements.layerConfigModal) {
+            domElements.layerConfigModal.classList.add(CSS_CLASSES.HIDDEN);
+        }
+        layerConfigCurrent = null;
+    }
+
+    /**
+     * Conferma la configurazione layer, persiste al server e ricarica il layer sulla mappa
+     */
+    function handleConfirmLayerConfig() {
+        if (!layerConfigCurrent) return;
+
+        const surfaceType = domElements.lcSurfaceType?.value || '';
+
+        const updatedMetadata = { ...(layerConfigCurrent.metadata || {}) };
+        if (surfaceType) {
+            updatedMetadata.surface_type = surfaceType;
+        } else {
+            delete updatedMetadata.surface_type;
+        }
+
+        const updatedLayer = { ...layerConfigCurrent, metadata: updatedMetadata };
+
+        // Persisti al backend (stesso pattern di LayerSymbology)
+        const threadId = getStorageValue(STORAGE_KEYS.THREAD_ID);
+        if (threadId) {
+            fetch(Routes.Agent.STATE(threadId), {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ state_updates: { layer_registry: [updatedLayer] } })
+            }).catch(err => {
+                console.warn('[LayerPanel] Config persist failed (non-blocking):', err);
+            });
+        }
+
+        closeLayerConfigModal();
+
+        // Ricarica il layer sulla mappa per applicare il nuovo surface_type
+        reloadProjectLayers(render=false);
+        // renderLayerList()
+        GeoMap.reloadLayer(updatedLayer);
+    }
+
+    // =========================================================================
     // CARICAMENTO LAYERS DAL BACKEND
     // =========================================================================
 
     /**
      * Ricarica la lista di layers dal backend
      */
-    function reloadProjectLayers() {
+    function reloadProjectLayers(render = true) {
         const projectId = getStorageValue(STORAGE_KEYS.PROJECT_ID);
 
         if (!domElements.projectLayersList) return;
@@ -548,7 +711,7 @@ const LayerPanel = (() => {
                 if (domElements.layerCount) {
                     domElements.layerCount.textContent = String(layers.length);
                 }
-                renderLayerList(layers);
+                renderLayerList(layers, render);
             })
             .catch(err => {
                 console.error('[LayerPanel] Error loading layers:', err);
@@ -564,7 +727,7 @@ const LayerPanel = (() => {
      * Renderizza la lista di layers
      * @param {Array<Object>} layers - Array di layer objects
      */
-    function renderLayerList(layers) {
+    function renderLayerList(layers, render = true) {
         if (!domElements.projectLayersList) return;
 
         if (!layers || layers.length === 0) {
@@ -579,10 +742,12 @@ const LayerPanel = (() => {
             domElements.projectLayersList.appendChild(layerItem);
 
             // Dispatch layer add events
-            if (layer.type === 'vector') {
-                dispatchEvent('layer:add-geojson', { layer_data: layer });
-            } else if (layer.type === 'raster') {
-                dispatchEvent('layer:add-cog', { layer_data: layer });
+            if (render) {
+                if (layer.type === 'vector') {
+                    dispatchEvent('layer:add-geojson', { layer_data: layer });
+                } else if (layer.type === 'raster') {
+                    dispatchEvent('layer:add-cog', { layer_data: layer });
+                }
             }
         });
 
@@ -594,6 +759,170 @@ const LayerPanel = (() => {
      * @param {Object} layer - Oggetto layer
      * @returns {HTMLElement} L'elemento layer item
      */
+    function buildStyleLegendElement(style) {
+        const paint = style.paint || {};
+        // Infer type from paint keys if not explicitly set on the style object
+        const type = style.type ||
+            ('fill-color' in paint ? 'fill' :
+             'line-color' in paint ? 'line' :
+             'circle-color' in paint ? 'circle' : null);
+        const colorKey = type === 'fill' ? 'fill-color' : type === 'line' ? 'line-color' : type === 'circle' ? 'circle-color' : null;
+        const colorExpr = colorKey ? paint[colorKey] : null;
+        if (!colorExpr) return null;
+
+        let bodyHtml = '';
+        let styleKind = 'single';
+
+        if (typeof colorExpr === 'string') {
+            styleKind = 'single';
+            bodyHtml = `<div class="layer-legend-single">
+                <div class="layer-legend-swatch" style="background:${escapeHtml(colorExpr)}"></div>
+                <span>Single color</span>
+            </div>`;
+        } else if (Array.isArray(colorExpr) && String(colorExpr[0]).startsWith('interpolate')) {
+            styleKind = 'graduated';
+            // extract field
+            let field = '';
+            for (let i = 0; i < colorExpr.length - 1; i++) {
+                if (Array.isArray(colorExpr[i]) && colorExpr[i][0] === 'get') { field = colorExpr[i][1]; break; }
+                if (colorExpr[i] === 'get' && typeof colorExpr[i + 1] === 'string') { field = colorExpr[i + 1]; break; }
+            }
+            // extract stops: [value, color, value, color, ...]
+            const stops = [];
+            for (let i = 3; i < colorExpr.length - 1; i += 2) {
+                if (typeof colorExpr[i] === 'number' && typeof colorExpr[i + 1] === 'string') {
+                    stops.push({ value: colorExpr[i], color: colorExpr[i + 1] });
+                }
+            }
+            const minVal = stops.length ? stops[0].value : '';
+            const maxVal = stops.length ? stops[stops.length - 1].value : '';
+            // build gradient
+            let gradStops = '';
+            if (stops.length) {
+                const range = stops[stops.length - 1].value - stops[0].value || 1;
+                gradStops = stops.map(s => `${escapeHtml(s.color)} ${(((s.value - stops[0].value) / range) * 100).toFixed(1)}%`).join(', ');
+            }
+            bodyHtml = `<div class="layer-legend-graduated">
+                ${field ? `<div class="layer-legend-field">${escapeHtml(field)}</div>` : ''}
+                <canvas class="layer-legend-ramp" data-stops='${JSON.stringify(stops.map(s => s.color))}' height="12"></canvas>
+                <div class="layer-legend-ramp-labels">
+                    <span>${minVal !== '' ? minVal : ''}</span>
+                    <span>${maxVal !== '' ? maxVal : ''}</span>
+                </div>
+            </div>`;
+        } else if (Array.isArray(colorExpr) && colorExpr[0] === 'match') {
+            styleKind = 'categorized';
+            // format: ['match', ['to-string', ['get', field]], val, color, val, color, ..., fallback]
+            const pairs = [];
+            let i = 2;
+            while (i < colorExpr.length - 1) {
+                if (typeof colorExpr[i] !== 'undefined' && typeof colorExpr[i + 1] === 'string' && /^#/.test(colorExpr[i + 1])) {
+                    pairs.push({ label: String(colorExpr[i]), color: colorExpr[i + 1] });
+                    i += 2;
+                } else { break; }
+            }
+            const MAX_SHOWN = 8;
+            const shown = pairs //pairs.slice(0, MAX_SHOWN);
+            // const extra = pairs.length - shown.length;
+            bodyHtml = `<div class="layer-legend-cat-grid">
+                ${shown.map(p => `<div class="layer-legend-cat-row">
+                    <div class="layer-legend-cat-swatch" style="background:${escapeHtml(p.color)}"></div>
+                    <span>${escapeHtml(p.label)}</span>
+                </div>`).join('')}
+                ${/* extra > 0 ? `<div class="layer-legend-cat-more">+${extra} more</div>` : '' */ ''}
+            </div>`;
+        }
+
+        if (!bodyHtml) return null;
+
+        const wrap = document.createElement('div');
+        wrap.className = 'layer-legend-wrap';
+        wrap.innerHTML = `
+            <div class="layer-legend-header text-secondary">
+                <span class="layer-legend-toggle-icon">▶</span>
+                <strong>style legend</strong>
+            </div>
+            <div class="layer-legend-body d-none">${bodyHtml}</div>
+        `;
+
+        const header = wrap.querySelector('.layer-legend-header');
+        const body = wrap.querySelector('.layer-legend-body');
+        header.addEventListener('click', () => {
+            const collapsed = body.classList.toggle('d-none');
+            header.querySelector('.layer-legend-toggle-icon').textContent = collapsed ? '▶' : '▼';
+            if (!collapsed) {
+                // draw gradient canvases
+                wrap.querySelectorAll('canvas.layer-legend-ramp[data-stops]').forEach(canvas => {
+                    try {
+                        const stops = JSON.parse(canvas.dataset.stops);
+                        const ctx = canvas.getContext('2d');
+                        const grad = ctx.createLinearGradient(0, 0, canvas.offsetWidth || 280, 0);
+                        stops.forEach((c, idx) => grad.addColorStop(idx / Math.max(1, stops.length - 1), c));
+                        ctx.fillStyle = grad;
+                        ctx.fillRect(0, 0, canvas.offsetWidth || 280, canvas.height);
+                    } catch (_) {}
+                });
+            }
+        });
+
+        return wrap;
+    }
+
+    function buildRasterLegendElement(style) {
+        if (!style || !style.colormap) return null;
+        const colormapInfo = (typeof LayerRasterSymbology !== 'undefined')
+            ? LayerRasterSymbology.getColorStops(style.colormap)
+            : null;
+        const stops = colormapInfo
+            ? (style.reverse ? [...colormapInfo.stops].reverse() : colormapInfo.stops)
+            : null;
+        const label = colormapInfo ? colormapInfo.label : style.colormap;
+        const minVal = style.min !== undefined ? style.min : '';
+        const maxVal = style.max !== undefined ? style.max : '';
+        const opacity = style.opacity !== undefined ? Math.round(style.opacity * 100) : '';
+
+        const bodyHtml = `<div class="layer-legend-graduated">
+            <canvas class="layer-legend-ramp" data-stops='${stops ? JSON.stringify(stops) : '[]'}' height="12"></canvas>
+            <div class="layer-legend-ramp-labels">
+                <span>${escapeHtml(String(minVal))}</span>
+                <span>${escapeHtml(String(maxVal))}</span>
+            </div>
+            <div class="layer-legend-field">${escapeHtml(label)}${opacity !== '' ? ` · opacity ${opacity}%` : ''}</div>
+        </div>`;
+
+        const wrap = document.createElement('div');
+        wrap.className = 'layer-legend-wrap';
+        wrap.innerHTML = `
+            <div class="layer-legend-header text-secondary">
+                <span class="layer-legend-toggle-icon">▶</span>
+                <strong>style legend</strong>
+            </div>
+            <div class="layer-legend-body d-none">${bodyHtml}</div>
+        `;
+
+        const header = wrap.querySelector('.layer-legend-header');
+        const body = wrap.querySelector('.layer-legend-body');
+        header.addEventListener('click', () => {
+            const collapsed = body.classList.toggle('d-none');
+            header.querySelector('.layer-legend-toggle-icon').textContent = collapsed ? '▶' : '▼';
+            if (!collapsed) {
+                wrap.querySelectorAll('canvas.layer-legend-ramp[data-stops]').forEach(canvas => {
+                    try {
+                        const cs = JSON.parse(canvas.dataset.stops);
+                        if (!cs.length) return;
+                        const ctx = canvas.getContext('2d');
+                        const grad = ctx.createLinearGradient(0, 0, canvas.offsetWidth || 280, 0);
+                        cs.forEach((c, idx) => grad.addColorStop(idx / Math.max(1, cs.length - 1), c));
+                        ctx.fillStyle = grad;
+                        ctx.fillRect(0, 0, canvas.offsetWidth || 280, canvas.height);
+                    } catch (_) {}
+                });
+            }
+        });
+
+        return wrap;
+    }
+
     function createLayerItemElement(layer) {
         const item = document.createElement('div');
         item.className = 'layer-item';
@@ -635,6 +964,9 @@ const LayerPanel = (() => {
             <div class="dropdown">
                 <button class="btn btn-sm btn-outline-light" data-bs-toggle="dropdown" aria-expanded="false">⋯</button>
                 <ul class="dropdown-menu dropdown-menu-dark">
+                    ${layer.type === 'vector' ? '<li><a class="dropdown-item" data-action="symbology">Style</a></li>' : ''}
+                    ${layer.type === 'raster' ? '<li><a class="dropdown-item" data-action="raster-symbology">Style</a></li>' : ''}
+                    <li><a class="dropdown-item" data-action="config">Config</a></li>
                     <li><a class="dropdown-item" data-action="download">Download</a></li>
                 </ul>
             </div>
@@ -649,12 +981,83 @@ const LayerPanel = (() => {
         // ===== Details section =====
         const details = document.createElement('div');
         details.className = `layer-details ${CSS_CLASSES.D_NONE}`;
-        details.innerHTML = `
+
+        // Static info rows
+        const staticInfo = document.createElement('div');
+        staticInfo.innerHTML = `
             <div class="small text-secondary mb-1">${escapeHtml(layer.type || '')}</div>
             <div class="mb-1 layer-detail detail-description">${escapeHtml(layer.description || '—')}</div>
             <div class="mb-1 text-secondary"><strong>src:</strong> <code>${escapeHtml(layer.src || '')}</code></div>
-            <div class="text-secondary"><strong>metadata:</strong> <code>${escapeHtml(JSON.stringify(layer.metadata || {}))}</code></div>
         `;
+        details.appendChild(staticInfo);
+
+        // Metadata section
+        const metadata = layer.metadata || {};
+        const metaKeys = Object.keys(metadata);
+        if (metaKeys.length > 0) {
+            const metaWrap = document.createElement('div');
+            metaWrap.className = 'layer-meta-wrap';
+
+            // Metadata header (toggle all)
+            const metaHeader = document.createElement('div');
+            metaHeader.className = 'layer-meta-header text-secondary';
+            metaHeader.innerHTML = '<span class="layer-meta-toggle-icon">▶</span><strong>metadata</strong>';
+
+            const metaBody = document.createElement('div');
+            metaBody.className = 'layer-meta-body d-none';
+
+            metaHeader.addEventListener('click', () => {
+                const collapsed = metaBody.classList.toggle('d-none');
+                metaHeader.querySelector('.layer-meta-toggle-icon').textContent = collapsed ? '▶' : '▼';
+            });
+
+            // One row per metadata key
+            metaKeys.forEach(key => {
+                const val = metadata[key];
+                const isComplex = val !== null && typeof val === 'object';
+                const rawVal = isComplex ? JSON.stringify(val, null, 2) : String(val ?? '');
+
+                const keyRow = document.createElement('div');
+                keyRow.className = 'layer-meta-key-row';
+
+                const keyLabel = document.createElement('div');
+                keyLabel.className = 'layer-meta-key-label';
+                keyLabel.innerHTML = isComplex
+                    ? `<span class="layer-meta-key-icon">▶</span><code>${escapeHtml(key)}</code>`
+                    : `<span class="layer-meta-key-icon layer-meta-key-icon--leaf"></span><code>${escapeHtml(key)}</code><span class="layer-meta-inline-val">${escapeHtml(rawVal)}</span>`;
+
+                keyRow.appendChild(keyLabel);
+
+                if (isComplex) {
+                    const keyVal = document.createElement('div');
+                    keyVal.className = 'layer-meta-key-val d-none';
+                    keyVal.innerHTML = `<pre><code>${escapeHtml(rawVal)}</code></pre>`;
+                    keyLabel.addEventListener('click', () => {
+                        const collapsed = keyVal.classList.toggle('d-none');
+                        keyLabel.querySelector('.layer-meta-key-icon').textContent = collapsed ? '▶' : '▼';
+                    });
+                    keyRow.appendChild(keyVal);
+                }
+                metaBody.appendChild(keyRow);
+            });
+
+            metaWrap.appendChild(metaHeader);
+            metaWrap.appendChild(metaBody);
+            details.appendChild(metaWrap);
+        }
+
+        // Style legend section — vector
+        if (layer.style && layer.style.paint) {
+            const legendEl = buildStyleLegendElement(layer.style);
+            if (legendEl) details.appendChild(legendEl);
+        }
+
+        // Style legend section — raster
+        if (layer.type === 'raster' && layer.style && layer.style.colormap) {
+            const legendEl = buildRasterLegendElement(layer.style);
+            if (legendEl) details.appendChild(legendEl);
+        }
+
         item.appendChild(details);
 
         // Toggle details
@@ -687,6 +1090,36 @@ const LayerPanel = (() => {
                 const eyeIcon = eyeButton.querySelector('span');
                 const isVisible = eyeIcon.textContent === 'visibility';
                 eyeIcon.textContent = isVisible ? 'visibility_off' : 'visibility';
+            });
+        }
+
+        // Symbology action (vector layers only)
+        const symbologyLink = right.querySelector('[data-action="symbology"]');
+        if (symbologyLink) {
+            symbologyLink.addEventListener('click', (e) => {
+                e.preventDefault();
+                const layerData = JSON.parse(item.dataset.layerData);
+                LayerSymbology.open(layerData);
+            });
+        }
+
+        // Raster symbology action (raster layers only)
+        const rasterSymbologyLink = right.querySelector('[data-action="raster-symbology"]');
+        if (rasterSymbologyLink) {
+            rasterSymbologyLink.addEventListener('click', (e) => {
+                e.preventDefault();
+                const layerData = JSON.parse(item.dataset.layerData);
+                LayerRasterSymbology.open(layerData);
+            });
+        }
+
+        // Config action
+        const configLink = right.querySelector('[data-action="config"]');
+        if (configLink) {
+            configLink.addEventListener('click', (e) => {
+                e.preventDefault();
+                const layerData = JSON.parse(item.dataset.layerData);
+                openLayerConfigModal(layerData);
             });
         }
 

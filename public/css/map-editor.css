@@ -125,6 +125,7 @@
 .drawToolbar {
     display: flex;
     align-items: center;
+    position: relative;
     /* gap: var(--space-2); */
 }
 

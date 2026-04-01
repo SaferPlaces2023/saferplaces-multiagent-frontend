@@ -46,7 +46,7 @@
     document.addEventListener('layer:add-cog', e => GeoMap.addCOG(e.detail));
     document.addEventListener('layer:toggle-remote', e => {
         const layer = e.detail.layer;
-        GeoMap.toggleRemoteLayer(layer);
+        GeoMap.toggleLayerMapVisibility(layer);
     });
     document.addEventListener('layer:download', e => {
         const { layer } = e.detail;
@@ -59,6 +59,7 @@
     document.addEventListener('map:toggle-layer-visibility', e => GeoMap.toggleLayerMapVisibility(e.detail));
     document.addEventListener('map:set-style', e => GeoMap.setStyle(e.detail.styleUrl));
     document.addEventListener('map:reset', () => GeoMap.resetView());
+    document.addEventListener('layers:reordered', e => GeoMap.reorderLayers(e.detail.order));
 
     // ========================================
     // 5) WIRING EVENTI - TIME SLIDER
@@ -69,7 +70,36 @@
     });
 
     // ========================================
-    // 6) WIRING EVENTI - CHAT
+    // 6) WIRING EVENTI - MAP COMMANDS (PLN-015 T-015-06)
+    // ========================================
+    document.addEventListener('map:execute-commands', e => {
+        const commands = e.detail?.commands;
+        if (!Array.isArray(commands)) return;
+        commands.forEach(command => {
+            try {
+                switch (command.type) {
+                    case 'move_view':
+                        GeoMap.moveView(command.payload);
+                        break;
+                    case 'set_layer_style': {
+                        const { layer_id, style } = command.payload || {};
+                        if (layer_id && style) GeoMap.setLayerStyle(layer_id, style);
+                        break;
+                    }
+                    case 'sync_shapes':
+                        document.dispatchEvent(new CustomEvent('draw-tool:add-shape', { detail: command.payload }));
+                        break;
+                    default:
+                        console.warn('[app] Unknown map command type:', command.type);
+                }
+            } catch (err) {
+                console.error('[app] Error executing map command:', command.type, err);
+            }
+        });
+    });
+
+    // ========================================
+    // 7) WIRING EVENTI - CHAT
     // ========================================
     document.addEventListener('chat:command', e => {
         const { cmd } = e.detail;

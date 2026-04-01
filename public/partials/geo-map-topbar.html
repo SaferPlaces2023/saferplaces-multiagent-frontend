@@ -70,6 +70,22 @@
             </span>
         </div>
 
+        <!-- Collections Panel (Outside overflow:hidden container) -->
+        <div id="dtCollectionsPanel" class="dt-panel hidden" aria-label="Draw collections panel" role="region">
+
+            <!-- Panel Header -->
+            <div class="dt-panel-head">
+                <strong>Drawn Collections</strong>
+                <span class="dt-badge" id="dtCollectionsCount" aria-label="Number of collections">
+                    0
+                </span>
+            </div>
+
+            <!-- Collections List -->
+            <div id="dtCollectionsList" class="dt-panel-list" role="list">
+            </div>
+        </div>
+
         <div id="drawToolbarBody">
             <!-- Separator -->
             <div class="dt-sep ms-3 me-2" aria-hidden="true"></div>
@@ -78,22 +94,6 @@
             <button id="dtCollections" class="dt-btn" type="button" title="View drawn collections" aria-label="Collections" aria-controls="dtCollectionsPanel">
                 <span class="material-symbols-outlined">inventory_2</span>
             </button>
-
-            <!-- Collections Panel (Initially Hidden) -->
-            <div id="dtCollectionsPanel" class="dt-panel hidden" aria-label="Draw collections panel" role="region">
-
-                <!-- Panel Header -->
-                <div class="dt-panel-head">
-                    <strong>Drawn Collections</strong>
-                    <span class="dt-badge" id="dtCollectionsCount" aria-label="Number of collections">
-                        0
-                    </span>
-                </div>
-
-                <!-- Collections List -->
-                <div id="dtCollectionsList" class="dt-panel-list" role="list">
-                </div>
-            </div>
 
             <!-- Separator -->
             <div class="dt-sep mx-2" aria-hidden="true"></div>

@@ -98,6 +98,9 @@ const AIChat = (() => {
     // Minimize state
     let previousWidth = CHAT_CONFIG.DEFAULT_WIDTH;
 
+    // Chat message ids
+    let messageIds = new Set();
+
     // =========================================================================
     // INIZIALIZZAZIONE
     // =========================================================================
@@ -140,6 +143,7 @@ const AIChat = (() => {
         domElements.settingsBtn?.addEventListener('click', () => ChatSettings?.togglePanel?.());
         domElements.sendBtn?.addEventListener('click', send);
         domElements.chatInput?.addEventListener('keydown', handleChatInputKeydown);
+        domElements.chatInput?.addEventListener('input', handleChatInputAutoGrow);
     }
 
     /**
@@ -177,6 +181,16 @@ const AIChat = (() => {
             e.preventDefault();
             send();
         }
+    }
+
+    /**
+     * Auto-espande la textarea in verticale fino a 4 righe
+     */
+    function handleChatInputAutoGrow() {
+        const el = domElements.chatInput;
+        if (!el) return;
+        el.style.height = 'auto';
+        el.style.height = el.scrollHeight + 'px';
     }
 
     // =========================================================================
@@ -349,6 +363,7 @@ const AIChat = (() => {
         }
         if (domElements.chatInput) {
             domElements.chatInput.value = message;
+            handleChatInputAutoGrow();
         }
         send();
     }
@@ -415,6 +430,13 @@ const AIChat = (() => {
         appendBubble(messageText, CSS_CLASSES.USER);
         if (domElements.chatInput) {
             domElements.chatInput.value = '';
+            domElements.chatInput.style.height = 'auto';
+        }
+
+        // Disable send button and show waiting icon
+        if (domElements.sendBtn) {
+            domElements.sendBtn.disabled = true;
+            domElements.sendBtn.innerHTML = '<span class="material-symbols-outlined">arrow_upload_progress</span>';
         }
 
         const typingIndicator = showTyping();
@@ -434,6 +456,7 @@ const AIChat = (() => {
                 return;
             }
 
+            // region: block request
             const response = await fetch(Routes.Agent.THREAD(threadId), {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
@@ -451,11 +474,48 @@ const AIChat = (() => {
             hideTyping(typingIndicator);
 
             processAgentResponse(data);
+            // endregion: block request
+
+
+            // region: EventSource apre la connessione in streaming
+            // const response = await fetch(Routes.Agent.THREAD(threadId), {
+            //     method: "POST",
+            //     headers: { "Content-Type": "application/json" },
+            //     body: JSON.stringify({ prompt: messageText , stream: true })
+            // });
+
+            // const reader = response.body.getReader();
+            // const decoder = new TextDecoder();
+            // let buffer = "";
+
+            // while (true) {
+            //     const { done, value } = await reader.read();
+            //     if (done) break;
+
+            //     buffer += decoder.decode(value, { stream: true });
+
+            //     const righe = buffer.split("\n");
+            //     buffer = righe.pop();  // chunk incompleto
+
+            //     for (const riga of righe) {
+            //         if (!riga.trim()) continue;
+            //         const obj = JSON.parse(riga);
+            //         processAgentResponse(obj);
+            //     }
+            // }
+            // endregion: EventSource apre la connessione in streaming
+
 
         } catch (error) {
             hideTyping(typingIndicator);
             appendBubble(ERRORS.AGENT_CONTACT, CSS_CLASSES.AI);
             console.error('[AIChat] Error sending message:', error);
+        } finally {
+            // Re-enable send button and restore send icon
+            if (domElements.sendBtn) {
+                domElements.sendBtn.disabled = false;
+                domElements.sendBtn.innerHTML = '<span class="material-symbols-outlined">send</span>';
+            }
         }
     }
 
@@ -480,6 +540,13 @@ const AIChat = (() => {
     function processAgentElement(element) {
         if (!element) return;
 
+        if (!element.id) return;
+
+        console.log(element)
+
+        if (element.role != 'interrupt' && messageIds.has(element.id)) return;
+        messageIds.add(element.id);
+
         // Tool calls
         if (element.tool_calls && Array.isArray(element.tool_calls) && element.tool_calls.length > 0) {
             element.tool_calls.forEach(call => appendToolCall(call));
@@ -495,6 +562,11 @@ const AIChat = (() => {
 
         // Messaggi standard (AI, system, etc)
         appendBubble(element.content || '(no response)', element.role || CSS_CLASSES.AI);
+
+        // Map commands from AI message (PLN-015 T-015-05)
+        if (element.map_commands && Array.isArray(element.map_commands) && element.map_commands.length > 0) {
+            dispatchEvent('map:execute-commands', { commands: element.map_commands });
+        }
 
         // State updates (interrupt)
         if (element.role === 'interrupt' && element.state_updates) {
@@ -512,6 +584,12 @@ const AIChat = (() => {
         if (Object.prototype.hasOwnProperty.call(stateUpdates, 'user_drawn_shapes')) {
             dispatchEvent('draw-tool:update-user-drawn-shapes', {
                 user_drawn_shapes: stateUpdates.user_drawn_shapes
+            });
+        }
+
+        if (Object.prototype.hasOwnProperty.call(stateUpdates, 'shapes_registry')) {
+            dispatchEvent('draw-tool:sync-shapes-registry', {
+                shapes_registry: stateUpdates.shapes_registry
             });
         }
     }

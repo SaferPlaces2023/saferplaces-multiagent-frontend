@@ -32,7 +32,8 @@ const Routes = (() => {
 const STORAGE_KEYS = {
     THREAD_ID: 'thread_id',
     USER_ID: 'user_id',
-    PROJECT_ID: 'project_id'
+    PROJECT_ID: 'project_id',
+    AUTH_GATE_AUTO_OPEN_PROJECT: 'auth_gate_auto_open_project'
 };
 
 // =========================================================================

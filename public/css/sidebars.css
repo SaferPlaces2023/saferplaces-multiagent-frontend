@@ -45,6 +45,224 @@
     display: none;
 }
 
+
+/* ===== Metadata expandable tree ===== */
+
+.layer-meta-wrap {
+  margin-top: .4rem;
+  border: 1px solid rgba(255, 255, 255, .06);
+  border-radius: .5rem;
+  overflow: hidden;
+}
+
+.layer-meta-header {
+  display: flex;
+  align-items: center;
+  gap: .4rem;
+  /* padding: .3rem .6rem; */
+  background: rgba(255, 255, 255, .04);
+  cursor: pointer;
+  user-select: none;
+  font-size: .82rem;
+  color: #9aa0a6;
+  transition: background 0.15s;
+}
+
+.layer-meta-header:hover {
+  background: rgba(255, 255, 255, .08);
+}
+
+.layer-meta-toggle-icon {
+  font-size: .65rem;
+  width: 10px;
+  flex-shrink: 0;
+  color: #9aa0a6;
+}
+
+.layer-meta-body {
+  /* padding: .3rem .4rem; */
+}
+
+.layer-meta-key-row {
+  margin-bottom: .2rem;
+}
+
+.layer-meta-key-label {
+  display: flex;
+  align-items: baseline;
+  gap: .35rem;
+  padding: .15rem .2rem;
+  border-radius: .3rem;
+  font-size: .8rem;
+  color: #9aa0a6;
+  cursor: default;
+  user-select: none;
+}
+
+.layer-meta-key-label:has(.layer-meta-key-icon:not(.layer-meta-key-icon--leaf)) {
+  cursor: pointer;
+}
+
+.layer-meta-key-label:hover:has(.layer-meta-key-icon:not(.layer-meta-key-icon--leaf)) {
+  background: rgba(255, 255, 255, .06);
+}
+
+.layer-meta-key-icon {
+  font-size: .6rem;
+  width: 10px;
+  min-width: 10px;
+  flex-shrink: 0;
+  color: #9aa0a6;
+}
+
+.layer-meta-key-icon--leaf {
+  visibility: hidden;
+}
+
+.layer-meta-inline-val {
+  margin-left: .3rem;
+  color: var(--color-text-primary);
+  font-size: .78rem;
+  font-family: monospace;
+  opacity: .85;
+  word-break: break-all;
+}
+
+.layer-meta-key-val {
+  padding-left: 1.25rem;
+}
+
+.layer-meta-key-val pre {
+  margin: 0;
+  padding: .3rem .5rem;
+  background: rgba(255, 255, 255, .04);
+  border-radius: .35rem;
+  font-size: .75rem;
+  color: var(--color-text-primary);
+  white-space: pre-wrap;
+  word-break: break-all;
+  line-height: 1.5;
+}
+
+.layer-meta-key-val pre code {
+  background: none;
+  padding: 0;
+  border-radius: 0;
+}
+
+
+/* ===== Layer Style Legend ===== */
+
+.layer-legend-wrap {
+  margin-top: .4rem;
+  border: 1px solid rgba(255, 255, 255, .06);
+  border-radius: .5rem;
+  overflow: hidden;
+}
+
+.layer-legend-header {
+  display: flex;
+  align-items: center;
+  gap: .4rem;
+  /* padding: .25rem .55rem; */
+  background: rgba(255, 255, 255, .04);
+  cursor: pointer;
+  user-select: none;
+  font-size: .82rem;
+  color: #9aa0a6;
+  transition: background 0.15s;
+}
+
+.layer-legend-header:hover {
+  background: rgba(255, 255, 255, .08);
+}
+
+.layer-legend-toggle-icon {
+  font-size: .65rem;
+  width: 10px;
+  flex-shrink: 0;
+  color: #9aa0a6;
+}
+
+.layer-legend-body {
+  padding: .4rem .55rem;
+  display: flex;
+  flex-direction: column;
+  gap: .3rem;
+  max-height: 200px;
+  overflow-y: scroll;
+}
+
+/* Single color */
+.layer-legend-single {
+  display: flex;
+  align-items: center;
+  gap: .45rem;
+  font-size: .8rem;
+  color: #95989c;
+}
+.layer-legend-swatch {
+  width: 22px;
+  height: 14px;
+  border-radius: 3px;
+  border: 1px solid rgba(255,255,255,.12);
+  flex-shrink: 0;
+}
+
+/* Graduated */
+.layer-legend-graduated {
+  display: flex;
+  flex-direction: column;
+  gap: .2rem;
+}
+.layer-legend-field {
+  font-size: .75rem;
+  color: #95989c;
+  font-family: monospace;
+  opacity: .85;
+}
+.layer-legend-ramp {
+  width: 100%;
+  height: 12px;
+  border-radius: 4px;
+  border: 1px solid rgba(255,255,255,.1);
+}
+.layer-legend-ramp-labels {
+  display: flex;
+  justify-content: space-between;
+  font-size: .72rem;
+  color: #95989c;
+  font-family: monospace;
+  line-height: 1.2;
+}
+
+/* Categorized */
+.layer-legend-cat-grid {
+  display: flex;
+  flex-direction: column;
+  gap: .18rem;
+}
+.layer-legend-cat-row {
+  display: flex;
+  align-items: center;
+  gap: .4rem;
+  font-size: .78rem;
+  color: #95989c;
+}
+.layer-legend-cat-swatch {
+  width: 14px;
+  height: 14px;
+  border-radius: 2px;
+  border: 1px solid rgba(255,255,255,.12);
+  flex-shrink: 0;
+}
+.layer-legend-cat-more {
+  font-size: .75rem;
+  color: #6b7280;
+  font-style: italic;
+}
+
+
 /* ========================================================================= */
 /* SIDEBAR BASE STYLING - User Panel */
 /* ========================================================================= */

@@ -136,6 +136,14 @@ const AuthGate = (() => {
 
         // Ricarica progetto dalla sessione
         loadUserProject(user, project, thread);
+
+        const auto_open_project = getStorageValue(STORAGE_KEYS.AUTH_GATE_AUTO_OPEN_PROJECT);
+        if (auto_open_project === 'true') {
+            localStorage.removeItem(STORAGE_KEYS.AUTH_GATE_AUTO_OPEN_PROJECT);
+            loadUserProject(user, project, thread);
+            return;
+        }
+
     }
 
     // =========================================================================

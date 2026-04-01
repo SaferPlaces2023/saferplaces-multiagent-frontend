@@ -105,7 +105,8 @@ const DrawTools = (() => {
 
         // COLLECTIONS PERSISTENCE
         saveFeatureCollection: 'Salva collection in registry, calcola bounds, sync agent state',
-        updateUserDrawnShapesAgentState: 'POST /state con user_drawn_shapes array',
+        updateUserDrawnShapesAgentState: 'POST /state con user_drawn_shapes; risposta include shapes_registry aggiornato',
+        syncFromShapesRegistry: 'Aggiorna shapesRegistryMirror e panel da shapes_registry backend',
         getFeatureCollection: 'Retrieves da DrawFeatureCollections',
         listFeatureCollections: 'Returns array di collection keys',
         removeFeatureCollection: 'Rimuove da registry e mappa',
@@ -256,6 +257,9 @@ const DrawTools = (() => {
     // --- Collections registry
     let DrawFeatureCollections = {};
 
+    // --- Mirror of shapes_registry from backend (shape_id → DrawnShape dict)
+    let shapesRegistryMirror = {};
+
     // =========================================================================
     // INIZIALIZZAZIONE
     // =========================================================================
@@ -358,6 +362,12 @@ const DrawTools = (() => {
                         drawBboxFeatureCollection(fc);
                     }
                 });
+            }
+        });
+
+        document.addEventListener('draw-tool:sync-shapes-registry', (ev) => {
+            if (ev.detail?.shapes_registry) {
+                syncFromShapesRegistry(ev.detail.shapes_registry);
             }
         });
     }
@@ -1208,7 +1218,8 @@ const DrawTools = (() => {
     }
 
     /**
-     * Synca user_drawn_shapes con agent state via REST
+     * Synca user_drawn_shapes con agent state via REST.
+     * La risposta include shapes_registry e user_drawn_shapes aggiornati dal backend.
      */
     function updateUserDrawnShapesAgentState() {
         const threadId = getStorageValue(STORAGE_KEYS.THREAD_ID) || localStorage.getItem(DRAW_CONSTANTS.STORAGE_THREAD_KEY);
@@ -1234,11 +1245,34 @@ const DrawTools = (() => {
                 return response.json();
             })
             .then(data => {
-                console.log('[DrawTools] user_drawn_shapes synced:', data);
+                console.log('[DrawTools] State synced:', data);
+                if (data?.shapes_registry) {
+                    syncFromShapesRegistry(data.shapes_registry);
+                }
             })
             .catch(err => {
                 console.error('[DrawTools] Error updating user_drawn_shapes:', err);
             });
+    }
+
+    /**
+     * Aggiorna il mirror locale di shapes_registry e ri-renderizza il panel.
+     * Marca le entries di DrawFeatureCollections come registered o pending.
+     * @param {Array} shapesRegistryArray - Array di DrawnShape dict dal backend
+     */
+    function syncFromShapesRegistry(shapesRegistryArray) {
+        if (!Array.isArray(shapesRegistryArray)) return;
+
+        // Rebuild mirror: shape_id → DrawnShape
+        shapesRegistryMirror = {};
+        shapesRegistryArray.forEach(shape => {
+            if (shape?.shape_id) {
+                shapesRegistryMirror[shape.shape_id] = shape;
+            }
+        });
+
+        renderCollectionsPanel();
+        console.log('[DrawTools] shapes_registry mirror updated:', Object.keys(shapesRegistryMirror));
     }
 
     /**
@@ -1322,6 +1356,12 @@ const DrawTools = (() => {
             const description = meta.description || 'No description available.';
             const iconName = DRAW_CONSTANTS.TYPE_ICONS[type.toLowerCase()] || DRAW_CONSTANTS.TYPE_ICONS.default;
 
+            const collectionId = fc.collection_id;
+            const isRegistered = !!(collectionId && shapesRegistryMirror[collectionId]);
+            const registeredBadge = isRegistered
+                ? `<span class="dt-badge-registered" title="Registered in shapes registry"><span class="material-symbols-outlined" style="font-size:14px;color:#4caf50">check_circle</span></span>`
+                : `<span class="dt-badge-pending" title="Pending registration"><span class="material-symbols-outlined" style="font-size:14px;color:#ff9800">pending</span></span>`;
+
             const item = document.createElement('div');
             item.className = 'dt-panel-item';
             item.dataset.key = name;
@@ -1333,6 +1373,7 @@ const DrawTools = (() => {
                             <span class="material-symbols-outlined fs-6">${iconName}</span>
                             <div class="dt-name">${escapeHtml(name)}</div>
                             <div class="dt-type"><code>${escapeHtml(type)}</code></div>
+                            ${registeredBadge}
                         </div>
                         <button class="dt-link dt-details-toggle text-start" type="button">${DRAW_CONSTANTS.UI_MESSAGES.DETAILS_SHOW}</button>
                     </div>
@@ -1490,6 +1531,7 @@ const DrawTools = (() => {
         listFeatureCollections,
         removeFeatureCollection,
         clearAllFeatureCollections,
-        renderCollectionsPanel
+        renderCollectionsPanel,
+        syncFromShapesRegistry
     };
 })();

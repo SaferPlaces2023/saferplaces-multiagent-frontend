@@ -1,0 +1,945 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Vector Symbology Panel</title>
+  <style>
+    :root {
+      --font-sans: Inter, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      --color-text-primary: #111827;
+      --color-text-secondary: #4b5563;
+      --color-text-tertiary: #6b7280;
+      --color-background-primary: #ffffff;
+      --color-background-secondary: #f9fafb;
+      --color-background-tertiary: #f3f4f6;
+      --color-border-primary: #2563eb;
+      --color-border-secondary: #d1d5db;
+      --color-border-tertiary: #e5e7eb;
+      --color-success-bg: #e1f5ee;
+      --color-success-fg: #0f6e56;
+      --border-radius-md: 8px;
+      --border-radius-lg: 12px;
+      --shadow: 0 14px 40px rgba(0,0,0,0.16);
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: var(--font-sans);
+      font-size: 13px;
+      color: var(--color-text-primary);
+      background: #eef2f7;
+    }
+
+    .modal-bg {
+      min-height: 100vh;
+      background: rgba(17, 24, 39, 0.42);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 24px;
+    }
+
+    .modal {
+      width: 100%;
+      max-width: 560px;
+      background: var(--color-background-primary);
+      border: 1px solid var(--color-border-tertiary);
+      border-radius: var(--border-radius-lg);
+      box-shadow: var(--shadow);
+      overflow: hidden;
+    }
+
+    .modal-header {
+      padding: 14px 16px;
+      border-bottom: 1px solid var(--color-border-tertiary);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .modal-header-main {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+      min-width: 0;
+    }
+
+    .title-row {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      min-width: 0;
+    }
+
+    .modal-header h2 {
+      font-size: 15px;
+      font-weight: 600;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      max-width: 340px;
+    }
+
+    .layer-badge {
+      font-size: 11px;
+      padding: 2px 8px;
+      border-radius: 999px;
+      font-weight: 600;
+      background: var(--color-success-bg);
+      color: var(--color-success-fg);
+      text-transform: lowercase;
+    }
+
+    .layer-meta {
+      color: var(--color-text-secondary);
+      font-size: 12px;
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+    }
+
+    .modal-body {
+      padding: 16px;
+      display: flex;
+      flex-direction: column;
+      gap: 14px;
+    }
+
+    .field-row {
+      display: flex;
+      flex-direction: column;
+      gap: 5px;
+    }
+
+    .field-row label,
+    .inline-label {
+      font-size: 12px;
+      color: var(--color-text-secondary);
+      font-weight: 600;
+    }
+
+    .helper {
+      color: var(--color-text-tertiary);
+      font-size: 11px;
+      line-height: 1.35;
+    }
+
+    select,
+    input[type="number"],
+    input[type="text"],
+    input[type="range"] {
+      width: 100%;
+    }
+
+    select,
+    input[type="number"],
+    input[type="text"] {
+      border: 1px solid var(--color-border-secondary);
+      background: var(--color-background-primary);
+      color: var(--color-text-primary);
+      border-radius: var(--border-radius-md);
+      padding: 8px 10px;
+      font-size: 13px;
+      outline: none;
+    }
+
+    select:focus,
+    input[type="number"]:focus,
+    input[type="text"]:focus {
+      border-color: var(--color-border-primary);
+      box-shadow: 0 0 0 3px rgba(37,99,235,0.12);
+    }
+
+    .row2 {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px;
+    }
+
+    .style-card {
+      border: 1px solid var(--color-border-tertiary);
+      border-radius: 10px;
+      background: var(--color-background-secondary);
+      padding: 12px;
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+
+    .chip-row {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+    }
+
+    .chip {
+      padding: 5px 10px;
+      border-radius: 999px;
+      border: 1px solid var(--color-border-secondary);
+      background: #fff;
+      cursor: pointer;
+      font-size: 12px;
+      color: var(--color-text-secondary);
+      user-select: none;
+    }
+
+    .chip.active {
+      border-color: var(--color-border-primary);
+      color: var(--color-border-primary);
+      background: rgba(37,99,235,0.07);
+      font-weight: 600;
+    }
+
+    .colormap-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 8px;
+    }
+
+    .cm-option {
+      border: 1.5px solid transparent;
+      border-radius: 8px;
+      overflow: hidden;
+      cursor: pointer;
+      background: white;
+      padding: 2px;
+    }
+
+    .cm-option.selected {
+      border-color: var(--color-border-primary);
+      box-shadow: 0 0 0 2px rgba(37,99,235,0.10);
+    }
+
+    .cm-option canvas {
+      display: block;
+      width: 100%;
+      height: 22px;
+      border-radius: 6px;
+    }
+
+    .palette-list {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+
+    .palette-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      border: 1.5px solid transparent;
+      border-radius: 8px;
+      padding: 8px 10px;
+      cursor: pointer;
+      background: white;
+    }
+
+    .palette-row.active {
+      border-color: var(--color-border-primary);
+      background: rgba(37,99,235,0.04);
+    }
+
+    .palette-swatches { display: flex; gap: 4px; }
+    .swatch {
+      width: 18px;
+      height: 18px;
+      border-radius: 4px;
+      border: 1px solid rgba(0,0,0,0.08);
+    }
+
+    .range-row {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .range-row input[type="range"] { flex: 1; }
+    .range-row span {
+      min-width: 42px;
+      text-align: right;
+      font-size: 12px;
+      font-weight: 600;
+    }
+
+    .sample-preview {
+      border: 1px solid var(--color-border-tertiary);
+      border-radius: 10px;
+      background: linear-gradient(180deg, #f8fafc 0%, #eef2ff 100%);
+      min-height: 76px;
+      padding: 12px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .json-box {
+      background: #0f172a;
+      color: #e2e8f0;
+      border-radius: 10px;
+      padding: 12px;
+      font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+      font-size: 11px;
+      line-height: 1.45;
+      white-space: pre-wrap;
+      word-break: break-word;
+    }
+
+    .section-divider {
+      border: none;
+      border-top: 1px solid var(--color-border-tertiary);
+      margin: 2px 0;
+    }
+
+    .modal-footer {
+      padding: 12px 16px;
+      border-top: 1px solid var(--color-border-tertiary);
+      display: flex;
+      justify-content: flex-end;
+      gap: 8px;
+    }
+
+    button {
+      padding: 8px 14px;
+      border-radius: var(--border-radius-md);
+      border: 1px solid var(--color-border-secondary);
+      background: transparent;
+      color: var(--color-text-primary);
+      font-size: 13px;
+      cursor: pointer;
+    }
+
+    button:hover { background: var(--color-background-secondary); }
+    button.primary {
+      background: var(--color-text-primary);
+      color: white;
+      border-color: var(--color-text-primary);
+    }
+    button.primary:hover { opacity: 0.9; }
+
+    .hidden { display: none !important; }
+
+    @media (max-width: 640px) {
+      .row2,
+      .colormap-grid { grid-template-columns: 1fr; }
+      .modal-header { align-items: flex-start; }
+      .modal-header h2 { max-width: 100%; }
+    }
+  </style>
+</head>
+<body>
+  <div class="modal-bg">
+    <div class="modal">
+      <div class="modal-header">
+        <div class="modal-header-main">
+          <div class="title-row">
+            <h2 id="modal-title">Vector symbology</h2>
+            <span class="layer-badge">vector</span>
+          </div>
+          <div class="layer-meta" id="layer-meta"></div>
+        </div>
+      </div>
+
+      <div class="modal-body" id="modal-body"></div>
+
+      <div class="modal-footer">
+        <button id="reset-btn" type="button">reset</button>
+        <button class="primary" id="apply-btn" type="button">apply</button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const LAYERS = [
+      [
+        {
+          title: "Digital Twin Buildings Layer",
+          type: "vector",
+          src: "s3://saferplaces.co/SaferPlaces-Agent/dev/user=tommaso/project=ma-012/dt-c114dm7w/dt-c114dm7w_buildings.gpkg",
+          description: "Digital Twin generated buildings layer from bbox: {\"west\": 11.3, \"south\": 43.3, \"east\": 11.35, \"north\": 43.35}.",
+          metadata: {
+            crs: "EPSG:4326",
+            "bounding-box-wgs84": { minx: 11.2993569, miny: 43.2996057, maxx: 11.3511529, maxy: 43.3502788 },
+            n_features: 5692,
+            geometry_type: ["MultiPolygon"],
+            attributes: {
+              id: "str",
+              height: "float64",
+              subtype: "str",
+              class: "str",
+              is_underground: "bool",
+              geometry: "geometry"
+            },
+            download_url: "https://s3.us-east-1.amazonaws.com/saferplaces.co/SaferPlaces-Agent/dev/user%3Dtommaso/project%3Dma-012/dt-c114dm7w/dt-c114dm7w_buildings.gpkg"
+          },
+          style: {
+            paint: {
+              "fill-color": ["interpolate-hcl", ["get", "height"], 0, "#f7fbff", 50, "#6baed6", 100, "#08306b"],
+              "fill-opacity": 0.8
+            }
+          }
+        },
+        {
+          title: "Digital Twin Roads - dt-HbesngPY",
+          type: "vector",
+          src: "s3://saferplaces.co/SaferPlaces-Agent/dev/user=tommaso/project=ma-012/dt-hbesngpy/dt-hbesngpy_roads.gpkg",
+          description: "Digital Twin generated roads layer for the region dt-HbesngPY.",
+          metadata: {
+            crs: "EPSG:4326",
+            "bounding-box-wgs84": { minx: 11.3, miny: 43.3, maxx: 11.35, maxy: 43.35 },
+            n_features: 6838,
+            geometry_type: ["LineString"],
+            attributes: {
+              id: "str",
+              subtype: "str",
+              class: "str",
+              geometry: "geometry"
+            },
+            download_url: "https://s3.us-east-1.amazonaws.com/saferplaces.co/SaferPlaces-Agent/dev/user%3Dtommaso/project%3Dma-012/dt-hbesngpy/dt-hbesngpy_roads.gpkg"
+          },
+          style: null
+        }
+      ]
+    ];
+
+    const VECTOR_LAYERS = LAYERS.flat().filter(layer => layer.type === "vector");
+
+    const STYLE_TYPES = [
+      { value: "single", label: "Single color" },
+      { value: "graduated", label: "Graduated" },
+      { value: "categorized", label: "Categorized" }
+    ];
+
+    const COLORMAPS = [
+      { name: "Blues", stops: ["#eff3ff", "#6baed6", "#084594"] },
+      { name: "Reds", stops: ["#fee5d9", "#fb6a4a", "#a50f15"] },
+      { name: "Greens", stops: ["#f7fcf5", "#74c476", "#00441b"] },
+      { name: "Terrain", stops: ["#0d0221", "#81b29a", "#f2cc8f", "#e07a5f"] },
+      { name: "Viridis", stops: ["#440154", "#31688e", "#35b779", "#fde725"] },
+      { name: "Plasma", stops: ["#0d0887", "#9c179e", "#ed7953", "#f0f921"] },
+      { name: "Gray", stops: ["#ffffff", "#969696", "#252525"] }
+    ];
+
+    const CAT_PALETTES = [
+      { name: "Pastel", colors: ["#a6cee3", "#b2df8a", "#fb9a99", "#fdbf6f", "#cab2d6"] },
+      { name: "Bold", colors: ["#1f78b4", "#33a02c", "#e31a1c", "#ff7f00", "#6a3d9a"] },
+      { name: "Muted", colors: ["#8dd3c7", "#ffffb3", "#bebada", "#fb8072", "#80b1d3"] }
+    ];
+
+    function getLayerGeometryKind(layer) {
+      const raw = (layer.metadata?.geometry_type || [""])[0].toLowerCase();
+      if (raw.includes("polygon")) return "polygon";
+      if (raw.includes("line")) return "line";
+      if (raw.includes("point")) return "point";
+      return "polygon";
+    }
+
+    function getNonGeometryAttributes(layer) {
+      const attrs = layer.metadata?.attributes || {};
+      return Object.entries(attrs)
+        .filter(([name, dtype]) => name !== "geometry" && dtype !== "geometry")
+        .map(([name, dtype]) => ({ name, dtype }));
+    }
+
+    function getCompatibleFields(layer, styleType) {
+      const attrs = getNonGeometryAttributes(layer);
+      return attrs.filter(({ dtype }) => {
+        if (styleType === "graduated") return dtype === "float64" || dtype === "int64";
+        if (styleType === "categorized") return dtype === "str" || dtype === "bool";
+        return true;
+      });
+    }
+
+    function defaultStateForLayer(layer) {
+      const attrs = getNonGeometryAttributes(layer);
+      const numericField = attrs.find(a => ["float64", "int64"].includes(a.dtype))?.name || attrs[0]?.name || "";
+      const categoricalField = attrs.find(a => ["str", "bool"].includes(a.dtype))?.name || attrs[0]?.name || "";
+      return {
+        styleType: numericField ? "graduated" : "single",
+        field: numericField || categoricalField,
+        color: "#4a90d9",
+        colormap: 0,
+        classes: 5,
+        opacity: 0.8,
+        catPalette: 0,
+        min: "",
+        max: "",
+        lineWidth: 2,
+        radius: 6
+      };
+    }
+
+    function parseStyleFromLayer(layer) {
+      const base = defaultStateForLayer(layer);
+      const paint = layer.style?.paint || {};
+      const kind = getLayerGeometryKind(layer);
+      const colorProp = kind === "polygon" ? "fill-color" : (kind === "line" ? "line-color" : "circle-color");
+      const opacityProp = kind === "polygon" ? "fill-opacity" : (kind === "line" ? "line-opacity" : "circle-opacity");
+      const widthProp = "line-width";
+      const radiusProp = "circle-radius";
+
+      if (typeof paint[opacityProp] === "number") base.opacity = paint[opacityProp];
+      if (typeof paint[widthProp] === "number") base.lineWidth = paint[widthProp];
+      if (typeof paint[radiusProp] === "number") base.radius = paint[radiusProp];
+
+      const colorExpr = paint[colorProp];
+      if (!colorExpr) return base;
+
+      if (typeof colorExpr === "string") {
+        base.styleType = "single";
+        base.color = colorExpr;
+        return base;
+      }
+
+      if (Array.isArray(colorExpr)) {
+        const field = extractFieldFromExpression(colorExpr);
+        const mapIndex = guessColormapIndexFromExpression(colorExpr);
+        if (field) base.field = field;
+        if (mapIndex >= 0) base.colormap = mapIndex;
+
+        if (colorExpr[0] === "match") {
+          base.styleType = "categorized";
+          base.catPalette = guessPaletteIndexFromExpression(colorExpr);
+          return base;
+        }
+
+        if (String(colorExpr[0]).startsWith("interpolate")) {
+          base.styleType = "graduated";
+          const stops = extractStopValues(colorExpr);
+          if (stops.length) {
+            base.classes = Math.max(2, Math.min(10, stops.length));
+            base.min = String(stops[0]);
+            base.max = String(stops[stops.length - 1]);
+          }
+          return base;
+        }
+      }
+
+      return base;
+    }
+
+    function extractFieldFromExpression(expr) {
+      if (!Array.isArray(expr)) return "";
+      for (let i = 0; i < expr.length - 1; i++) {
+        if (expr[i] === "get" && typeof expr[i + 1] === "string") return expr[i + 1];
+        if (Array.isArray(expr[i]) && expr[i][0] === "get" && typeof expr[i][1] === "string") return expr[i][1];
+      }
+      return "";
+    }
+
+    function extractColorsFromExpression(expr) {
+      if (!Array.isArray(expr)) return [];
+      if (expr[0] === "match") {
+        const tail = expr.slice(3);
+        return tail.filter(v => typeof v === "string" && /^#/.test(v));
+      }
+      if (String(expr[0]).startsWith("interpolate")) {
+        return expr.filter(v => typeof v === "string" && /^#/.test(v));
+      }
+      return [];
+    }
+
+    function extractStopValues(expr) {
+      if (!Array.isArray(expr) || !String(expr[0]).startsWith("interpolate")) return [];
+      const values = [];
+      for (let i = 3; i < expr.length; i += 2) {
+        if (typeof expr[i] === "number") values.push(expr[i]);
+      }
+      return values;
+    }
+
+    function guessColormapIndexFromExpression(expr) {
+      const colors = extractColorsFromExpression(expr);
+      if (!colors.length) return -1;
+      let bestIndex = -1;
+      let bestScore = -Infinity;
+      COLORMAPS.forEach((cm, index) => {
+        let score = 0;
+        colors.forEach(c => { if (cm.stops.includes(c)) score += 2; });
+        if (colors[0] === cm.stops[0]) score += 1;
+        if (colors[colors.length - 1] === cm.stops[cm.stops.length - 1]) score += 1;
+        if (score > bestScore) { bestScore = score; bestIndex = index; }
+      });
+      return bestIndex;
+    }
+
+    function guessPaletteIndexFromExpression(expr) {
+      const colors = extractColorsFromExpression(expr);
+      if (!colors.length) return 0;
+      let bestIndex = 0;
+      let bestScore = -Infinity;
+      CAT_PALETTES.forEach((palette, index) => {
+        let score = 0;
+        colors.forEach(c => { if (palette.colors.includes(c)) score += 1; });
+        if (score > bestScore) { bestScore = score; bestIndex = index; }
+      });
+      return bestIndex;
+    }
+
+    function drawColormap(canvas, stops) {
+      const ctx = canvas.getContext("2d");
+      const w = canvas.width;
+      const h = canvas.height;
+      const grad = ctx.createLinearGradient(0, 0, w, 0);
+      stops.forEach((color, i) => grad.addColorStop(i / Math.max(1, stops.length - 1), color));
+      ctx.fillStyle = grad;
+      ctx.fillRect(0, 0, w, h);
+    }
+
+    const uiState = {
+      selectedLayerIndex: 0,
+      layerStates: VECTOR_LAYERS.map(layer => parseStyleFromLayer(layer))
+    };
+
+    function getSelectedLayer() {
+      return VECTOR_LAYERS[uiState.selectedLayerIndex];
+    }
+
+    function getCurrentState() {
+      return uiState.layerStates[uiState.selectedLayerIndex];
+    }
+
+    function setState(patch) {
+      Object.assign(getCurrentState(), patch);
+      normalizeStateForLayer(getSelectedLayer(), getCurrentState());
+      render();
+    }
+
+    function normalizeStateForLayer(layer, state) {
+      const compatible = getCompatibleFields(layer, state.styleType);
+      if (!compatible.some(f => f.name === state.field)) {
+        state.field = compatible[0]?.name || getNonGeometryAttributes(layer)[0]?.name || "";
+      }
+      if (state.styleType === "graduated" && !compatible.length) {
+        state.styleType = "single";
+      }
+      if (state.styleType === "categorized" && !compatible.length) {
+        state.styleType = "single";
+      }
+    }
+
+    function changeSelectedLayer(index) {
+      uiState.selectedLayerIndex = Number(index);
+      normalizeStateForLayer(getSelectedLayer(), getCurrentState());
+      render();
+    }
+
+    function onStyleTypeChange(value) {
+      const state = getCurrentState();
+      state.styleType = value;
+      normalizeStateForLayer(getSelectedLayer(), state);
+      render();
+    }
+
+    function getStyleTypeLabel(value) {
+      return STYLE_TYPES.find(x => x.value === value)?.label || value;
+    }
+
+    function getMaplibreStyle(layer, state) {
+      const geometryKind = getLayerGeometryKind(layer);
+      const mapLayerType = geometryKind === "polygon" ? "fill" : (geometryKind === "line" ? "line" : "circle");
+      const paint = {};
+
+      const colorProp = geometryKind === "polygon" ? "fill-color" : (geometryKind === "line" ? "line-color" : "circle-color");
+      const opacityProp = geometryKind === "polygon" ? "fill-opacity" : (geometryKind === "line" ? "line-opacity" : "circle-opacity");
+
+      if (state.styleType === "single") {
+        paint[colorProp] = state.color;
+      }
+
+      if (state.styleType === "graduated") {
+        const ramp = COLORMAPS[state.colormap];
+        const steps = state.classes || ramp.stops.length;
+        const min = state.min !== "" ? Number(state.min) : 0;
+        const max = state.max !== "" ? Number(state.max) : 100;
+        const expr = ["interpolate-hcl", ["get", state.field]];
+        for (let i = 0; i < steps; i++) {
+          const t = steps === 1 ? 0 : i / (steps - 1);
+          const value = +(min + (max - min) * t).toFixed(2);
+          const colorIndex = Math.round(t * (ramp.stops.length - 1));
+          expr.push(value, ramp.stops[colorIndex]);
+        }
+        paint[colorProp] = expr;
+      }
+
+      if (state.styleType === "categorized") {
+        const palette = CAT_PALETTES[state.catPalette].colors;
+        paint[colorProp] = [
+          "match",
+          ["to-string", ["get", state.field]],
+          "class_1", palette[0],
+          "class_2", palette[1],
+          "class_3", palette[2],
+          "class_4", palette[3],
+          "class_5", palette[4],
+          "#9ca3af"
+        ];
+      }
+
+      paint[opacityProp] = state.opacity;
+      if (geometryKind === "line") paint["line-width"] = state.lineWidth;
+      if (geometryKind === "point") {
+        paint["circle-radius"] = state.radius;
+        paint["circle-stroke-color"] = "#ffffff";
+        paint["circle-stroke-width"] = 1;
+      }
+
+      return { type: mapLayerType, paint };
+    }
+
+    function renderPreview(layer, state) {
+      const kind = getLayerGeometryKind(layer);
+      const style = getMaplibreStyle(layer, state);
+      const colorProp = kind === "polygon" ? "fill-color" : (kind === "line" ? "line-color" : "circle-color");
+      const opacityProp = kind === "polygon" ? "fill-opacity" : (kind === "line" ? "line-opacity" : "circle-opacity");
+      const paintColor = style.paint[colorProp];
+      const opacity = style.paint[opacityProp] ?? 1;
+
+      if (Array.isArray(paintColor) && String(paintColor[0]).startsWith("interpolate")) {
+        return `<canvas id="preview-canvas" width="460" height="24" style="width:100%;height:24px;border-radius:8px"></canvas>`;
+      }
+
+      if (kind === "line") {
+        const color = Array.isArray(paintColor) ? "#64748b" : paintColor;
+        return `<svg viewBox="0 0 300 70" width="100%" height="70" aria-hidden="true">
+          <path d="M20 50 C70 10, 130 60, 180 28 S260 34, 280 16" fill="none" stroke="${color}" stroke-width="${style.paint['line-width'] || 2}" stroke-linecap="round" stroke-linejoin="round" opacity="${opacity}" />
+        </svg>`;
+      }
+
+      if (kind === "point") {
+        const color = Array.isArray(paintColor) ? "#64748b" : paintColor;
+        const radius = style.paint["circle-radius"] || 6;
+        return `<svg viewBox="0 0 300 70" width="100%" height="70" aria-hidden="true">
+          <circle cx="150" cy="35" r="${radius}" fill="${color}" opacity="${opacity}" stroke="#ffffff" stroke-width="1.2" />
+        </svg>`;
+      }
+
+      const color = Array.isArray(paintColor) ? "#94a3b8" : paintColor;
+      return `<svg viewBox="0 0 300 70" width="100%" height="70" aria-hidden="true">
+        <path d="M28 56 L48 18 L94 22 L130 12 L176 28 L210 20 L270 34 L250 58 Z" fill="${color}" opacity="${opacity}" stroke="rgba(15,23,42,0.18)" stroke-width="1" />
+      </svg>`;
+    }
+
+    function render() {
+      const layer = getSelectedLayer();
+      const state = getCurrentState();
+      const geometryKind = getLayerGeometryKind(layer);
+      const compatibleFields = getCompatibleFields(layer, state.styleType);
+      const attrs = getNonGeometryAttributes(layer);
+
+      document.getElementById("modal-title").textContent = layer.title;
+      document.getElementById("layer-meta").innerHTML = [
+        `<span>${geometryKind}</span>`,
+        `<span>${layer.metadata?.n_features?.toLocaleString?.() || 0} feature</span>`,
+        `<span>${attrs.length} attributi</span>`
+      ].join("<span>•</span>");
+
+      const body = document.getElementById("modal-body");
+      body.innerHTML = `
+        <div class="field-row">
+          <label>Vector layer</label>
+          <select id="layer-select">
+            ${VECTOR_LAYERS.map((item, index) => `<option value="${index}" ${index === uiState.selectedLayerIndex ? "selected" : ""}>${item.title}</option>`).join("")}
+          </select>
+          <div class="helper">Mostra solo i layer vector della nuova struttura. La gestione raster è stata rimossa.</div>
+        </div>
+
+        <div class="style-card">
+          <div class="field-row">
+            <label>Style type</label>
+            <select id="style-type-select">
+              ${STYLE_TYPES
+                .filter(type => getCompatibleFields(layer, type.value).length > 0 || type.value === "single")
+                .map(type => `<option value="${type.value}" ${type.value === state.styleType ? "selected" : ""}>${type.label}</option>`)
+                .join("")}
+            </select>
+          </div>
+
+          ${state.styleType === "single" ? `
+            <div class="field-row">
+              <label>Color</label>
+              <div class="range-row" style="align-items:center">
+                <input id="single-color" type="color" value="${state.color}" style="width:48px;height:34px;padding:2px;border-radius:8px;border:1px solid var(--color-border-secondary);background:white" />
+                <span style="min-width:auto;text-align:left;font-weight:500">${geometryKind === "polygon" ? "fill" : geometryKind === "line" ? "stroke" : "marker"}</span>
+              </div>
+            </div>
+          ` : ""}
+
+          ${(state.styleType === "graduated" || state.styleType === "categorized") ? `
+            <div class="field-row">
+              <label>Field</label>
+              <select id="field-select">
+                ${compatibleFields.map(field => `<option value="${field.name}" ${field.name === state.field ? "selected" : ""}>${field.name} (${field.dtype})</option>`).join("")}
+              </select>
+            </div>
+          ` : ""}
+
+          ${state.styleType === "graduated" ? `
+            <div class="field-row">
+              <label>Color ramp</label>
+              <div class="colormap-grid" id="cm-grid"></div>
+            </div>
+            <div class="field-row">
+              <label>Classes</label>
+              <div class="range-row">
+                <input id="classes-range" type="range" min="2" max="10" step="1" value="${state.classes}" />
+                <span id="classes-value">${state.classes}</span>
+              </div>
+            </div>
+            <div class="row2">
+              <div class="field-row">
+                <label>Min override</label>
+                <input id="min-override" type="number" placeholder="auto" value="${state.min}" />
+              </div>
+              <div class="field-row">
+                <label>Max override</label>
+                <input id="max-override" type="number" placeholder="auto" value="${state.max}" />
+              </div>
+            </div>
+          ` : ""}
+
+          ${state.styleType === "categorized" ? `
+            <div class="field-row">
+              <label>Palette</label>
+              <div class="palette-list" id="palette-list"></div>
+            </div>
+          ` : ""}
+
+          ${(geometryKind === "line") ? `
+            <div class="field-row">
+              <label>Line width</label>
+              <div class="range-row">
+                <input id="line-width-range" type="range" min="1" max="12" step="0.5" value="${state.lineWidth}" />
+                <span id="line-width-value">${state.lineWidth}px</span>
+              </div>
+            </div>
+          ` : ""}
+
+          ${(geometryKind === "point") ? `
+            <div class="field-row">
+              <label>Marker radius</label>
+              <div class="range-row">
+                <input id="radius-range" type="range" min="2" max="18" step="1" value="${state.radius}" />
+                <span id="radius-value">${state.radius}px</span>
+              </div>
+            </div>
+          ` : ""}
+
+          <hr class="section-divider" />
+
+          <div class="field-row">
+            <label>Opacity</label>
+            <div class="range-row">
+              <input id="opacity-range" type="range" min="0" max="1" step="0.01" value="${state.opacity}" />
+              <span id="opacity-value">${Math.round(state.opacity * 100)}%</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="field-row">
+          <label>Preview</label>
+          <div class="sample-preview" id="preview-area">${renderPreview(layer, state)}</div>
+        </div>
+
+        <div class="field-row">
+          <label>Generated MapLibre style</label>
+          <div class="json-box" id="json-output"></div>
+          <div class="helper">Il pannello si inizializza leggendo l'eventuale style già presente nel layer selezionato.</div>
+        </div>
+      `;
+
+      document.getElementById("layer-select").addEventListener("change", e => changeSelectedLayer(e.target.value));
+      document.getElementById("style-type-select").addEventListener("change", e => onStyleTypeChange(e.target.value));
+
+      const fieldSelect = document.getElementById("field-select");
+      if (fieldSelect) fieldSelect.addEventListener("change", e => setState({ field: e.target.value }));
+
+      const singleColor = document.getElementById("single-color");
+      if (singleColor) singleColor.addEventListener("input", e => setState({ color: e.target.value }));
+
+      const opacityRange = document.getElementById("opacity-range");
+      opacityRange.addEventListener("input", e => setState({ opacity: Number(e.target.value) }));
+
+      const classesRange = document.getElementById("classes-range");
+      if (classesRange) classesRange.addEventListener("input", e => setState({ classes: Number(e.target.value) }));
+
+      const minOverride = document.getElementById("min-override");
+      if (minOverride) minOverride.addEventListener("input", e => setState({ min: e.target.value }));
+
+      const maxOverride = document.getElementById("max-override");
+      if (maxOverride) maxOverride.addEventListener("input", e => setState({ max: e.target.value }));
+
+      const lineWidthRange = document.getElementById("line-width-range");
+      if (lineWidthRange) lineWidthRange.addEventListener("input", e => setState({ lineWidth: Number(e.target.value) }));
+
+      const radiusRange = document.getElementById("radius-range");
+      if (radiusRange) radiusRange.addEventListener("input", e => setState({ radius: Number(e.target.value) }));
+
+      const cmGrid = document.getElementById("cm-grid");
+      if (cmGrid) {
+        COLORMAPS.forEach((cm, index) => {
+          const wrapper = document.createElement("div");
+          wrapper.className = "cm-option" + (index === state.colormap ? " selected" : "");
+          wrapper.title = cm.name;
+          wrapper.addEventListener("click", () => setState({ colormap: index }));
+          const canvas = document.createElement("canvas");
+          canvas.width = 140;
+          canvas.height = 22;
+          wrapper.appendChild(canvas);
+          cmGrid.appendChild(wrapper);
+          drawColormap(canvas, cm.stops);
+        });
+      }
+
+      const paletteList = document.getElementById("palette-list");
+      if (paletteList) {
+        CAT_PALETTES.forEach((palette, index) => {
+          const row = document.createElement("div");
+          row.className = "palette-row" + (index === state.catPalette ? " active" : "");
+          row.addEventListener("click", () => setState({ catPalette: index }));
+          const label = document.createElement("span");
+          label.textContent = palette.name;
+          label.style.color = "var(--color-text-secondary)";
+          label.style.fontWeight = "600";
+          const swatches = document.createElement("div");
+          swatches.className = "palette-swatches";
+          palette.colors.forEach(color => {
+            const node = document.createElement("div");
+            node.className = "swatch";
+            node.style.background = color;
+            swatches.appendChild(node);
+          });
+          row.append(label, swatches);
+          paletteList.appendChild(row);
+        });
+      }
+
+      const previewCanvas = document.getElementById("preview-canvas");
+      if (previewCanvas && state.styleType === "graduated") {
+        drawColormap(previewCanvas, COLORMAPS[state.colormap].stops);
+      }
+
+      const generated = getMaplibreStyle(layer, state);
+      document.getElementById("json-output").textContent = JSON.stringify(generated, null, 2);
+    }
+
+    document.getElementById("reset-btn").addEventListener("click", () => {
+      uiState.layerStates[uiState.selectedLayerIndex] = parseStyleFromLayer(getSelectedLayer());
+      render();
+    });
+
+    document.getElementById("apply-btn").addEventListener("click", () => {
+      const layer = getSelectedLayer();
+      layer.style = getMaplibreStyle(layer, getCurrentState());
+      render();
+      console.log("Applied style for layer:", layer.title, layer.style);
+    });
+
+    render();
+  </script>
+</body>
+</html>
