@@ -966,6 +966,7 @@ const LayerPanel = (() => {
                 <ul class="dropdown-menu dropdown-menu-dark">
                     ${layer.type === 'vector' ? '<li><a class="dropdown-item" data-action="symbology">Style</a></li>' : ''}
                     ${layer.type === 'raster' ? '<li><a class="dropdown-item" data-action="raster-symbology">Style</a></li>' : ''}
+                    ${layer.type === 'raster' ? '<li><a class="dropdown-item" data-action="open-sculpt">Open in Sculpt</a></li>' : ''}
                     <li><a class="dropdown-item" data-action="config">Config</a></li>
                     <li><a class="dropdown-item" data-action="download">Download</a></li>
                 </ul>
@@ -1133,10 +1134,103 @@ const LayerPanel = (() => {
             });
         }
 
+        // Open in Sculpt action (raster layers only)
+        const openSculptLink = right.querySelector('[data-action="open-sculpt"]');
+        if (openSculptLink) {
+            openSculptLink.addEventListener('click', (e) => {
+                e.preventDefault();
+                const layerData = JSON.parse(item.dataset.layerData);
+                openInSculpt(layerData);
+            });
+        }
+
         // Drag handle tracking
         item.addEventListener('mousedown', (e) => {
             draggingFromHandle = e.target.classList.contains('drag-handle-symbol');
         });
+    }
+
+    // =========================================================================
+    // DEM SCULPT PANEL
+    // =========================================================================
+
+    /**
+     * Apre il pannello DEM Sculpt per il layer raster specificato.
+     * Sostituisce visivamente la mappa senza rimuoverla dal DOM.
+     * @param {Object} layer - Layer raster con metadata.download_url
+     */
+    function openInSculpt(layer) {
+        const panel = document.getElementById('sculptPanel');
+        const iframe = document.getElementById('sculptIframe');
+        const closeBtn = document.getElementById('sculptCloseBtn');
+
+        if (!panel || !iframe) return;
+
+        const demUrl = layer.metadata?.download_url || '';
+
+        // Sync light-theme class from parent to iframe document
+        function syncTheme() {
+            try {
+                const ihtml = iframe.contentDocument?.documentElement;
+                if (!ihtml) return;
+                if (document.documentElement.classList.contains('light-theme')) {
+                    ihtml.classList.add('light-theme');
+                } else {
+                    ihtml.classList.remove('light-theme');
+                }
+            } catch (_) {}
+        }
+
+        // Inject DEM URL once iframe has loaded, then auto-load
+        iframe.onload = () => {
+            syncTheme();
+            try {
+                const iwin = iframe.contentWindow;
+                const demInput = iframe.contentDocument.getElementById('demUrl');
+                if (demInput && demUrl) {
+                    demInput.value = demUrl;
+                    iwin.loadDEMFromURL();
+                }
+                // Apply default colormap based on surface_type
+                const SURFACE_COLORMAP = {
+                    'dem':                    'terrain',
+                    'dem-building':           'elevation',
+                    'water-depth':            'water',
+                    'rain-timeseries':        'spectral',
+                    'temperature-timeseries': 'hot',
+                    'raster':                 'spectral'
+                };
+                const surfaceType = layer.metadata?.surface_type || '';
+                const cmName = SURFACE_COLORMAP[surfaceType] || 'terrain';
+                if (typeof iwin.setColormap === 'function') iwin.setColormap(cmName);
+            } catch (e) {
+                console.warn('[Sculpt] Could not inject DEM URL:', e);
+            }
+        };
+
+        // (Re)load the sculpt tool – root-relative path
+        iframe.src = '/public/ext/dem-sculpt/dem-sculpt.html';
+
+        panel.classList.remove('hidden');
+
+        // Watch parent theme changes and propagate to iframe
+        if (!iframe.dataset.themeObserverBound) {
+            iframe.dataset.themeObserverBound = '1';
+            const observer = new MutationObserver(syncTheme);
+            observer.observe(document.documentElement, { attributes: true, attributeFilter: ['class'] });
+            iframe._themeObserver = observer;
+        }
+
+        // Wire up close button (once)
+        if (closeBtn && !closeBtn.dataset.sculptBound) {
+            closeBtn.dataset.sculptBound = '1';
+            closeBtn.addEventListener('click', () => {
+                panel.classList.add('hidden');
+                // Release iframe resources cleanly
+                iframe.onload = null;
+                iframe.src = 'about:blank';
+            });
+        }
     }
 
     // =========================================================================

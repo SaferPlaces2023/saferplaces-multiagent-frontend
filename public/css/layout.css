@@ -264,6 +264,66 @@ fieldset[disabled] {
     z-index: 1;
 }
 
+/* ========================================================================= */
+/* SCULPT PANEL - DEM Sculpt overlay (replaces map view)                     */
+/* ========================================================================= */
+
+.sculpt-panel {
+    position: absolute;
+    inset: 0;
+    z-index: 50;
+    display: flex;
+    flex-direction: column;
+    background: var(--color-bg-primary);
+}
+
+.sculpt-panel.hidden {
+    display: none;
+}
+
+.sculpt-close-btn {
+    position: absolute;
+    top: 12px;
+    left: 50%;
+    transform: translateX(-50%);
+    z-index: 200;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 6px 14px;
+    background: rgba(248, 249, 252, 0.93);
+    border: 1px solid rgba(0, 0, 0, 0.13);
+    border-radius: var(--radius-md);
+    color: var(--color-text-primary);
+    font-family: var(--font-family-base);
+    font-size: 12px;
+    font-weight: var(--font-weight-medium);
+    cursor: pointer;
+    box-shadow: var(--shadow-sm);
+    transition: var(--transition-all-fast);
+    white-space: nowrap;
+}
+
+.sculpt-close-btn:hover {
+    background: rgba(248, 249, 252, 1);
+    box-shadow: var(--shadow-md);
+}
+
+.sculpt-close-btn .material-symbols-outlined {
+    font-size: 16px;
+    line-height: 1;
+}
+
+html.light-theme .sculpt-close-btn {
+    background: rgba(255, 255, 255, 0.95);
+}
+
+#sculptIframe {
+    flex: 1;
+    width: 100%;
+    border: none;
+}
+
 /* Normalization of strip buttons */
 .left-sidebar-strip .btn {
     width: 36px;
