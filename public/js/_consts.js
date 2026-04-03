@@ -16,10 +16,12 @@ const Routes = (() => {
         const LAYERS = (threadId) => `${THREAD(threadId)}/layers`;
         const RENDER = (threadId) => `${THREAD(threadId)}/render`;
         const LAYER_URL = `${BASE}/get-layer-url`;
+        const REGISTER_VECTOR = (threadId) => `${THREAD(threadId)}/register-vector`;
+        const REGISTER_RASTER = (threadId) => `${THREAD(threadId)}/register-raster`;
 
         return { 
             BASE, NEWTHREAD, THREAD, USER, STATE, LAYERS, RENDER,
-            LAYER_URL
+            LAYER_URL, REGISTER_VECTOR, REGISTER_RASTER
         };
     })();
 

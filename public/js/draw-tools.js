@@ -224,7 +224,16 @@ const DrawTools = (() => {
         dtCollection: 'dtCollections',
         dtPanel: 'dtCollectionsPanel',
         dtList: 'dtCollectionsList',
-        dtCount: 'dtCollectionsCount'
+        dtCount: 'dtCollectionsCount',
+
+        // Export GeoJSON modal
+        drawExportModal: 'drawExportModal',
+        deTitle: 'deTitle',
+        deDesc: 'deDesc',
+        deDownload: 'deDownload',
+        deRegister: 'deRegister',
+        deCancel: 'deCancel',
+        deStatus: 'deStatus'
     };
 
     // =========================================================================
@@ -260,6 +269,9 @@ const DrawTools = (() => {
     // --- Mirror of shapes_registry from backend (shape_id → DrawnShape dict)
     let shapesRegistryMirror = {};
 
+    // --- Export modal state
+    let exportPendingFc = null;   // {name, fc}
+
     // =========================================================================
     // INIZIALIZZAZIONE
     // =========================================================================
@@ -280,6 +292,7 @@ const DrawTools = (() => {
         bindDrawingToolButtons();
         bindPanelButtons();
         bindDocumentEvents();
+        bindExportModalEvents();
 
         console.log('[DrawTools] Initialized');
     }
@@ -1437,8 +1450,8 @@ const DrawTools = (() => {
 
                 if (action === 'zoom') {
                     document.dispatchEvent(new CustomEvent('draw:collection:zoom', { detail: { key: name, fc } }));
-                } else if (action === 'download') {
-                    document.dispatchEvent(new CustomEvent('draw:collection:download', { detail: { key: name, fc } }));
+                } else if (action === 'download' || action === 'register') {
+                    openExportModal(name, fc);
                 }
             });
 
@@ -1457,6 +1470,139 @@ const DrawTools = (() => {
         if (/line/i.test(geomType)) return DRAW_CONSTANTS.MODES.LINESTRING;
         if (/polygon/i.test(geomType)) return DRAW_CONSTANTS.MODES.POLYGON;
         return 'collection';
+    }
+
+    // =========================================================================
+    // EXPORT GeoJSON MODAL
+    // =========================================================================
+
+    /**
+     * Wiring eventi pulsanti del modal di export GeoJSON
+     */
+    function bindExportModalEvents() {
+        domElements.deCancel?.addEventListener('click', closeExportModal);
+        domElements.deDownload?.addEventListener('click', handleExportDownload);
+        domElements.deRegister?.addEventListener('click', handleExportRegister);
+    }
+
+    /**
+     * Apre il modal di export con la feature collection selezionata
+     * @param {string} name - Chiave nel registry
+     * @param {Object} fc - GeoJSON FeatureCollection
+     */
+    function openExportModal(name, fc) {
+        exportPendingFc = { name, fc };
+
+        const suggestedTitle = fc?.metadata?.name || name || '';
+        if (domElements.deTitle) domElements.deTitle.value = suggestedTitle;
+        if (domElements.deDesc) domElements.deDesc.value = '';
+        setExportStatus('', false);
+
+        if (domElements.drawExportModal) {
+            domElements.drawExportModal.classList.remove('hidden');
+        }
+        setTimeout(() => domElements.deTitle?.focus(), 50);
+    }
+
+    /**
+     * Chiude il modal di export
+     */
+    function closeExportModal() {
+        if (domElements.drawExportModal) {
+            domElements.drawExportModal.classList.add('hidden');
+        }
+        exportPendingFc = null;
+        setExportStatus('', false);
+    }
+
+    /**
+     * Esegue il download del GeoJSON come file
+     */
+    function handleExportDownload() {
+        if (!exportPendingFc) return;
+        const { name, fc } = exportPendingFc;
+        const blob = new Blob([JSON.stringify(fc, null, 2)], { type: 'application/geo+json' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `${name || 'collection'}.geojson`;
+        a.click();
+        URL.revokeObjectURL(url);
+        closeExportModal();
+    }
+
+    /**
+     * Registra il GeoJSON come layer nel progetto: upload S3 + registrazione
+     */
+    async function handleExportRegister() {
+        if (!exportPendingFc) return;
+
+        const title = (domElements.deTitle?.value || '').trim();
+        if (!title) {
+            setExportStatus('Insert at least a title.', true);
+            return;
+        }
+
+        const threadId = getStorageValue(STORAGE_KEYS.THREAD_ID);
+        if (!threadId) {
+            setExportStatus('No active session. Open a project first.', true);
+            return;
+        }
+
+        const { name, fc } = exportPendingFc;
+        const description = (domElements.deDesc?.value || '').trim();
+
+        setExportStatus('Uploading…', false);
+        if (domElements.deRegister) domElements.deRegister.disabled = true;
+
+        try {
+            const resp = await fetch(Routes.Agent.REGISTER_VECTOR(threadId), {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ geojson: fc, title, description })
+            });
+
+            if (!resp.ok) {
+                const err = await resp.json().catch(() => ({}));
+                throw new Error(err.error || `Server error ${resp.status}`);
+            }
+
+            const result = await resp.json();
+            setExportStatus(`Layer "${result.title}" registered.`, false);
+
+            // Notify layer panel to refresh
+            document.dispatchEvent(new CustomEvent('layer:reload-project-layers'));
+
+            // Also add to map immediately via render
+            document.dispatchEvent(new CustomEvent('layer:add-geojson', {
+                detail: { layer_data: { src: result.src, type: 'vector', title: result.title, register: false } }
+            }));
+
+            setTimeout(closeExportModal, 1400);
+        } catch (err) {
+            console.error('[DrawTools] register-vector failed:', err);
+            setExportStatus(`Error: ${err.message}`, true);
+        } finally {
+            if (domElements.deRegister) domElements.deRegister.disabled = false;
+        }
+    }
+
+    /**
+     * Aggiorna il messaggio di status nel modal
+     * @param {string} message
+     * @param {boolean} isError
+     */
+    function setExportStatus(message, isError) {
+        const el = domElements.deStatus;
+        if (!el) return;
+        if (!message) {
+            el.classList.add('d-none');
+            el.textContent = '';
+            return;
+        }
+        el.classList.remove('d-none', 'text-danger', 'text-secondary');
+        el.classList.add(isError ? 'text-danger' : 'text-secondary');
+        el.textContent = message;
     }
 
     // =========================================================================
@@ -1532,6 +1678,7 @@ const DrawTools = (() => {
         removeFeatureCollection,
         clearAllFeatureCollections,
         renderCollectionsPanel,
-        syncFromShapesRegistry
+        syncFromShapesRegistry,
+        openExportModal
     };
 })();

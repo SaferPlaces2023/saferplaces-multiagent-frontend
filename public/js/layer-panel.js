@@ -145,7 +145,15 @@ const LayerPanel = (() => {
         lcSurfaceType: 'lcSurfaceType',
         lcCancel: 'lcCancel',
         lcSave: 'lcSave',
-        lcError: 'lcError'
+        lcError: 'lcError',
+        // Modal raster export (sculpt DEM)
+        rasterExportModal: 'rasterExportModal',
+        reTitle: 'reTitle',
+        reDesc: 'reDesc',
+        reDownload: 'reDownload',
+        reRegister: 'reRegister',
+        reCancel: 'reCancel',
+        reStatus: 'reStatus'
     };
 
     // =========================================================================
@@ -155,6 +163,7 @@ const LayerPanel = (() => {
     let pendingReg = null;
     let draggingFromHandle = false;
     let layerConfigCurrent = null;
+    let rasterExportPending = null;  // { tif_base64, source_dem_url, name }
 
     // Resize state for left sidebar
     let leftResizing = false;
@@ -214,6 +223,10 @@ const LayerPanel = (() => {
 
         domElements.lcCancel?.addEventListener('click', closeLayerConfigModal);
         domElements.lcSave?.addEventListener('click', handleConfirmLayerConfig);
+
+        domElements.reCancel?.addEventListener('click', closeRasterExportModal);
+        domElements.reDownload?.addEventListener('click', handleRasterExportDownload);
+        domElements.reRegister?.addEventListener('click', handleRasterExportRegister);
     }
 
     /**
@@ -1231,6 +1244,146 @@ const LayerPanel = (() => {
                 iframe.src = 'about:blank';
             });
         }
+
+        // Listen for export message from dem-sculpt iframe (bound once globally)
+        if (!window._sculptExportListenerBound) {
+            window._sculptExportListenerBound = true;
+            window.addEventListener('message', (ev) => {
+                if (!ev.data?.type) return;
+                if (ev.data.type === 'sculpt:export-geojson') {
+                    const { fc, name } = ev.data;
+                    if (fc && typeof DrawTools?.openExportModal === 'function') {
+                        DrawTools.openExportModal(name || 'sculpt-log', fc);
+                    }
+                } else if (ev.data.type === 'sculpt:export-geotiff') {
+                    const { tif_base64, source_dem_url, name } = ev.data;
+                    if (tif_base64) openRasterExportModal(tif_base64, source_dem_url, name);
+                }
+            });
+        }
+    }
+
+    // =========================================================================
+    // RASTER EXPORT MODAL (sculpt DEM)
+    // =========================================================================
+
+    /**
+     * Apre il modal di export raster con i dati TIF dal dem-sculpt
+     * @param {string} tif_base64 - TIF codificato in base64
+     * @param {string} source_dem_url - URL HTTPS del DEM sorgente (per l'allineamento)
+     * @param {string} name - Nome suggerito
+     */
+    function openRasterExportModal(tif_base64, source_dem_url, name) {
+        rasterExportPending = { tif_base64, source_dem_url, name };
+
+        if (domElements.reTitle) domElements.reTitle.value = name || 'dem-sculpt';
+        if (domElements.reDesc) domElements.reDesc.value = '';
+        setRasterExportStatus('', false);
+
+        if (domElements.rasterExportModal) {
+            domElements.rasterExportModal.classList.remove(CSS_CLASSES.HIDDEN);
+        }
+        setTimeout(() => domElements.reTitle?.focus(), 50);
+    }
+
+    /**
+     * Chiude il modal di export raster
+     */
+    function closeRasterExportModal() {
+        if (domElements.rasterExportModal) {
+            domElements.rasterExportModal.classList.add(CSS_CLASSES.HIDDEN);
+        }
+        rasterExportPending = null;
+        setRasterExportStatus('', false);
+    }
+
+    /**
+     * Trigger download del TIF dal base64 in memoria
+     */
+    function handleRasterExportDownload() {
+        if (!rasterExportPending) return;
+        const { tif_base64, name } = rasterExportPending;
+        const binary = atob(tif_base64);
+        const bytes = new Uint8Array(binary.length);
+        for (let i = 0; i < binary.length; i++) bytes[i] = binary.charCodeAt(i);
+        const blob = new Blob([bytes], { type: 'image/tiff' });
+        const a = document.createElement('a');
+        a.href = URL.createObjectURL(blob);
+        a.download = `${name || 'dem-sculpt'}.tif`;
+        a.click();
+        URL.revokeObjectURL(a.href);
+        closeRasterExportModal();
+    }
+
+    /**
+     * Invia il TIF al backend per allineamento, conversione COG e registrazione come layer
+     */
+    async function handleRasterExportRegister() {
+        if (!rasterExportPending) return;
+
+        const title = (domElements.reTitle?.value || '').trim();
+        if (!title) {
+            setRasterExportStatus('Insert at least a title.', true);
+            return;
+        }
+
+        const threadId = getStorageValue(STORAGE_KEYS.THREAD_ID);
+        if (!threadId) {
+            setRasterExportStatus('No active session. Open a project first.', true);
+            return;
+        }
+
+        const { tif_base64, source_dem_url } = rasterExportPending;
+        const description = (domElements.reDesc?.value || '').trim();
+
+        setRasterExportStatus('Uploading and processing…', false);
+        if (domElements.reRegister) domElements.reRegister.disabled = true;
+
+        try {
+            const resp = await fetch(Routes.Agent.REGISTER_RASTER(threadId), {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ tif_base64, source_dem_url, title, description })
+            });
+
+            if (!resp.ok) {
+                const err = await resp.json().catch(() => ({}));
+                throw new Error(err.error || `Server error ${resp.status}`);
+            }
+
+            const result = await resp.json();
+            setRasterExportStatus(`Layer "${result.title}" registered.`, false);
+
+            document.dispatchEvent(new CustomEvent('layer:reload-project-layers'));
+            document.dispatchEvent(new CustomEvent('layer:add-cog', {
+                detail: { layer_data: { src: result.src, type: 'raster', title: result.title, register: false } }
+            }));
+
+            setTimeout(closeRasterExportModal, 1400);
+        } catch (err) {
+            console.error('[LayerPanel] register-raster failed:', err);
+            setRasterExportStatus(`Error: ${err.message}`, true);
+        } finally {
+            if (domElements.reRegister) domElements.reRegister.disabled = false;
+        }
+    }
+
+    /**
+     * Aggiorna il messaggio di status nel modal raster
+     * @param {string} message
+     * @param {boolean} isError
+     */
+    function setRasterExportStatus(message, isError) {
+        const el = domElements.reStatus;
+        if (!el) return;
+        if (!message) {
+            el.classList.add('d-none');
+            el.textContent = '';
+            return;
+        }
+        el.classList.remove('d-none', 'text-danger', 'text-secondary');
+        el.classList.add(isError ? 'text-danger' : 'text-secondary');
+        el.textContent = message;
     }
 
     // =========================================================================
