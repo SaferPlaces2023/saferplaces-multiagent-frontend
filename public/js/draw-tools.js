@@ -1324,12 +1324,15 @@ const DrawTools = (() => {
      * @returns {Array<string>} Layer IDs
      */
     function getAllBboxFillLayerIds() {
+        const POLYGON_TYPES = [DRAW_CONSTANTS.MODES.BBOX, DRAW_CONSTANTS.MODES.POLYGON];
         return Object.keys(DrawFeatureCollections)
-            .filter(k => DrawFeatureCollections[k]?.metadata?.feature_type === DRAW_CONSTANTS.MODES.BBOX)
+            .filter(k => POLYGON_TYPES.includes(DrawFeatureCollections[k]?.metadata?.feature_type))
             .map(k => {
                 const fc = DrawFeatureCollections[k];
-                return createLayerLayerId(`${DRAW_CONSTANTS.MODES.BBOX}-fill`, fc.collection_id);
-            });
+                const ftype = fc.metadata?.feature_type || DRAW_CONSTANTS.MODES.BBOX;
+                return createLayerLayerId(`${ftype}-fill`, fc.collection_id);
+            })
+            .filter(layerId => map.getLayer(layerId) != null);
     }
 
     // =========================================================================
