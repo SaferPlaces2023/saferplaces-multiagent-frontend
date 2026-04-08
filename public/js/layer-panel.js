@@ -979,6 +979,7 @@ const LayerPanel = (() => {
                 <ul class="dropdown-menu dropdown-menu-dark">
                     ${layer.type === 'vector' ? '<li><a class="dropdown-item" data-action="symbology">Style</a></li>' : ''}
                     ${layer.type === 'raster' ? '<li><a class="dropdown-item" data-action="raster-symbology">Style</a></li>' : ''}
+                    ${layer.type === 'raster' ? '<li><a class="dropdown-item" data-action="identify">Identify</a></li>' : ''}
                     ${layer.type === 'raster' ? '<li><a class="dropdown-item" data-action="open-sculpt">Open in Sculpt</a></li>' : ''}
                     ${layer.type === 'raster' && layer.metadata?.surface_type === 'water-depth' ? '<li><a class="dropdown-item" data-action="open-cesium">3D View</a></li>' : ''}
                     <li><a class="dropdown-item" data-action="config">Config</a></li>
@@ -1145,6 +1146,16 @@ const LayerPanel = (() => {
                 e.preventDefault();
                 const layerData = JSON.parse(item.dataset.layerData);
                 downloadLayer(layerData);
+            });
+        }
+
+        // Identify action (raster layers only)
+        const identifyLink = right.querySelector('[data-action="identify"]');
+        if (identifyLink) {
+            identifyLink.addEventListener('click', (e) => {
+                e.preventDefault();
+                const layerData = JSON.parse(item.dataset.layerData);
+                GeoMap.startIdentify(layerData);
             });
         }
 

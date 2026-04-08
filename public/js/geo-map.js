@@ -229,7 +229,10 @@ const GeoMap = (() => {
         btnCesiumLaunch: 'btnCesiumLaunch',
         viewportBbox: 'map-viewport-bbox',
         viewportCenter: 'map-viewport-center',
-        viewportZoom: 'map-viewport-zoom'
+        viewportZoom: 'map-viewport-zoom',
+        btnStopIdentify: 'btnStopIdentify',
+        identifyIndicator: 'identifyIndicator',
+        identifyTooltip: 'identify-tooltip'
     };
 
     // =========================================================================
@@ -240,6 +243,11 @@ const GeoMap = (() => {
     let registry = {};  // id → {type, url, data, metadata?}
     let customLayerIds = new Set();
     let currentBuildingsSource = 'default';  // 'default' | layerId from registry with surface_type='buildings'
+
+    // Identify mode state
+    let identifyActive = false;
+    let identifyLayerUrl = null;
+    let identifyBoundHandler = null;
     let surfaceColorscalesMap = {
         [GEO_MAP_CONSTANTS.RASTER_SURFACE_TYPES.RAIN_TIMESERIES]: MaplibreCOGProtocol.colorScale({
             colorScheme: GEO_MAP_CONSTANTS.COLORMAPS.RAIN,
@@ -514,6 +522,11 @@ const GeoMap = (() => {
 
         if (domElements.btnCesiumLaunch) {
             domElements.btnCesiumLaunch.addEventListener('click', handleCesiumLaunch);
+        }
+
+        const btnStop = document.getElementById('btnStopIdentify');
+        if (btnStop) {
+            btnStop.addEventListener('click', stopIdentify);
         }
 
         // Bind toolbar header toggles for click-to-expand
@@ -1756,6 +1769,132 @@ const GeoMap = (() => {
     // EXPORTED API
     // =========================================================================
 
+    // =========================================================================
+    // IDENTIFY MODE
+    // =========================================================================
+
+    /**
+     * Attiva la modalità identify per un layer raster COG.
+     * Rende il layer visibile se non lo è, aggiunge listener mousemove
+     * e mostra l'indicatore nella topbar.
+     * @param {Object} layerData - Oggetto layer con src, type, metadata
+     */
+    function startIdentify(layerData) {
+        if (!map || !layerData.metadata?.download_url) return;
+
+        // Ferma eventuale identify attivo su altro layer
+        if (identifyActive) stopIdentify();
+
+        identifyLayerUrl = layerData.metadata?.download_url;
+
+        // Rendi il layer visibile se non lo è ancora
+        const layerId = createLayerIdFromSource(layerData.src);
+        if (!isLayerVisible(layerId)) {
+            toggleLayerMapVisibility({ ...layerData, id: layerId });
+        }
+
+        // Crea il tooltip floating se non esiste
+        let tooltip = document.getElementById('identify-tooltip');
+        if (!tooltip) {
+            tooltip = document.createElement('div');
+            tooltip.id = 'identify-tooltip';
+            tooltip.style.cssText = [
+                'display:none',
+                'position:absolute',
+                'z-index:1000',
+                'background:#2d2d2d',
+                'border:1px solid #888',
+                'color:#eee',
+                'padding:5px 10px',
+                'border-radius:4px',
+                'font-family:monospace',
+                'font-size:13px',
+                'pointer-events:none',
+                'white-space:pre'
+            ].join(';');
+            const mapContainer = document.getElementById(GEO_MAP_CONSTANTS.MAP_CONTAINER_ID);
+            if (mapContainer) mapContainer.appendChild(tooltip);
+        }
+
+        // Cursore crosshair durante identify
+        map.getCanvas().style.cursor = 'crosshair';
+
+        // Handler mousemove
+        identifyBoundHandler = (e) => {
+            const { lngLat: { lat: latitude, lng: longitude }, point: { x, y } } = e;
+            const zoom = map.getZoom();
+
+            MaplibreCOGProtocol.locationValues(identifyLayerUrl, { latitude, longitude }, zoom)
+                .then(values => {
+                    if (!tooltip) return;
+                    const validValues = values.filter(v => !isNaN(v));
+                    if (validValues.length === 0) {
+                        tooltip.style.display = 'none';
+                        return;
+                    }
+                    const lines = validValues.map((v, i) =>
+                        validValues.length > 1 ? `Band ${i + 1}: ${v.toFixed(4)}` : v.toFixed(4)
+                    );
+                    tooltip.textContent = lines.join('\n');
+                    tooltip.style.display = 'block';
+
+                    // Posizione relativa al container mappa
+                    const mapContainer = document.getElementById(GEO_MAP_CONSTANTS.MAP_CONTAINER_ID);
+                    const mapRect = mapContainer ? mapContainer.getBoundingClientRect() : { left: 0, top: 0 };
+                    // e.point è relativo al canvas; aggiungiamo offset fisso
+                    tooltip.style.left = (x + 14) + 'px';
+                    tooltip.style.top = (y + 14) + 'px';
+                })
+                .catch(() => {
+                    if (tooltip) tooltip.style.display = 'none';
+                });
+        };
+
+        map.on('mousemove', identifyBoundHandler);
+        map.on('drag', _hideIdentifyTooltip);
+
+        identifyActive = true;
+
+        // Mostra indicatore topbar
+        const indicator = document.getElementById('identifyIndicator');
+        if (indicator) indicator.classList.remove('d-none');
+
+        // Bind stop button (potrebbe non essere in DOM al primo caricamento)
+        const btnStop = document.getElementById('btnStopIdentify');
+        if (btnStop) btnStop.onclick = stopIdentify;
+    }
+
+    /**
+     * Disattiva la modalità identify: rimuove listener, nasconde tooltip e indicatore.
+     */
+    function stopIdentify() {
+        if (!identifyActive) return;
+
+        if (identifyBoundHandler) {
+            map.off('mousemove', identifyBoundHandler);
+            map.off('drag', _hideIdentifyTooltip);
+            identifyBoundHandler = null;
+        }
+
+        identifyLayerUrl = null;
+        identifyActive = false;
+
+        map.getCanvas().style.cursor = '';
+
+        const tooltip = document.getElementById('identify-tooltip');
+        if (tooltip) tooltip.style.display = 'none';
+
+        const indicator = document.getElementById('identifyIndicator');
+        if (indicator) indicator.classList.add('d-none');
+    }
+
+    function _hideIdentifyTooltip() {
+        const tooltip = document.getElementById('identify-tooltip');
+        if (tooltip) tooltip.style.display = 'none';
+    }
+
+    // =========================================================================
+
     return {
         init,
         addVectorLayer,
@@ -1770,6 +1909,8 @@ const GeoMap = (() => {
         renderTimestampRasters,
         zoomToBounds,
         reorderLayers,
-        getViewportState
+        getViewportState,
+        startIdentify,
+        stopIdentify
     };
 })();
