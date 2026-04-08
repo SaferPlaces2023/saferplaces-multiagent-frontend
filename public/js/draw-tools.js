@@ -449,7 +449,16 @@ const DrawTools = (() => {
                 }
             }
 
-            // Persist in DrawFeatureCollections (skip agent-state sync — already in backend registry)
+            // If shape already exists locally: update source data + mirror only.
+            // Do NOT call saveFeatureCollection — that would overwrite existing metadata (e.g. custom name).
+            if (DrawFeatureCollections[srcId]) {
+                shapesRegistryMirror[collection_id] = shape;
+                renderCollectionsPanel();
+                console.log('[DrawTools] Shape synced from registry (already local):', collection_id, featureType);
+                return;
+            }
+
+            // New shape from backend: persist in DrawFeatureCollections
             saveFeatureCollection(collection_id, srcId, fc, false);
 
             // Mark as registered in the mirror so the panel shows the green badge
@@ -542,6 +551,13 @@ const DrawTools = (() => {
                 const pendingId  = current_collection_id;
                 const pendingSrc = current_source_id;
                 const pendingFc  = current_feature_collection;
+
+                // Stamp feature_type BEFORE _resetDrawingState() clears drawMode
+                // (saveFeatureCollection is called later from the modal, when drawMode is already null)
+                if (pendingFc) {
+                    pendingFc.metadata = pendingFc.metadata || {};
+                    pendingFc.metadata.feature_type = DRAW_CONSTANTS.MODES.BBOX;
+                }
 
                 // Reset drawing state now (stop listeners, hide confirm bar)
                 _resetDrawingState();
@@ -1244,7 +1260,15 @@ const DrawTools = (() => {
         editTarget.bbox = bbox;
 
         const poly = bboxToPolygonFeature(bbox);
-        const fc = { type: 'FeatureCollection', features: [poly] };
+
+        // Preserve existing metadata (name, description, feature_type, etc.) from the registry
+        const existingFc = DrawFeatureCollections[editTarget.srcId];
+        const fc = {
+            type: 'FeatureCollection',
+            features: [poly],
+            collection_id: existingFc?.collection_id,
+            metadata: existingFc?.metadata ? { ...existingFc.metadata } : undefined
+        };
 
         const src = map.getSource(editTarget.srcId);
         if (src) {
