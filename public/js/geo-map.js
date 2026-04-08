@@ -100,7 +100,7 @@ const GeoMap = (() => {
             defaultCenter: [12.4964, 41.9028],
             defaultZoom: 3,
             maxPitch: 75,
-            defaultStyle: 'https://tiles.stadiamaps.com/styles/alidade_smooth.json?api_key=961bdf77-3689-48c2-b079-80c0d4169115'
+            defaultStyle: (BASEMAP_STYLES.find(s => s.default) || BASEMAP_STYLES[0]).url
         },
 
         // Configurazione view/navigazione
@@ -273,14 +273,17 @@ const GeoMap = (() => {
     }
 
     /**
-     * Configura l'istanza MapLibre con stile e centro
+     * Configura l'istanza MapLibre con stile vuoto (il basemap viene aggiunto come raster source)
      */
     function setupMap() {
-        const styleUrl = domElements.styleSelect?.value || GEO_MAP_CONSTANTS.MAP_CONFIG.defaultStyle;
-
         map = new maplibregl.Map({
             container: GEO_MAP_CONSTANTS.MAP_CONTAINER_ID,
-            style: styleUrl,
+            style: {
+                version: 8,
+                sources: {},
+                layers: [],
+                glyphs: 'https://tiles.openfreemap.org/fonts/{fontstack}/{range}.pbf'
+            },
             center: GEO_MAP_CONSTANTS.MAP_CONFIG.defaultCenter,
             zoom: GEO_MAP_CONSTANTS.MAP_CONFIG.defaultZoom
         });
@@ -431,6 +434,8 @@ const GeoMap = (() => {
         if (!map) return;
 
         map.on('style.load', () => {
+            const tileUrl = domElements.styleSelect?.value || GEO_MAP_CONSTANTS.MAP_CONFIG.defaultStyle;
+            _setupBasemapLayer(tileUrl);
             map.setProjection({ type: 'globe' });
             map.setSky(GEO_MAP_CONSTANTS.SKY_CONFIG);
             add3DBuildings();
@@ -491,6 +496,15 @@ const GeoMap = (() => {
      */
     function bindUIEvents() {
         if (domElements.styleSelect) {
+            // Populate options from BASEMAP_STYLES constant
+            BASEMAP_STYLES.forEach(({ label, url, default: isDefault }) => {
+                const opt = document.createElement('option');
+                opt.value = url;
+                opt.textContent = label;
+                if (isDefault) opt.selected = true;
+                domElements.styleSelect.appendChild(opt);
+            });
+
             domElements.styleSelect.addEventListener('change', (e) => setStyle(e.target.value));
         }
 
@@ -1544,24 +1558,38 @@ const GeoMap = (() => {
     }
 
     /**
-     * Cambia lo stile della mappa e ripulisce state correlati
-     * @param {string} styleUrl - URL nuovo stile
+     * Cambia il basemap aggiornando i tile della source 'basemap' (senza resettare layers/sources utente)
+     * @param {string} tileUrl - URL raster tile template ({z}/{x}/{y})
      */
-    function setStyle(styleUrl) {
+    function setStyle(tileUrl) {
         if (!map) return;
 
         try {
-            map.setStyle(styleUrl);
-
-            // Ripulisci state dipendenti
-            TimeSlider.clearIntervals();
-            LayerPanel.reloadProjectLayers();
-
-            console.log('[GeoMap] Style changed');
-
+            const src = map.getSource('basemap');
+            if (src) {
+                src.setTiles([tileUrl]);
+                console.log('[GeoMap] Basemap updated:', tileUrl);
+            }
         } catch (err) {
-            console.error('[GeoMap] Error setting style:', err);
+            console.error('[GeoMap] Error updating basemap:', err);
         }
+    }
+
+    /**
+     * Aggiunge la raster source 'basemap' come layer di sfondo a indice 0
+     * Chiamato una volta in style.load sull'inizializzazione con blank style
+     * @param {string} tileUrl - URL raster tile template
+     */
+    function _setupBasemapLayer(tileUrl) {
+        if (!map || map.getSource('basemap')) return;
+
+        map.addSource('basemap', {
+            type: 'raster',
+            tiles: [tileUrl],
+            tileSize: 256
+        });
+
+        map.addLayer({ id: 'basemap', type: 'raster', source: 'basemap' });
     }
 
     // =========================================================================

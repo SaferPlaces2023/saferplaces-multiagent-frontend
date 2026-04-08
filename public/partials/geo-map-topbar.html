@@ -17,40 +17,8 @@
 
         <div id="mapStyleSelectorBody" class="d-flex">
             <!-- Style Select Dropdown -->
+            <!-- Options populated dynamically from BASEMAP_STYLES in _consts.js -->
             <select id="styleSelect" class="form-select form-select-sm bg-dark text-light border-secondary ms-2" aria-label="Select map style">
-
-                <!-- MapLibre Styles -->
-                <option value="https://demotiles.maplibre.org/style.json">MapLibre Basic</option>
-
-                <!-- CARTO Styles -->
-                <option value="https://basemaps.cartocdn.com/gl/positron-gl-style/style.json">Carto Positron (light)</option>
-                <option value="https://basemaps.cartocdn.com/gl/dark-matter-gl-style/style.json">Carto Dark Matter (dark)</option>
-                <option value="https://basemaps.cartocdn.com/gl/voyager-gl-style/style.json">Carto Voyager</option>
-
-                <!-- MapTiler Styles (requires API-Key) -->
-                <!-- <option value="https://api.maptiler.com/maps/basic-v2/style.json?key=get_your_own_OpIi9ZULNHzrESv6T2vL">MapTiler Basic</option>
-                <option value="https://api.maptiler.com/maps/bright-v2/style.json?key=get_your_own_OpIi9ZULNHzrESv6T2vL">MapTiler Bright</option>
-                <option value="https://api.maptiler.com/maps/darkmatter/style.json?key=get_your_own_OpIi9ZULNHzrESv6T2vL">MapTiler Dark Matter</option>
-                <option value="https://api.maptiler.com/maps/streets-v2/style.json?key=get_your_own_OpIi9ZULNHzrESv6T2vL">MapTiler Streets</option>
-                <option value="https://api.maptiler.com/maps/terrain/style.json?key=get_your_own_OpIi9ZULNHzrESv6T2vL">MapTiler Terrain</option>
-                <option value="https://api.maptiler.com/maps/satellite/style.json?key=get_your_own_OpIi9ZULNHzrESv6T2vL">MapTiler Satellite</option> -->
-                <option value="https://api.maptiler.com/maps/hybrid/style.json?key=eKTWCeR7phLWdM7M4myh" selected>MapTiler Satellite</option>
-
-                <!-- Stadia Maps Styles -->
-                <option value="https://tiles.stadiamaps.com/styles/alidade_smooth/style.json?api_key=961bdf77-3689-48c2-b079-80c0d4169115">Stadia Alidade Smooth</option>
-                <option value="https://tiles.stadiamaps.com/styles/alidade_smooth_dark/style.json?api_key=961bdf77-3689-48c2-b079-80c0d4169115">Stadia Alidade Smooth Dark</option>
-                <option value="https://tiles.stadiamaps.com/styles/outdoors/style.json?api_key=961bdf77-3689-48c2-b079-80c0d4169115">Stadia Outdoors</option>
-                <option value="https://tiles.stadiamaps.com/styles/osm_bright/style.json?api_key=961bdf77-3689-48c2-b079-80c0d4169115">Stadia OSM Bright</option>
-                <option value="https://tiles.stadiamaps.com/styles/alidade_satellite.json?api_key=961bdf77-3689-48c2-b079-80c0d4169115">Stadia Satellite</option>
-
-                <!-- OpenMapTiles Styles (requires API-Key) -->
-                <!-- <option value="https://api.maptiler.com/maps/topo/style.json?key=get_your_own_OpIi9ZULNHzrESv6T2vL">OpenMapTiles Topo</option>
-                <option value="https://api.maptiler.com/maps/dataviz/style.json?key=get_your_own_OpIi9ZULNHzrESv6T2vL">OpenMapTiles Dataviz</option>
-                <option value="https://api.maptiler.com/maps/toner/style.json?key=get_your_own_OpIi9ZULNHzrESv6T2vL">OpenMapTiles Toner</option> -->
-
-                <!-- MapLibre Demo Styles -->
-                <option value="https://demotiles.maplibre.org/style.json">MapLibre Demo Basic</option>
-                <option value="https://raw.githubusercontent.com/maplibre/demotiles/main/style.json">MapLibre Demo (raw GitHub)</option>
             </select>
 
             <!-- Reset View Button -->

@@ -106,3 +106,28 @@ const CSS_CLASSES = {
     BLURRED: 'blurred',
     HIDDEN: 'hidden'
 };
+
+// =========================================================================
+// BASEMAP STYLES
+// =========================================================================
+const MAPTILER_API_KEY = 'eKTWCeR7phLWdM7M4myh';
+const BASEMAP_STYLES = [
+    // OpenStreetMap
+    { id: 'osm',                    label: 'OpenStreetMap',            url: 'https://tile.openstreetmap.org/{z}/{x}/{y}.png' },
+
+    // CARTO
+    { id: 'carto-light',            label: 'Carto Positron (light)',    url: 'https://a.basemaps.cartocdn.com/light_all/{z}/{x}/{y}@2x.png' },
+    { id: 'carto-dark',             label: 'Carto Dark Matter (dark)',  url: 'https://a.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}@2x.png' },
+    { id: 'carto-voyager',          label: 'Carto Voyager',             url: 'https://a.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}@2x.png' },
+
+    // MapTiler (API-Key required)
+    { id: 'maptiler-satellite',     label: 'MapTiler Satellite',        url: `https://api.maptiler.com/maps/hybrid/{z}/{x}/{y}.png?key=${MAPTILER_API_KEY}`,          default: true },
+    { id: 'maptiler-streets',       label: 'MapTiler Streets',          url: `https://api.maptiler.com/maps/streets-v2/{z}/{x}/{y}.png?key=${MAPTILER_API_KEY}` },
+
+    // Stadia Maps (API-Key required)
+    { id: 'stadia-smooth',          label: 'Stadia Alidade Smooth',     url: 'https://tiles.stadiamaps.com/tiles/alidade_smooth/{z}/{x}/{y}@2x.png?api_key=961bdf77-3689-48c2-b079-80c0d4169115' },
+    { id: 'stadia-smooth-dark',     label: 'Stadia Alidade Smooth Dark',url: 'https://tiles.stadiamaps.com/tiles/alidade_smooth_dark/{z}/{x}/{y}@2x.png?api_key=961bdf77-3689-48c2-b079-80c0d4169115' },
+    { id: 'stadia-outdoors',        label: 'Stadia Outdoors',           url: 'https://tiles.stadiamaps.com/tiles/outdoors/{z}/{x}/{y}@2x.png?api_key=961bdf77-3689-48c2-b079-80c0d4169115' },
+    { id: 'stadia-osm-bright',      label: 'Stadia OSM Bright',         url: 'https://tiles.stadiamaps.com/tiles/osm_bright/{z}/{x}/{y}@2x.png?api_key=961bdf77-3689-48c2-b079-80c0d4169115' },
+    { id: 'stadia-satellite',       label: 'Stadia Satellite',          url: 'https://tiles.stadiamaps.com/tiles/alidade_satellite/{z}/{x}/{y}@2x.png?api_key=961bdf77-3689-48c2-b079-80c0d4169115' },
+];
