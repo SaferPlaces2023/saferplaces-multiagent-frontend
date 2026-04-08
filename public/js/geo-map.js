@@ -29,7 +29,7 @@ const GeoMap = (() => {
         'GEO_MAP_CONSTANTS.COG_TILE_SIZE': 'Tile size 256 per raster sources',
 
         // DOM IDS
-        DOM_IDS: 'Map: 4 elementi - map, styleSelect, resetView, btnCesiumLaunch',
+        DOM_IDS: 'Map: 6 elementi - map, styleSelect, resetView, btnCesiumLaunch, viewportBbox, viewportCenter',
 
         // STATO INTERNO
         map: 'Istanza MapLibre.Map',
@@ -226,7 +226,10 @@ const GeoMap = (() => {
         map: 'map',
         styleSelect: 'styleSelect',
         resetView: 'resetView',
-        btnCesiumLaunch: 'btnCesiumLaunch'
+        btnCesiumLaunch: 'btnCesiumLaunch',
+        viewportBbox: 'map-viewport-bbox',
+        viewportCenter: 'map-viewport-center',
+        viewportZoom: 'map-viewport-zoom'
     };
 
     // =========================================================================
@@ -435,7 +438,52 @@ const GeoMap = (() => {
 
         map.on('load', () => {
             DrawTools.init(map);
+            updateViewportInfo();
         });
+
+        map.on('move', updateViewportInfo);
+    }
+
+    /**
+     * Restituisce lo stato di viewport corrente per sincronizzazione con il backend.
+     * @returns {{ map_viewport: [number,number,number,number]|null, map_zoom: number|null }}
+     */
+    function getViewportState() {
+        if (!map) return { map_viewport: null, map_zoom: null };
+        const bounds = map.getBounds();
+        const zoom = map.getZoom();
+        return {
+            map_viewport: [
+                parseFloat(bounds.getWest().toFixed(6)),
+                parseFloat(bounds.getSouth().toFixed(6)),
+                parseFloat(bounds.getEast().toFixed(6)),
+                parseFloat(bounds.getNorth().toFixed(6))
+            ],
+            map_zoom: parseFloat(zoom.toFixed(4))
+        };
+    }
+
+    /**
+     * Aggiorna il pannello viewport con bbox e centro corrente in EPSG:4326
+     */
+    function updateViewportInfo() {
+        if (!map || !domElements.viewportBbox || !domElements.viewportCenter) return;
+
+        const bounds = map.getBounds();
+        const center = map.getCenter();
+        const zoom = map.getZoom();
+
+        const fmt = (v) => v.toFixed(5);
+
+        domElements.viewportBbox.textContent =
+            `${fmt(bounds.getWest())}, ${fmt(bounds.getSouth())}, ${fmt(bounds.getEast())}, ${fmt(bounds.getNorth())}`;
+
+        domElements.viewportCenter.textContent =
+            `${fmt(center.lng)}, ${fmt(center.lat)}`;
+
+        if (domElements.viewportZoom) {
+            domElements.viewportZoom.textContent = zoom.toFixed(2);
+        }
     }
 
     /**
@@ -463,7 +511,7 @@ const GeoMap = (() => {
      */
     function setupToolbarToggles() {
         const toolbarHeads = document.querySelectorAll('.toolbar-head[data-toggle]');
-        
+
         toolbarHeads.forEach(head => {
             head.addEventListener('click', (e) => {
                 e.stopPropagation();
@@ -478,7 +526,7 @@ const GeoMap = (() => {
     function toggleToolbar(headElement) {
         const targetBodyId = headElement.getAttribute('data-toggle');
         const targetBody = document.getElementById(targetBodyId);
-        
+
         if (!targetBody) return;
 
         // Se il body è già attivo, chiudilo
@@ -518,10 +566,26 @@ const GeoMap = (() => {
             return;
         }
 
+        const panel = document.getElementById('cesiumPanel');
+        const iframe = document.getElementById('cesiumIframe');
+        const closeBtn = document.getElementById('cesiumCloseBtn');
+
+        if (!panel || !iframe) return;
+
+        // Wire close button once
+        if (closeBtn && !closeBtn.dataset.cesiumBound) {
+            closeBtn.dataset.cesiumBound = '1';
+            closeBtn.addEventListener('click', () => {
+                panel.classList.add('hidden');
+                iframe.src = 'about:blank';
+            });
+        }
+
+        // POST session params into the named iframe instead of a new tab
         const form = document.createElement('form');
         form.method = 'POST';
         form.action = '/cesium-viewer';
-        form.target = '_blank';
+        form.target = 'cesiumIframe';
 
         form.appendChild(createFormInput('hidden', 'user_id', userId));
         form.appendChild(createFormInput('hidden', 'project_id', projectId));
@@ -530,6 +594,8 @@ const GeoMap = (() => {
         document.body.appendChild(form);
         form.submit();
         document.body.removeChild(form);
+
+        panel.classList.remove('hidden');
     }
 
     // =========================================================================
@@ -621,7 +687,7 @@ const GeoMap = (() => {
                 url: renderUrl,
                 data: geoJsonData,
                 name: layerData.layer_data.title,
-                metadata: { 
+                metadata: {
                     ...(renderInfo.metadata || {}),
                     ...(layerData.layer_data.metadata || {})
                 }
@@ -643,6 +709,8 @@ const GeoMap = (() => {
                 zoomToBounds(getBoundingBoxArray(bbox));
             }
 
+            setupVectorFeatureClick(layerId);
+
             return layerId;
 
         } catch (err) {
@@ -650,6 +718,71 @@ const GeoMap = (() => {
             showFlash(domElements.map, `Error: ${err.message}`);
             throw err;
         }
+    }
+
+    function setupVectorFeatureClick(layerId) {
+        map.on('click', `${layerId}-fill`, (e) => {
+            const props = e.features[0].properties;
+
+            const html = `
+                <div style="
+                    font-family: system-ui, sans-serif;
+                    font-size: 13px;
+                    line-height: 1.4;
+                    max-height: 300px;
+                    overflow-y: auto;
+                    min-width: 220px;
+                ">
+                ${Object.entries(props)
+                    .map(([key, value]) => {
+                        const formatted = typeof value === 'object'
+                            ? JSON.stringify(value, null, 2)
+                            : value;
+
+                        return `
+                                <div style="
+                                    display: flex;
+                                    justify-content: space-between;
+                                    gap: 10px;
+                                    padding: 6px 0;
+                                    border-bottom: 1px solid #eee;
+                                ">
+                                    <code style="
+                                    color: #555;
+                                    background: #f5f5f5;
+                                    padding: 2px 4px;
+                                    border-radius: 4px;
+                                    ">${key}</code>
+
+                                    <code style="
+                                    color: #111;
+                                    background: #fafafa;
+                                    padding: 2px 4px;
+                                    border-radius: 4px;
+                                    text-align: right;
+                                    max-width: 60%;
+                                    overflow-wrap: anywhere;
+                                    ">${formatted}</code>
+                                </div>
+                                `;
+                        })
+                    .join('')}
+                </div>
+                `;
+
+            new maplibregl.Popup()
+                .setLngLat(e.lngLat)
+                .setHTML(html)
+                .addTo(map);
+        });
+        // Change the cursor to a pointer when the mouse is over the states layer.
+        map.on('mouseenter', `${layerId}-fill`, () => {
+            map.getCanvas().style.cursor = 'pointer';
+        });
+        // Change it back to a pointer when it leaves.
+        map.on('mouseleave', `${layerId}-fill`, () => {
+            map.getCanvas().style.cursor = '';
+        });
     }
 
     /**
@@ -707,22 +840,22 @@ const GeoMap = (() => {
                     await processSimpleRasterLayer(layerId, renderUrl, renderInfo, layerData);
             }
 
-            
+
             // Registra layer
             registerLayer(layerId, {
                 type: 'raster',
                 url: renderUrl,
                 name: layerData.layer_data.title,
-                metadata: { 
+                metadata: {
                     ...(renderInfo.metadata || {}),
                     ...(layerData.layer_data.metadata || {})
                 }
             });
-            
+
             if (layerData.layer_data?.style) {
                 setRasterStyle(layerId, layerData.layer_data.style);
             }
-            
+
             customLayerIds.add(layerId);
 
             Toasts.ok(toastId, `Layer <i>"${escapeHtml(layerData.layer_data.title)}"</i> added`);
@@ -1286,9 +1419,9 @@ const GeoMap = (() => {
         if (!map) return;
         try {
             if (bbox) {
-                const w = bbox.west  ?? bbox[0];
+                const w = bbox.west ?? bbox[0];
                 const s = bbox.south ?? bbox[1];
-                const e = bbox.east  ?? bbox[2];
+                const e = bbox.east ?? bbox[2];
                 const n = bbox.north ?? bbox[3];
                 map.fitBounds([[w, s], [e, n]], { padding: 40 });
             } else if (center) {
@@ -1608,6 +1741,7 @@ const GeoMap = (() => {
         toggleLayerMapVisibility,
         renderTimestampRasters,
         zoomToBounds,
-        reorderLayers
+        reorderLayers,
+        getViewportState
     };
 })();

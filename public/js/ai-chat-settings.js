@@ -268,7 +268,8 @@ Structure your response clearly, using well-separated sections and concise expla
                 },
                 body: JSON.stringify({ 
                     state_updates: {
-                        avaliable_tools: availableTools 
+                        avaliable_tools: availableTools,
+                        ...GeoMap.getViewportState()
                     }
                 })
             })
@@ -297,7 +298,8 @@ Structure your response clearly, using well-separated sections and concise expla
             },
             body: JSON.stringify({
                 state_updates: {
-                    confirm_tool_execution: isEnabled
+                    confirm_tool_execution: isEnabled,
+                    ...GeoMap.getViewportState()
                 }
             })
         })

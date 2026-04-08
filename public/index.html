@@ -63,6 +63,7 @@
             <div data-include="public/partials/layer-register.html"></div>
             <div data-include="public/partials/layer-config.html"></div>
             <div data-include="public/partials/draw-export.html"></div>
+            <div data-include="public/partials/draw-save.html"></div>
             <div data-include="public/partials/raster-export.html"></div>
             <div data-include="public/partials/time-slider.html"></div>
             <!-- DEM Sculpt panel – overlays the map when open -->
@@ -71,6 +72,13 @@
                     <span class="material-symbols-outlined">arrow_back</span> Back to Map
                 </button>
                 <iframe id="sculptIframe" frameborder="0" allowfullscreen></iframe>
+            </div>
+            <!-- Cesium 3D panel – overlays the map when open -->
+            <div id="cesiumPanel" class="cesium-panel hidden">
+                <button id="cesiumCloseBtn" class="sculpt-close-btn" title="Back to map">
+                    <span class="material-symbols-outlined">arrow_back</span> Back to Map
+                </button>
+                <iframe id="cesiumIframe" name="cesiumIframe" frameborder="0" allowfullscreen></iframe>
             </div>
         </div>
 

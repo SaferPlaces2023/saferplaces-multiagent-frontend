@@ -654,7 +654,7 @@ const LayerSymbology = (() => {
                     fetch(Routes.Agent.STATE(threadId), {
                         method: 'POST',
                         headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify({ state_updates: { layer_registry: [currentLayer] } })
+                        body: JSON.stringify({ state_updates: { layer_registry: [currentLayer], ...GeoMap.getViewportState() } })
                     }).catch(err => console.warn('[LayerSymbology] Failed to sync style to server:', err));
                 }
             });

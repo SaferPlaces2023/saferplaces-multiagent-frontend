@@ -76,7 +76,7 @@ const DrawTools = (() => {
         'onMouseMoveEdit': 'Sub-handler: calcola offset move/resize, applica bbox',
 
         'onMouseUp': 'Gestore mouseup: riabilita map pan',
-        'onKeyDown': 'Escape key: cancella polygon drawing', 
+        'onKeyDown': 'Escape key: cancella polygon drawing',
 
         // LAYER MANAGEMENT - CREATION
         drawPointLayer: 'Aggiunge source geojson + layer circle per points',
@@ -233,7 +233,16 @@ const DrawTools = (() => {
         deDownload: 'deDownload',
         deRegister: 'deRegister',
         deCancel: 'deCancel',
-        deStatus: 'deStatus'
+        deStatus: 'deStatus',
+        /* Bbox draw info panel */
+        drawBboxInfo: 'draw-bbox-info',
+        drawBboxInfoDims: 'draw-bbox-info-dims',
+        /* Draw save modal */
+        drawSaveModal: 'drawSaveModal',
+        dsSaveName: 'dsSaveName',
+        dsSaveDesc: 'dsSaveDesc',
+        dsSaveConfirm: 'dsSaveConfirm',
+        dsSaveCancel: 'dsSaveCancel'
     };
 
     // =========================================================================
@@ -272,6 +281,9 @@ const DrawTools = (() => {
     // --- Export modal state
     let exportPendingFc = null;   // {name, fc}
 
+    // --- Save modal state (bbox drawing save)
+    let savePendingData = null;   // {collection_id, srcId, fc, defaultName}
+
     // =========================================================================
     // INIZIALIZZAZIONE
     // =========================================================================
@@ -289,10 +301,16 @@ const DrawTools = (() => {
         map = mapInstance;
         domElements = cacheElements(DOM_IDS);
 
+        // Move bbox info panel inside map container so map.project() coords align
+        if (domElements.drawBboxInfo) {
+            map.getContainer().appendChild(domElements.drawBboxInfo);
+        }
+
         bindDrawingToolButtons();
         bindPanelButtons();
         bindDocumentEvents();
         bindExportModalEvents();
+        bindSaveModalEvents();
 
         console.log('[DrawTools] Initialized');
     }
@@ -383,6 +401,64 @@ const DrawTools = (() => {
                 syncFromShapesRegistry(ev.detail.shapes_registry);
             }
         });
+
+        // Fired by app.js on sync_shapes MapCommand (from CreateShapeTool / RegisterShapeTool)
+        document.addEventListener('draw-tool:add-shape', (ev) => {
+            const shape = ev.detail;
+            if (!shape?.shape_id || !shape?.geometry) return;
+
+            const collection_id = shape.shape_id;
+            const typeMap = { polygon: 'polygon', bbox: 'bbox', point: 'point', linestring: 'linestring' };
+            const featureType = typeMap[shape.shape_type] || 'polygon';
+            const srcId = createLayerSourceId(featureType, collection_id);
+
+            const fc = {
+                type: 'FeatureCollection',
+                features: [{ type: 'Feature', geometry: shape.geometry, properties: {} }],
+                collection_id,
+                metadata: { feature_type: featureType, description: shape.label || null },
+            };
+
+            // Add / update MapLibre source
+            if (!map.getSource(srcId)) {
+                map.addSource(srcId, { type: 'geojson', data: fc });
+            } else {
+                map.getSource(srcId).setData(fc);
+            }
+
+            // Add layers appropriate to geometry type
+            if (featureType === 'point') {
+                const layerId = createLayerLayerId('point', collection_id);
+                if (!map.getLayer(layerId)) {
+                    map.addLayer({ id: layerId, type: 'circle', source: srcId, paint: DRAW_CONSTANTS.PAINT.point });
+                }
+            } else if (featureType === 'linestring') {
+                const layerId = createLayerLayerId('linestring', collection_id);
+                if (!map.getLayer(layerId)) {
+                    map.addLayer({ id: layerId, type: 'line', source: srcId, paint: DRAW_CONSTANTS.PAINT.line });
+                }
+            } else {
+                // polygon / bbox: fill + line
+                const fillId = createLayerLayerId(`${featureType}-fill`, collection_id);
+                const lineId = createLayerLayerId(`${featureType}-line`, collection_id);
+                if (!map.getLayer(fillId)) {
+                    map.addLayer({ id: fillId, type: 'fill', source: srcId, paint: DRAW_CONSTANTS.PAINT.fill });
+                }
+                if (!map.getLayer(lineId)) {
+                    map.addLayer({ id: lineId, type: 'line', source: srcId, paint: DRAW_CONSTANTS.PAINT.line });
+                }
+            }
+
+            // Persist in DrawFeatureCollections (skip agent-state sync — already in backend registry)
+            saveFeatureCollection(collection_id, srcId, fc, false);
+
+            // Mark as registered in the mirror so the panel shows the green badge
+            shapesRegistryMirror[collection_id] = shape;
+
+            renderCollectionsPanel();
+            zoom_to_feature_collection(collection_id);
+            console.log('[DrawTools] Shape added from registry:', collection_id, featureType);
+        });
     }
 
     // =========================================================================
@@ -461,10 +537,28 @@ const DrawTools = (() => {
                 finishPolygon();
             }
 
+            // For bbox: intercept and ask for a name before saving
+            if (drawMode === DRAW_CONSTANTS.MODES.BBOX) {
+                const pendingId  = current_collection_id;
+                const pendingSrc = current_source_id;
+                const pendingFc  = current_feature_collection;
+
+                // Reset drawing state now (stop listeners, hide confirm bar)
+                _resetDrawingState();
+                openSaveModal(pendingId, pendingSrc, pendingFc);
+                return;
+            }
+
             saveFeatureCollection(current_collection_id, current_source_id, current_feature_collection);
         }
 
-        // Reset stato
+        _resetDrawingState();
+    }
+
+    /**
+     * Estrae e resetta lo stato del disegno corrente (usato da stop)
+     */
+    function _resetDrawingState() {
         drawMode = null;
         isDrawing = false;
         current_collection_id = null;
@@ -474,9 +568,10 @@ const DrawTools = (() => {
             domElements.drawConfirm.classList.add('closed');
         }
 
+        hideBboxInfoPanel();
+
         document.querySelectorAll('.dt-btn.active').forEach(btn => btn.classList.remove('active'));
 
-        // Unbind event listeners
         map.off('click', onClickHandler);
         map.off('mousedown', onMouseDownHandler);
         map.off('mousemove', onMouseMoveHandler);
@@ -860,6 +955,48 @@ const DrawTools = (() => {
     }
 
     /**
+     * Calcola distanza in km tra due punti geografici (formula Haversine)
+     * @param {number} lat1 @param {number} lng1 @param {number} lat2 @param {number} lng2
+     * @returns {number} Distanza in km
+     */
+    function haversineKm(lat1, lng1, lat2, lng2) {
+        const R = 6371;
+        const dLat = (lat2 - lat1) * Math.PI / 180;
+        const dLng = (lng2 - lng1) * Math.PI / 180;
+        const a = Math.sin(dLat / 2) ** 2 +
+            Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) * Math.sin(dLng / 2) ** 2;
+        return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+    }
+
+    /**
+     * Aggiorna il pannello draw-bbox-info con coordinate e dimensioni km
+     */
+    function updateBboxInfoPanel(minLng, minLat, maxLng, maxLat) {
+        if (!domElements.drawBboxInfo) return;
+
+        const wKm = haversineKm(minLat, minLng, minLat, maxLng);
+        const hKm = haversineKm(minLat, minLng, maxLat, minLng);
+        const bounds = [minLng.toFixed(3), minLat.toFixed(3), maxLng.toFixed(3), maxLat.toFixed(3)];
+        const fmtKm = v => v < 1 ? `${(v * 1000).toFixed(0)} m` : `${v.toFixed(2)} km`;
+        if (domElements.drawBboxInfoDims) {
+            domElements.drawBboxInfoDims.innerHTML = `[${bounds.join(', ')}]<br>${fmtKm(wKm)} × ${fmtKm(hKm)}`;
+        }
+
+        // Anchor to SE corner (maxLng, minLat) of the bbox
+        const px = map.project([maxLng, minLat]);
+        domElements.drawBboxInfo.style.left = `${px.x + 8}px`;
+        domElements.drawBboxInfo.style.top = `${px.y + 4}px`;
+        domElements.drawBboxInfo.style.display = 'inline-flex';
+    }
+
+    /**
+     * Nasconde il pannello draw-bbox-info
+     */
+    function hideBboxInfoPanel() {
+        if (domElements.drawBboxInfo) domElements.drawBboxInfo.style.display = 'none';
+    }
+
+    /**
      * Crea/aggiorna Polygon rettangolo da due LngLat
      * @param {maplibregl.LngLat} a - Primo punto
      * @param {maplibregl.LngLat} b - Secondo punto
@@ -893,6 +1030,7 @@ const DrawTools = (() => {
         }
 
         current_feature_collection = fc;
+        updateBboxInfoPanel(minLng, minLat, maxLng, maxLat);
     }
 
     /**
@@ -1014,6 +1152,7 @@ const DrawTools = (() => {
         }
 
         clearHandles();
+        hideBboxInfoPanel();
 
         console.log('[DrawTools] Edit mode stopped');
     }
@@ -1114,6 +1253,7 @@ const DrawTools = (() => {
 
         current_feature_collection = fc;
         setHandlesFromBbox(bbox);
+        updateBboxInfoPanel(bbox.minLng, bbox.minLat, bbox.maxLng, bbox.maxLat);
     }
 
     /**
@@ -1188,15 +1328,21 @@ const DrawTools = (() => {
 
             if (geom.type === 'Point') {
                 acc.extend([geom.coordinates[0], geom.coordinates[1]]);
+
             } else if (['Polygon', 'MultiPolygon'].includes(geom.type)) {
                 const rings = geom.type === 'Polygon' ? [geom.coordinates] : geom.coordinates;
+
                 rings.forEach(polygon => {
-                    polygon.forEach(coord => {
-                        acc.extend([coord[0], coord[1]]);
+                    polygon.forEach(ring => {
+                        ring.forEach(coord => {
+                            acc.extend([coord[0], coord[1]]);
+                        });
                     });
                 });
+
             } else if (['LineString', 'MultiLineString'].includes(geom.type)) {
                 const lines = geom.type === 'LineString' ? [geom.coordinates] : geom.coordinates;
+
                 lines.forEach(coords => {
                     coords.forEach(coord => {
                         acc.extend([coord[0], coord[1]]);
@@ -1207,17 +1353,17 @@ const DrawTools = (() => {
             return acc;
         }, new maplibregl.LngLatBounds());
 
-        // Aggiungi metadata
+        // metadata
         featureCollection.metadata = featureCollection.metadata || {};
         featureCollection.metadata.bounds = {
             minx: bounds.getWest(),
             miny: bounds.getSouth(),
             maxx: bounds.getEast(),
-            maxy: bounds.getNorth()
+            maxy: bounds.getNorth() // <-- ti manca questa riga
         };
         featureCollection.metadata.feature_type = featureCollection.metadata.feature_type || drawMode;
-        featureCollection.metadata.name = srcId;
-        featureCollection.metadata.description = null;
+        featureCollection.metadata.name = featureCollection.metadata.name || srcId;
+        if (featureCollection.metadata.description === undefined) featureCollection.metadata.description = null;
         featureCollection.collection_id = collection_id;
 
         // Salva nel registry
@@ -1247,7 +1393,8 @@ const DrawTools = (() => {
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
                 state_updates: {
-                    user_drawn_shapes: Object.values(DrawFeatureCollections)
+                    user_drawn_shapes: Object.values(DrawFeatureCollections),
+                    ...GeoMap.getViewportState()
                 }
             })
         })
@@ -1365,6 +1512,7 @@ const DrawTools = (() => {
         names.forEach(name => {
             const fc = DrawFeatureCollections[name];
             const meta = fc?.metadata || {};
+            const displayName = meta.name || name;
             const type = meta.feature_type || guessType(fc);
             const description = meta.description || 'No description available.';
             const iconName = DRAW_CONSTANTS.TYPE_ICONS[type.toLowerCase()] || DRAW_CONSTANTS.TYPE_ICONS.default;
@@ -1384,7 +1532,7 @@ const DrawTools = (() => {
                     <div class="dt-meta">
                         <div class="d-flex col gap-2 align-items-center">
                             <span class="material-symbols-outlined fs-6">${iconName}</span>
-                            <div class="dt-name">${escapeHtml(name)}</div>
+                            <div class="dt-name">${escapeHtml(displayName)}</div>
                             <div class="dt-type"><code>${escapeHtml(type)}</code></div>
                             ${registeredBadge}
                         </div>
@@ -1409,11 +1557,10 @@ const DrawTools = (() => {
                 <div class="dt-details hidden">
                     <div class="small text-secondary mb-1">Info</div>
                     <div class="small">features: <code>${fc.features.length}</code></div>
-                    <div class="small">bounds: <code>${
-                        meta.bounds 
-                            ? `[${meta.bounds.minx.toFixed(5)}, ${meta.bounds.miny.toFixed(5)}, ${meta.bounds.maxx.toFixed(5)}, ${meta.bounds.maxy.toFixed(5)}]`
-                            : 'N/A'
-                    }</code></div>
+                    <div class="small">bounds: <code>${meta.bounds
+                    ? `[${meta.bounds.minx.toFixed(5)}, ${meta.bounds.miny.toFixed(5)}, ${meta.bounds.maxx.toFixed(5)}, ${meta.bounds.maxy.toFixed(5)}]`
+                    : 'N/A'
+                }</code></div>
                     <div class="small">description: <code>${escapeHtml(description)}</code></div>
                 </div>
             `;
@@ -1423,8 +1570,8 @@ const DrawTools = (() => {
             const details = item.querySelector('.dt-details');
             toggle.addEventListener('click', () => {
                 const isHidden = details.classList.toggle('hidden');
-                toggle.textContent = isHidden 
-                    ? DRAW_CONSTANTS.UI_MESSAGES.DETAILS_SHOW 
+                toggle.textContent = isHidden
+                    ? DRAW_CONSTANTS.UI_MESSAGES.DETAILS_SHOW
                     : DRAW_CONSTANTS.UI_MESSAGES.DETAILS_HIDE;
             });
 
@@ -1475,6 +1622,81 @@ const DrawTools = (() => {
     // =========================================================================
     // EXPORT GeoJSON MODAL
     // =========================================================================
+
+    // =========================================================================
+    // DRAW SAVE MODAL
+    // =========================================================================
+
+    /**
+     * Wiring eventi pulsanti del modal di salvataggio bbox
+     */
+    function bindSaveModalEvents() {
+        domElements.dsSaveCancel?.addEventListener('click', () => {
+            closeSaveModal();
+            // Discard: remove the already-drawn layer from map
+            if (savePendingData) {
+                const { collection_id, srcId, fc } = savePendingData;
+                const mode = fc?.metadata?.feature_type || DRAW_CONSTANTS.MODES.BBOX;
+                const fillId = createLayerLayerId(`${mode}-fill`, collection_id);
+                const lineId = createLayerLayerId(`${mode}-line`, collection_id);
+                if (map.getLayer(fillId)) map.removeLayer(fillId);
+                if (map.getLayer(lineId)) map.removeLayer(lineId);
+                if (map.getSource(srcId)) map.removeSource(srcId);
+                savePendingData = null;
+            }
+        });
+
+        domElements.dsSaveConfirm?.addEventListener('click', () => {
+            if (!savePendingData) return;
+            const name = (domElements.dsSaveName?.value || '').trim();
+            if (!name) {
+                domElements.dsSaveName?.classList.add('is-invalid');
+                domElements.dsSaveName?.focus();
+                return;
+            }
+            domElements.dsSaveName?.classList.remove('is-invalid');
+
+            const { collection_id, srcId, fc } = savePendingData;
+            fc.metadata = fc.metadata || {};
+            fc.metadata.name = name;
+            fc.metadata.description = (domElements.dsSaveDesc?.value || '').trim() || null;
+
+            closeSaveModal();
+            saveFeatureCollection(collection_id, srcId, fc);
+            savePendingData = null;
+        });
+    }
+
+    /**
+     * Apre il modale di salvataggio bbox
+     * @param {string} collection_id
+     * @param {string} srcId
+     * @param {Object} fc
+     */
+    function openSaveModal(collection_id, srcId, fc) {
+        savePendingData = { collection_id, srcId, fc };
+
+        const defaultName = `bbox-${collection_id}`;
+        if (domElements.dsSaveName) {
+            domElements.dsSaveName.value = defaultName;
+            domElements.dsSaveName.classList.remove('is-invalid');
+        }
+        if (domElements.dsSaveDesc) domElements.dsSaveDesc.value = '';
+
+        if (domElements.drawSaveModal) {
+            domElements.drawSaveModal.classList.remove('hidden');
+        }
+        setTimeout(() => domElements.dsSaveName?.select(), 50);
+    }
+
+    /**
+     * Chiude il modale di salvataggio bbox
+     */
+    function closeSaveModal() {
+        if (domElements.drawSaveModal) {
+            domElements.drawSaveModal.classList.add('hidden');
+        }
+    }
 
     /**
      * Wiring eventi pulsanti del modal di export GeoJSON

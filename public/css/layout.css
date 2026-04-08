@@ -324,6 +324,29 @@ html.light-theme .sculpt-close-btn {
     border: none;
 }
 
+/* ========================================================================= */
+/* CESIUM PANEL - 3D Cesium overlay (replaces map view)                      */
+/* ========================================================================= */
+
+.cesium-panel {
+    position: absolute;
+    inset: 0;
+    z-index: 50;
+    display: flex;
+    flex-direction: column;
+    background: #000;
+}
+
+.cesium-panel.hidden {
+    display: none;
+}
+
+#cesiumIframe {
+    flex: 1;
+    width: 100%;
+    border: none;
+}
+
 /* Normalization of strip buttons */
 .left-sidebar-strip .btn {
     width: 36px;

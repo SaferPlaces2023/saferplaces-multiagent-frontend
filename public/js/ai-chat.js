@@ -460,7 +460,12 @@ const AIChat = (() => {
             const response = await fetch(Routes.Agent.THREAD(threadId), {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ prompt: messageText })
+                body: JSON.stringify({ 
+                    prompt: messageText,
+                    state_updates: {
+                       ...GeoMap.getViewportState() 
+                    }
+                })
             });
 
             if (!response.ok) {

@@ -672,7 +672,7 @@ const LayerPanel = (() => {
             fetch(Routes.Agent.STATE(threadId), {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ state_updates: { layer_registry: [updatedLayer] } })
+                body: JSON.stringify({ state_updates: { layer_registry: [updatedLayer], ...GeoMap.getViewportState() } })
             }).catch(err => {
                 console.warn('[LayerPanel] Config persist failed (non-blocking):', err);
             });
@@ -980,6 +980,7 @@ const LayerPanel = (() => {
                     ${layer.type === 'vector' ? '<li><a class="dropdown-item" data-action="symbology">Style</a></li>' : ''}
                     ${layer.type === 'raster' ? '<li><a class="dropdown-item" data-action="raster-symbology">Style</a></li>' : ''}
                     ${layer.type === 'raster' ? '<li><a class="dropdown-item" data-action="open-sculpt">Open in Sculpt</a></li>' : ''}
+                    ${layer.type === 'raster' && layer.metadata?.surface_type === 'water-depth' ? '<li><a class="dropdown-item" data-action="open-cesium">3D View</a></li>' : ''}
                     <li><a class="dropdown-item" data-action="config">Config</a></li>
                     <li><a class="dropdown-item" data-action="download">Download</a></li>
                 </ul>
@@ -1157,6 +1158,16 @@ const LayerPanel = (() => {
             });
         }
 
+        // Open in Cesium action (water-depth rasters only)
+        const openCesiumLink = right.querySelector('[data-action="open-cesium"]');
+        if (openCesiumLink) {
+            openCesiumLink.addEventListener('click', (e) => {
+                e.preventDefault();
+                const layerData = JSON.parse(item.dataset.layerData);
+                openInCesium(layerData);
+            });
+        }
+
         // Drag handle tracking
         item.addEventListener('mousedown', (e) => {
             draggingFromHandle = e.target.classList.contains('drag-handle-symbol');
@@ -1264,8 +1275,62 @@ const LayerPanel = (() => {
     }
 
     // =========================================================================
+    // CESIUM 3D VIEW PANEL
+    // =========================================================================
+
+    /**
+     * Apre il pannello Cesium 3D per il layer water-depth specificato.
+     * Passa il src del layer via localStorage così la demo React lo carica direttamente.
+     * @param {Object} layer - Layer raster con surface_type === 'water-depth'
+     */
+    function openInCesium(layer) {
+        const panel = document.getElementById('cesiumPanel');
+        const iframe = document.getElementById('cesiumIframe');
+        const closeBtn = document.getElementById('cesiumCloseBtn');
+
+        if (!panel || !iframe) return;
+
+        // Communicate the specific layer src so the Cesium demo can load it directly
+        const downloadUrl = layer.metadata?.download_url || '';
+        if (downloadUrl) {
+            localStorage.setItem('cesium_wd_url', downloadUrl);
+        } else {
+            localStorage.removeItem('cesium_wd_url');
+        }
+
+        // Wire up close button (once)
+        if (closeBtn && !closeBtn.dataset.cesiumBound) {
+            closeBtn.dataset.cesiumBound = '1';
+            closeBtn.addEventListener('click', () => {
+                panel.classList.add('hidden');
+                iframe.src = 'about:blank';
+            });
+        }
+
+        // POST session params into the named iframe
+        const userId    = localStorage.getItem('user_id');
+        const projectId = localStorage.getItem('project_id');
+        const threadId  = localStorage.getItem('thread_id');
+
+        const form = document.createElement('form');
+        form.method = 'POST';
+        form.action = '/cesium-viewer';
+        form.target = 'cesiumIframe';
+        const mkInput = (name, value) => { const i = document.createElement('input'); i.type = 'hidden'; i.name = name; i.value = value || ''; return i; };
+        form.appendChild(mkInput('user_id', userId));
+        form.appendChild(mkInput('project_id', projectId));
+        form.appendChild(mkInput('thread_id', threadId));
+        document.body.appendChild(form);
+        form.submit();
+        document.body.removeChild(form);
+
+        panel.classList.remove('hidden');
+    }
+
+    // =========================================================================
     // RASTER EXPORT MODAL (sculpt DEM)
     // =========================================================================
+
 
     /**
      * Apre il modal di export raster con i dati TIF dal dem-sculpt

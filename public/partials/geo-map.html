@@ -10,3 +10,33 @@
 
 <!-- ============= TOP BAR: Controls and Tools ============= -->
 <div data-include="public/partials/geo-map-topbar.html"></div>
+
+<!-- ============= BBOX DRAW INFO - injected into map container by draw-tools.js ============= -->
+<div id="draw-bbox-info" class="draw-bbox-info" aria-label="Drawn bbox dimensions" style="display:none;">
+    <span class="material-symbols-outlined">crop_free</span>
+    <code id="draw-bbox-info-dims">—</code>
+</div>
+
+<!-- ============= BOTTOM: Viewport info (bbox + center + zoom in EPSG:4326) ============= -->
+<div id="viewportInfoToolbar" class="viewportInfoToolbar draw-toolbar px-3 py-2" aria-label="Map viewport coordinates">
+
+    <div id="viewportInfoToolbarHead" class="toolbar-head d-flex align-items-center" data-toggle="viewportInfoToolbarBody" role="button" tabindex="0" aria-expanded="false">
+        <span class="small text-secondary d-inline-flex align-items-center gap-1">
+            <span class="material-symbols-outlined">my_location</span>
+            Viewport
+        </span>
+    </div>
+
+    <div id="viewportInfoToolbarBody">
+        <div class="dt-sep ms-3 me-2" aria-hidden="true"></div>
+        <span class="viewport-label">bbox</span>
+        <code id="map-viewport-bbox">—</code>
+        <div class="dt-sep mx-2" aria-hidden="true"></div>
+        <span class="viewport-label">center</span>
+        <code id="map-viewport-center">—</code>
+        <div class="dt-sep mx-2" aria-hidden="true"></div>
+        <span class="viewport-label">zoom</span>
+        <code id="map-viewport-zoom">—</code>
+    </div>
+
+</div>

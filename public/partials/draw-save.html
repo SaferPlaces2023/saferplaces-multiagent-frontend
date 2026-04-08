@@ -1,0 +1,66 @@
+<!-- ============================================================================= -->
+<!-- DRAW SAVE MODAL - Name and describe a newly drawn bbox before saving        -->
+<!-- ============================================================================= -->
+
+<section
+    id="drawSaveModal"
+    class="layer-reg hidden"
+    aria-modal="true"
+    role="dialog"
+    aria-label="Save drawn area">
+
+    <!-- ============= CARD ============= -->
+    <div class="layer-reg-card">
+
+        <!-- ============= HEADER ============= -->
+        <h6 class="mb-1">Save drawn area</h6>
+        <p class="small text-secondary mb-3">
+            Give a name to this shape before saving it.
+        </p>
+
+        <!-- ============= NAME FIELD ============= -->
+        <div class="mb-2">
+            <label class="form-label small" for="dsSaveName">
+                Name
+                <span class="text-danger" title="Required">*</span>
+            </label>
+            <input
+                id="dsSaveName"
+                class="form-control form-control-sm"
+                type="text"
+                placeholder="e.g., Study area"
+                aria-label="Shape name (required)"
+                required>
+        </div>
+
+        <!-- ============= DESCRIPTION FIELD ============= -->
+        <div class="mb-3">
+            <label class="form-label small" for="dsSaveDesc">Description</label>
+            <textarea
+                id="dsSaveDesc"
+                class="form-control form-control-sm"
+                rows="2"
+                placeholder="Brief description… (optional)"
+                spellcheck="false"
+                aria-label="Shape description (optional)">
+            </textarea>
+        </div>
+
+        <!-- ============= ACTION BUTTONS ============= -->
+        <div class="d-flex justify-content-end gap-2">
+            <button
+                id="dsSaveCancel"
+                class="btn btn-outline-light btn-sm"
+                type="button">
+                Discard
+            </button>
+            <button
+                id="dsSaveConfirm"
+                class="btn btn-success btn-sm"
+                type="button">
+                Save
+            </button>
+        </div>
+
+    </div>
+</section>
