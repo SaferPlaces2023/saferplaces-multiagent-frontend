@@ -204,6 +204,7 @@ const TimeSlider = (() => {
 
         domElements.tsTrack?.addEventListener('pointerdown', handleTrackPointerDown);
         enableHandleDrag();
+        enableRangeEdit();
     }
 
     // =========================================================================
@@ -320,6 +321,81 @@ const TimeSlider = (() => {
                 domElements.tsHighlights.appendChild(highlight);
             }
         });
+    }
+
+    // =========================================================================
+    // RANGE EDIT (click-to-edit start/end labels)
+    // =========================================================================
+
+    /**
+     * Abilita la modifica di start/end date cliccando sulle label
+     */
+    function enableRangeEdit() {
+        const targets = [
+            { el: domElements.tsStartLabel, isStart: true },
+            { el: domElements.tsEndLabel, isStart: false }
+        ];
+
+        targets.forEach(({ el, isStart }) => {
+            if (!el) return;
+            el.classList.add('ts-range-label-editable');
+
+            el.addEventListener('click', () => {
+                const currentISO = isStart ? startDate?.toISOString() : endDate?.toISOString();
+                if (!currentISO) return;
+
+                const input = document.createElement('input');
+                input.type = 'datetime-local';
+                input.value = toDatetimeLocalValue(new Date(currentISO));
+                input.className = 'ts-range-input';
+
+                const originalText = el.textContent.trim();
+                el.textContent = '';
+                el.appendChild(input);
+                input.focus();
+
+                let committed = false;
+
+                const commit = () => {
+                    if (committed) return;
+                    committed = true;
+                    if (input.value) {
+                        const newISO = new Date(input.value).toISOString();
+                        try {
+                            if (isStart) {
+                                setRange(newISO, endDate.toISOString());
+                            } else {
+                                setRange(startDate.toISOString(), newISO);
+                            }
+                        } catch {
+                            el.textContent = originalText;
+                        }
+                    } else {
+                        el.textContent = originalText;
+                    }
+                };
+
+                const cancel = () => {
+                    committed = true;
+                    el.textContent = originalText;
+                };
+
+                input.addEventListener('blur', commit);
+                input.addEventListener('keydown', (e) => {
+                    if (e.key === 'Enter') { e.preventDefault(); input.blur(); }
+                    if (e.key === 'Escape') { cancel(); }
+                });
+            });
+        });
+    }
+
+    /**
+     * Converte una Date nel formato richiesto da input[type=datetime-local]
+     * @param {Date} d
+     * @returns {string} "YYYY-MM-DDTHH:MM"
+     */
+    function toDatetimeLocalValue(d) {
+        return `${formatDate(d)}T${padZero(d.getHours())}:${padZero(d.getMinutes())}`;
     }
 
     // =========================================================================

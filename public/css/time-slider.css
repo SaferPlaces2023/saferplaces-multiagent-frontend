@@ -162,6 +162,45 @@
     font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas;
 }
 
+/* Editable range label */
+.ts-range-label-editable {
+    cursor: pointer;
+    border-bottom: 1px dashed transparent;
+    transition: color var(--transition-fast), border-color var(--transition-fast);
+    border-radius: var(--radius-sm);
+    padding: 0 var(--space-sm);
+}
+
+.ts-range-label-editable:hover {
+    color: var(--color-text-primary);
+    border-bottom-color: var(--color-accent-green-alpha-65);
+}
+
+/* Inline datetime-local input for range editing */
+.ts-range-input {
+    background: var(--color-input-bg);
+    color: var(--color-text-primary);
+    border: 1px solid var(--color-accent-green-alpha-35);
+    border-radius: var(--radius-md);
+    padding: 1px var(--space-sm);
+    font-size: 0.82rem;
+    font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas;
+    outline: none;
+    transition: border-color var(--transition-fast);
+    cursor: pointer;
+    width: 165px;
+}
+
+.ts-range-input:focus {
+    border-color: var(--color-accent-green-alpha-65);
+}
+
+/* Webkit datetime input icon color */
+.ts-range-input::-webkit-calendar-picker-indicator {
+    filter: invert(0.7);
+    cursor: pointer;
+}
+
 /* ========================================================================= */
 /* TRACK - Timeline slider track */
 /* ========================================================================= */

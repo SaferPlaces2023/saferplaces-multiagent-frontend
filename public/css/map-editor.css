@@ -157,11 +157,13 @@
 }
 
 #drawToolbarBody.active {
-    max-width: 500px;
+    max-width: 600px;
+    /* min-width: fit-content; */
     opacity: 1;
     transform: translateX(0);
     filter: blur(0);
     pointer-events: auto;
+    /* overflow-x: scroll; */
 }
 
 /* ========================================================================= */
@@ -493,6 +495,12 @@
     display: inline-flex;
     align-items: center;
     white-space: nowrap;
+}
+
+.vp-sep {
+    width: 1px;
+    height: 26px;
+    background: var(--color-border-faint);
 }
 
 #viewportInfoToolbarHead {
