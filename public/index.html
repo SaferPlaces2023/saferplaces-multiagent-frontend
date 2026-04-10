@@ -42,19 +42,24 @@
 
 <body class="bg-dark text-light">
 
-    <div id="authGateLogo2" class="d-flex row align-items-center logo-container2">
+    <!-- <div id="authGateLogo2" class="d-flex row align-items-center logo-container2">
         <div class="morph-pro2">
             <img class="logo2" src="public/imgs/SaferPlacesLogo.png" alt="Logo" />
         </div>
         <p>SaferPlaces AI Agent</p>
-    </div>
+    </div> -->
 
     <!-- Placeholder dei parziali -->
     <div id="appRoot" class="app-container">
 
         <!-- Chat Sidebar (left side - fixed width + resizable) -->
         <div class="chat-sidebar-wrapper">
-            <div style="height: 100%;" data-include="public/partials/ai-chat.html"></div>
+            <!-- Chat Panel Header -->
+            <header id="appHeader">
+                <img src="public/imgs/SaferPlacesLogo.png" alt="SaferPlaces logo" />
+                <span id="appHeaderTitle">SaferPlaces Agent</span>
+            </header>
+            <div style="flex: 1; min-height: 0;" data-include="public/partials/ai-chat.html"></div>
         </div>
 
         <!-- Map Container (flex: 1) -->

@@ -1608,10 +1608,7 @@ const DrawTools = (() => {
                 const hidden = eyeBtn.classList.toggle('dt-collection-hidden');
                 const icon = eyeBtn.querySelector('.material-symbols-outlined');
                 icon.textContent = hidden ? 'visibility_off' : 'visibility';
-
-                document.dispatchEvent(new CustomEvent('draw:collection:visible', {
-                    detail: { key: name, visible: !hidden, fc }
-                }));
+                setCollectionVisibility(fc, !hidden);
             });
 
             // Menu actions
@@ -1857,6 +1854,30 @@ const DrawTools = (() => {
     // =========================================================================
     // UTILITY HELPERS
     // =========================================================================
+
+    /**
+     * Mostra o nasconde tutti i layer MapLibre di una feature collection
+     * @param {Object} fc - Feature collection dal registry
+     * @param {boolean} visible - true = visibile, false = nascosto
+     */
+    function setCollectionVisibility(fc, visible) {
+        if (!fc?.collection_id) return;
+        const v = visible ? 'visible' : 'none';
+        const id = fc.collection_id;
+        const type = fc.metadata?.feature_type || DRAW_CONSTANTS.MODES.BBOX;
+
+        const candidateLayers = [
+            createLayerLayerId(type, id),
+            createLayerLayerId(`${type}-fill`, id),
+            createLayerLayerId(`${type}-line`, id)
+        ];
+
+        candidateLayers.forEach(layerId => {
+            if (map.getLayer(layerId)) {
+                map.setLayoutProperty(layerId, 'visibility', v);
+            }
+        });
+    }
 
     /**
      * Genera ID random 8 caratteri

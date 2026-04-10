@@ -110,7 +110,9 @@ const CSS_CLASSES = {
 // =========================================================================
 // BASEMAP STYLES
 // =========================================================================
-const MAPTILER_API_KEY = 'eKTWCeR7phLWdM7M4myh';
+// const MAPTILER_API_KEY = 'eKTWCeR7phLWdM7M4myh'; 
+const MAPTILER_API_KEY = 'WAuqggsrOmb4B3Rrj6ws'; 
+
 const BASEMAP_STYLES = [
     // OpenStreetMap
     { id: 'osm',                    label: 'OpenStreetMap',            url: 'https://tile.openstreetmap.org/{z}/{x}/{y}.png' },

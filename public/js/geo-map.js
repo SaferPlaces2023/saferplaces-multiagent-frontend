@@ -727,7 +727,7 @@ const GeoMap = (() => {
             // Applica stile AI se presente nel layer descriptor (PLN-015 T-015-10)
             const layerStyle = layerData.layer_data.style || layerData.layer_data.metadata?.style;
             if (layerStyle) {
-                setLayerStyle(layerId, layerStyle);
+                setLayerStyle(layerData.layer_data.src, layerStyle);
             }
 
             // Zoom to bounds se disponibile
@@ -844,6 +844,12 @@ const GeoMap = (() => {
 
             const renderInfo = await renderResponse.json();
             const renderUrl = renderInfo.src;
+
+            layerData.layer_data.metadata = {
+                ...(renderInfo.metadata || {}),
+                ...(layerData.layer_data.metadata || {})
+            };
+            console.log(layerData);
 
             if (!renderUrl) {
                 throw new Error('render-layer: render_url mancante');
@@ -1467,12 +1473,13 @@ const GeoMap = (() => {
      * @param {Object} style - { paint, layout, filter }
      */
     function setLayerStyle(layerId, style) {
-        console.log(layerId)
-        if (!map || !layerId || !style) return;
+        const layerKey = btoa(layerId)
+        console.log(layerKey)
+        if (!map || !layerKey || !style) return;
         const { paint = {}, layout = {}, filter } = style;
         const sublayerSuffixes = ['-fill', '-line', '-pt', ''];
         sublayerSuffixes.forEach(suffix => {
-            const id = suffix ? `${layerId}${suffix}` : layerId;
+            const id = suffix ? `${layerKey}${suffix}` : layerKey;
             if (!map.getLayer(id)) return;
             Object.entries(paint).forEach(([prop, value]) => {
                 try { map.setPaintProperty(id, prop, value); }
@@ -1487,7 +1494,26 @@ const GeoMap = (() => {
                 catch (e) { /* skip invalid filter */ }
             }
         });
-        console.log('[GeoMap] setLayerStyle applied to:', layerId);
+        console.log('[GeoMap] setLayerStyle applied to:', layerKey);
+
+        // Update registry style cache
+        if (registry[layerKey]) {
+            registry[layerKey].style = style;
+        }
+
+        // Notify layer-panel so the legend refreshes without a full reload
+        // const layerSrc = registry[layerKey]?.url;
+        if (layerId) {
+            document.dispatchEvent(new CustomEvent('layer:style-applied', {
+                detail: { layer: { src: layerId, style } }
+            }));
+        }
+
+        // If this layer is the active 3D-buildings source, rebuild the extrusion layer
+        // so the new fill color is reflected in the 3D view immediately
+        if (currentBuildingsSource === layerKey) {
+            switchBuildingsSource(layerKey);
+        }
     }
 
     /**

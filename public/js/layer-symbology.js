@@ -646,7 +646,7 @@ const LayerSymbology = (() => {
             applyBtn.addEventListener('click', () => {
                 if (!currentLayer || !currentState) return;
                 const style = getMaplibreStyle(currentLayer, currentState);
-                GeoMap.setLayerStyle(currentLayer.id, style);
+                GeoMap.setLayerStyle(currentLayer.src, style);
                 currentLayer.style = style;
                 document.dispatchEvent(new CustomEvent('layer:style-applied', { detail: { layer: currentLayer } }));
                 const threadId = getStorageValue(STORAGE_KEYS.THREAD_ID);

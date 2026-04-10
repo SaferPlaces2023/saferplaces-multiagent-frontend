@@ -47,7 +47,8 @@ const LayerPanel = (() => {
         reloadProjectLayers: 'Fetchia layers da backend, aggiorna badge, renderizza lista',
 
         // RENDERING LISTA LAYERS
-        renderLayerList: 'Popola lista DOM con layer items, abilita drag-sort',
+        renderLayerList: 'Separa layer in gruppi (metadata.layer_group) e ungrouped; renderizza gruppi espandibili poi lista normale',
+        createGroupElement: 'Crea sezione gruppo espandibile con header toggle e lista layer al suo interno',
         createLayerItemElement: 'Crea elemento layer item HTML con dettagli, actions, drag-handle',
         bindLayerItemEvents: 'Bind: eye toggle, download action, drag tracking su item',
 
@@ -143,6 +144,8 @@ const LayerPanel = (() => {
         layerConfigModal: 'layerConfigModal',
         lcLayerTitle: 'lcLayerTitle',
         lcSurfaceType: 'lcSurfaceType',
+        lcGroupSelect: 'lcGroupSelect',
+        lcGroupNew: 'lcGroupNew',
         lcCancel: 'lcCancel',
         lcSave: 'lcSave',
         lcError: 'lcError',
@@ -164,6 +167,7 @@ const LayerPanel = (() => {
     let draggingFromHandle = false;
     let layerConfigCurrent = null;
     let rasterExportPending = null;  // { tif_base64, source_dem_url, name }
+    let _cachedLayers = [];           // ultimo array layers caricato dal backend
 
     // Resize state for left sidebar
     let leftResizing = false;
@@ -628,6 +632,44 @@ const LayerPanel = (() => {
                 ).join('');
         }
 
+        // Popola il select layer_group con i gruppi esistenti + opzione "nuovo"
+        if (domElements.lcGroupSelect) {
+            const currentGroup = layer.metadata?.layer_group || '';
+            const existingGroups = [...new Set(
+                _cachedLayers
+                    .map(l => l.metadata?.layer_group)
+                    .filter(g => g && typeof g === 'string')
+            )];
+
+            domElements.lcGroupSelect.innerHTML =
+                '<option value="">— no group —</option>' +
+                existingGroups.map(g =>
+                    `<option value="${escapeHtml(g)}"${g === currentGroup ? ' selected' : ''}>${escapeHtml(g)}</option>`
+                ).join('') +
+                '<option value="__new__">+ New group…</option>';
+
+            // If the current group is not in the known list, pre-select __new__ and prefill the input
+            if (currentGroup && !existingGroups.includes(currentGroup)) {
+                domElements.lcGroupSelect.value = '__new__';
+            }
+
+            // Show/hide the free-text input based on select value
+            const updateGroupInput = () => {
+                const isNew = domElements.lcGroupSelect.value === '__new__';
+                domElements.lcGroupNew?.classList.toggle(CSS_CLASSES.D_NONE, !isNew);
+                if (isNew && domElements.lcGroupNew) {
+                    domElements.lcGroupNew.value = (currentGroup && !existingGroups.includes(currentGroup)) ? currentGroup : '';
+                    domElements.lcGroupNew.focus();
+                }
+            };
+
+            // Remove any previous listener before re-adding
+            domElements.lcGroupSelect._groupChangeHandler && domElements.lcGroupSelect.removeEventListener('change', domElements.lcGroupSelect._groupChangeHandler);
+            domElements.lcGroupSelect._groupChangeHandler = updateGroupInput;
+            domElements.lcGroupSelect.addEventListener('change', updateGroupInput);
+            updateGroupInput();
+        }
+
         // Nascondi errori precedenti
         if (domElements.lcError) {
             domElements.lcError.classList.add(CSS_CLASSES.D_NONE);
@@ -657,11 +699,22 @@ const LayerPanel = (() => {
 
         const surfaceType = domElements.lcSurfaceType?.value || '';
 
+        // Resolve layer_group value
+        let groupValue = domElements.lcGroupSelect?.value || '';
+        if (groupValue === '__new__') {
+            groupValue = (domElements.lcGroupNew?.value || '').trim();
+        }
+
         const updatedMetadata = { ...(layerConfigCurrent.metadata || {}) };
         if (surfaceType) {
             updatedMetadata.surface_type = surfaceType;
         } else {
             delete updatedMetadata.surface_type;
+        }
+        if (groupValue) {
+            updatedMetadata.layer_group = groupValue;
+        } else {
+            delete updatedMetadata.layer_group;
         }
 
         const updatedLayer = { ...layerConfigCurrent, metadata: updatedMetadata };
@@ -737,8 +790,11 @@ const LayerPanel = (() => {
     // =========================================================================
 
     /**
-     * Renderizza la lista di layers
+     * Renderizza la lista di layers con supporto gruppi.
+     * I layer con metadata.layer_group vengono raggruppati in sezioni espandibili;
+     * i layer senza gruppo appaiono come lista normale sotto i gruppi.
      * @param {Array<Object>} layers - Array di layer objects
+     * @param {boolean} render - Se true dispatcha gli eventi di aggiunta mappa
      */
     function renderLayerList(layers, render = true) {
         if (!domElements.projectLayersList) return;
@@ -750,11 +806,36 @@ const LayerPanel = (() => {
 
         domElements.projectLayersList.innerHTML = '';
 
+        _cachedLayers = layers;
+
+        // Separate grouped vs ungrouped, preserving insertion order of groups
+        const groupOrder = [];
+        const groups = {};
+        const ungrouped = [];
+
         layers.forEach(layer => {
+            const groupName = layer.metadata?.layer_group;
+            if (groupName) {
+                if (!groups[groupName]) {
+                    groups[groupName] = [];
+                    groupOrder.push(groupName);
+                }
+                groups[groupName].push(layer);
+            } else {
+                ungrouped.push(layer);
+            }
+        });
+
+        // Render grouped sections
+        groupOrder.forEach(groupName => {
+            const groupEl = createGroupElement(groupName, groups[groupName], render);
+            domElements.projectLayersList.appendChild(groupEl);
+        });
+
+        // Render ungrouped layers
+        ungrouped.forEach(layer => {
             const layerItem = createLayerItemElement(layer);
             domElements.projectLayersList.appendChild(layerItem);
-
-            // Dispatch layer add events
             if (render) {
                 if (layer.type === 'vector') {
                     dispatchEvent('layer:add-geojson', { layer_data: layer });
@@ -765,6 +846,50 @@ const LayerPanel = (() => {
         });
 
         enableLayerDragSort();
+    }
+
+    /**
+     * Crea un elemento gruppo espandibile con i layer al suo interno
+     * @param {string} groupName - Nome del gruppo
+     * @param {Array<Object>} layers - Layer appartenenti al gruppo
+     * @param {boolean} render - Se true dispatcha gli eventi di aggiunta mappa
+     * @returns {HTMLElement}
+     */
+    function createGroupElement(groupName, layers, render) {
+        const groupEl = document.createElement('div');
+        groupEl.className = 'layer-group';
+
+        const header = document.createElement('div');
+        header.className = 'layer-group-header';
+        header.innerHTML = `
+            <span class="layer-group-toggle-icon">▼</span>
+            <span class="layer-group-name">${escapeHtml(groupName)}</span>
+            <span class="layer-group-count text-secondary">(${layers.length})</span>
+        `;
+
+        const body = document.createElement('div');
+        body.className = 'layer-group-body';
+
+        header.addEventListener('click', () => {
+            const collapsed = body.classList.toggle(CSS_CLASSES.D_NONE);
+            header.querySelector('.layer-group-toggle-icon').textContent = collapsed ? '▶' : '▼';
+        });
+
+        layers.forEach(layer => {
+            const layerItem = createLayerItemElement(layer);
+            body.appendChild(layerItem);
+            if (render) {
+                if (layer.type === 'vector') {
+                    dispatchEvent('layer:add-geojson', { layer_data: layer });
+                } else if (layer.type === 'raster') {
+                    dispatchEvent('layer:add-cog', { layer_data: layer });
+                }
+            }
+        });
+
+        groupEl.appendChild(header);
+        groupEl.appendChild(body);
+        return groupEl;
     }
 
     /**

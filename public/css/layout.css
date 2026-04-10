@@ -160,6 +160,81 @@ fieldset[disabled] {
 /* MAIN APP LAYOUT - Flex container with map and sidebar */
 /* ========================================================================= */
 
+#appHeader {
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    justify-content: center;
+    gap: 12px;
+    padding: 12px 16px;
+    background-color: var(--color-bg-dark);
+    border-bottom: 1px solid rgba(255, 255, 255, 0.07);
+    flex-shrink: 0;
+    z-index: 10;
+    transition: flex-direction 0.2s, padding 0.2s;
+}
+
+#appHeader img {
+    height: 28px;
+    width: auto;
+    flex-shrink: 0;
+}
+
+#appHeaderTitle {
+    font-size: 1.1rem;
+    font-weight: 600;
+    letter-spacing: 0.04em;
+    color: var(--color-text-light);
+    transition: font-size 0.2s, opacity 0.2s;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+/* Minimized state: header goes vertical, title shrinks, logo rotates */
+.chat-sidebar-wrapper:has(.chatbox.min) #appHeader {
+    flex-direction: column;
+    gap: 6px;
+    padding: 12px 4px;
+}
+
+.chat-sidebar-wrapper:has(.chatbox.min) #appHeader img {
+    margin-top: 30px;
+    margin-bottom: 35px;
+    transform: rotate(90deg);
+}
+
+.chat-sidebar-wrapper:has(.chatbox.min) #appHeaderTitle {
+    font-size: 0.95rem;
+    writing-mode: vertical-rl;
+    text-orientation: mixed;
+    letter-spacing: 0.1em;
+}
+
+.chat-sidebar-wrapper:has(.chatbox.min) #minChat {
+    padding: 5px;
+    margin-top: 10px;
+}
+
+.chat-sidebar-wrapper .badge.ai-chat-badge {
+    padding: 0.6rem 0.8rem;
+}
+.chat-sidebar-wrapper:has(.chatbox.min) .ai-chat-badge {
+    padding: 0.6rem;
+}
+
+/* Minimized state: hide Settings and Clean buttons, keep minimize button */
+.chatbox.min #chatSettingsBtn,
+.chatbox.min #clearChat {
+    display: none;
+}
+
+/* Minimized state: hide textarea and send button */
+.chatbox.min .chat-input {
+    display: none;
+}
+
+
 #appRoot.app-container {
     display: flex;
     flex-direction: row;

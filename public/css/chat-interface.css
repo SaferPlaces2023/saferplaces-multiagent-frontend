@@ -42,7 +42,7 @@
 .chatbox.min .chat-body,
 .chatbox.min #chatBody,
 .chatbox.min .chat-input {
-    display: none;
+    display: none !important;
 }
 
 /* ========================================================================= */
@@ -287,6 +287,8 @@
 #chatSettings.closed {
     max-height: 0px;
     overflow: hidden;
+    padding: 0;
+    margin: 0;
 }
 
 /* Settings cards and sections */

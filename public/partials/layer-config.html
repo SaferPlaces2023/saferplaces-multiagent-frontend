@@ -30,6 +30,26 @@
             </small>
         </div>
 
+        <!-- ============= LAYER GROUP ============= -->
+        <div class="mb-2">
+            <label class="form-label small" for="lcGroupSelect">Group</label>
+            <select
+                id="lcGroupSelect"
+                class="form-select form-select-sm mb-1"
+                aria-label="Layer group">
+                <!-- options populated dynamically by layer-panel.js -->
+            </select>
+            <input
+                type="text"
+                id="lcGroupNew"
+                class="form-control form-control-sm d-none"
+                placeholder="New group name…"
+                aria-label="New group name" />
+            <small class="text-secondary d-block mt-1">
+                Organises layers into collapsible groups in the panel.
+            </small>
+        </div>
+
         <!-- ============= ACTION BUTTONS ============= -->
         <div class="d-flex justify-content-end gap-2 mt-3">
             <button
